@@ -1,5 +1,137 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
+## TABLE OF CONTENTS
+
+- [1. The product](#1-the-product)
+  - [1.1 The ten questions this design must answer](#11-the-ten-questions-this-design-must-answer)
+  - [1.2 Committed decisions](#12-committed-decisions)
+- [2. Architecture overview](#2-architecture-overview)
+- [3. L1 — Capture](#3-l1-capture)
+  - [3.1 PDPA is an architecture concern, not a page footer](#31-pdpa-is-an-architecture-concern-not-a-page-footer)
+  - [3.2 The two-purpose consent model](#32-the-two-purpose-consent-model)
+  - [3.3 Processor register](#33-processor-register)
+  - [3.4 privacy.html is a launch prerequisite](#34-privacyhtml-is-a-launch-prerequisite)
+  - [3.5 The phone number — a different regime](#35-the-phone-number-a-different-regime)
+  - [3.6 The input contract](#36-the-input-contract)
+  - [3.7 The form is an open relay, and this is the most serious gap in the design](#37-the-form-is-an-open-relay-and-this-is-the-most-serious-gap-in-the-design)
+- [4.6 The competitor scan is a scored pass, not best-effort (D25 direction)](#46-the-competitor-scan-is-a-scored-pass-not-best-effort-d25-direction)
+  - [4.6.0a  THE SCAN COULD NOT READ THE PAGES — and reported the wrong reason (30 Sep)](#460a-the-scan-could-not-read-the-pages-and-reported-the-wrong-reason-30-sep)
+  - [4.6.0b  OCCUPANT MINING IS A NEGATIVE RESULT — DO NOT RETRY THE HEURISTICS (30 Sep)](#460b-occupant-mining-is-a-negative-result-do-not-retry-the-heuristics-30-sep)
+  - [4.6.1 The scan, built (v38) — and what it is NOT](#461-the-scan-built-v38-and-what-it-is-not)
+  - [4.6.2  THE COMPETITOR-SET METHOD — the proven five-pass sweep, and what the free report uses](#462-the-competitor-set-method-the-proven-five-pass-sweep-and-what-the-free-report-uses)
+- [4.6.3 THE PS EVIDENCE PROTOCOL — how PS is graded, and how it is graded BY THE TOOL](#463-the-ps-evidence-protocol-how-ps-is-graded-and-how-it-is-graded-by-the-tool)
+  - [4.6.3.1 WHAT PS ACTUALLY NEEDS — THE CLAIM-OWNERSHIP MAP](#4631-what-ps-actually-needs-the-claim-ownership-map)
+  - [4.6.3.2  THE PILOT, AND THE ONE ERROR THAT MATTERS — ONE CATEGORY, SIX BRANDS, THREE CLAIMS](#4632-the-pilot-and-the-one-error-that-matters-one-category-six-brands-three-claims)
+  - [4.6.3.3  THE METHODOLOGICAL RULE THE PILOT PROVED — READ THE ABOUT PAGE, NOT THE HOMEPAGE](#4633-the-methodological-rule-the-pilot-proved-read-the-about-page-not-the-homepage)
+  - [4.6.3.4 THE PIPELINE — WHAT I WILL ACTUALLY RUN](#4634-the-pipeline-what-i-will-actually-run)
+  - [4.6.3.5 D1–D4, DECIDED BY THE TOOL NOT THE USER (Sean's instruction, 8 Oct)](#4635-d1d4-decided-by-the-tool-not-the-user-seans-instruction-8-oct)
+  - [4.6.3.6 THE TOOL IS BUILT AND RUN — ps_evidence.py, AND THE THREE DEFECTS ITS FIRST RUN FOUND IN IT](#4636-the-tool-is-built-and-run-ps_evidencepy-and-the-three-defects-its-first-run-found-in-it)
+  - [4.6.3.7  THE CLAIM MAP, LOCKED IN — and HOW IT COMPARES WITH THE RANGE OF COMPETITORS](#4637-the-claim-map-locked-in-and-how-it-compares-with-the-range-of-competitors)
+  - [4.6.3.8  THE THREE-WAY DISCOVERY TEST — WHICH MECHANISM ACTUALLY SURFACES THE MAJORS](#4638-the-three-way-discovery-test-which-mechanism-actually-surfaces-the-majors)
+  - [4.6.3.9  PRODUCTION HARDENING — DISCOVERY YIELDS A VETTED SET, NOT A CANDIDATE POOL](#4639-production-hardening-discovery-yields-a-vetted-set-not-a-candidate-pool)
+  - [4.6.3.10  THE RESOLUTION FIX — AND THE FABRICATED FINDING IT ALMOST CREATED](#46310-the-resolution-fix-and-the-fabricated-finding-it-almost-created)
+  - [4.6.3.11  THE INLINE / BACKGROUND SPLIT — and de-duplication by ENTITY](#46311-the-inline-background-split-and-de-duplication-by-entity)
+- [4.6.4 THE CLAIM/MIND PROTOCOL — VERIFYING WHAT CUSTOMERS THINK, NOT JUST WHAT THE BRAND SAYS](#464-the-claimmind-protocol-verifying-what-customers-think-not-just-what-the-brand-says)
+  - [4.6.4.1  THE THREE-WAY RULE — SEAN'S, AND IT DECIDES THE WHOLE PIPELINE](#4641-the-three-way-rule-seans-and-it-decides-the-whole-pipeline)
+  - [4.6.4.2 B2C — THE PROVEN PATH, AND ITS EXACT BLOCKER *MEASURED TODAY*](#4642-b2c-the-proven-path-and-its-exact-blocker-measured-today)
+  - [4.6.4.3 B2B — THE PART THAT HAD TO BE DESIGNED, AND THE LADDER](#4643-b2b-the-part-that-had-to-be-designed-and-the-ladder)
+  - [4.6.4.4  HOW "AGREE" AND "DISAGREE" ARE ACTUALLY DECIDED — NOT BY IMPRESSION](#4644-how-agree-and-disagree-are-actually-decided-not-by-impression)
+  - [4.6.4.5  THE MIND CAPTURE NOW RUNS END-TO-END — AND ITS FIRST HONEST RESULT IS *INCONCLUSIVE*, NOT A FLAG](#4645-the-mind-capture-now-runs-end-to-end-and-its-first-honest-result-is-inconclusive-not-a-flag)
+  - [4.6.4.6  SECOND CORPUS, SAME VERDICT — AND NOW THE CAUSE IS ESTABLISHED. GOOGLE MAPS REVIEWS ARE THE WRONG INSTRUMENT FOR POSITIONING](#4646-second-corpus-same-verdict-and-now-the-cause-is-established-google-maps-reviews-are-the-wrong-instrument-for-positioning)
+  - [4.6.4.7  THE B2B TEST — AND THE RULE IT EXPOSES: IT IS NOT B2C-vs-B2B, IT IS WHETHER THE REVIEW FORM ASKS THE COMPARISON QUESTION](#4647-the-b2b-test-and-the-rule-it-exposes-it-is-not-b2c-vs-b2b-it-is-whether-the-review-form-asks-the-comparison-question)
+  - [4.6.4.8  THE FORM HYPOTHESIS, MEASURED — AND THE INSTRUMENT IT ACTUALLY IDENTIFIES](#4648-the-form-hypothesis-measured-and-the-instrument-it-actually-identifies)
+  - [4.6.4.9 THE PRECONDITION GATE, AS CODE — specs/calibration/mind_test.py](#4649-the-precondition-gate-as-code-specscalibrationmind_testpy)
+  - [4.6.4.10  CONSULTING-AGENCY VALIDATION — THE RAW-REVIEW ROUTE FAILS, THE SYNTHESIS ROUTE WORKS, AND IT FOUND A SYSTEMATIC GAP](#46410-consulting-agency-validation-the-raw-review-route-fails-the-synthesis-route-works-and-it-found-a-systematic-gap)
+  - [4.6.4.11  §4.6.4.10's HEADLINE IS REFUTED — THE PRICE DOMINANCE IS CLUTCH'S EDITORIAL FRAME, NOT THE CUSTOMERS'](#46411-46410s-headline-is-refuted-the-price-dominance-is-clutchs-editorial-frame-not-the-customers)
+  - [4.6.4.12  OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST](#46412-option-1-the-flag-does-not-fire-usefully-and-the-control-proves-the-test-was-a-length-contest)
+  - [3.8 Input quality floor — superseded, see §3.10](#38-input-quality-floor-superseded-see-310)
+  - [3.9 Untrusted input must be contained](#39-untrusted-input-must-be-contained)
+  - [3.11 The pre-flight gate runs BEFORE the token spend (D30)](#311-the-pre-flight-gate-runs-before-the-token-spend-d30)
+  - [3.10 The input-quality floor (D12, accepted) — the live floor; §3.8 was its earlier title](#310-the-input-quality-floor-d12-accepted-the-live-floor-38-was-its-earlier-title)
+- [4. L2 — Enrichment](#4-l2-enrichment)
+  - [4.1 The validity gate is mandatory](#41-the-validity-gate-is-mandatory)
+  - [4.2 GRADE supplies the "what we couldn't check" section](#42-grade-supplies-the-what-we-couldnt-check-section)
+  - [4.3 Enrichment must not overstate](#43-enrichment-must-not-overstate)
+  - [4.4 What enrichment feeds](#44-what-enrichment-feeds)
+  - [4.4.1 Heritage is EVIDENCE, but it is DUE DILIGENCE, not a form question (D55 — Sean's ruling, 30 Sep)](#441-heritage-is-evidence-but-it-is-due-diligence-not-a-form-question-d55-seans-ruling-30-sep)
+- [5.10  THE LITE TIER — WHAT THE FREE REPORT OPENS UP, AND THE COST CUT THAT CANNOT BE TAKEN (Sean's design, measured)](#510-the-lite-tier-what-the-free-report-opens-up-and-the-cost-cut-that-cannot-be-taken-seans-design-measured)
+- [5.11 CANDIDATE LITE-TIER METRICS — RESEARCHED, WITH A RECOMMENDATION (7 Oct)](#511-candidate-lite-tier-metrics-researched-with-a-recommendation-7-oct)
+- [5.12 EMBA FRAMEWORKS — WHAT CAN ACTUALLY BE USED, AND WHAT TO REFUSE (7 Oct)](#512-emba-frameworks-what-can-actually-be-used-and-what-to-refuse-7-oct)
+  - [4.5 Non-load-bearing by construction —  EXCEPT position_strength, WHICH IS THE COMPARISON](#45-non-load-bearing-by-construction-except-position_strength-which-is-the-comparison)
+- [5. L3 — Scoring](#5-l3-scoring)
+  - [5.1 The six dimensions](#51-the-six-dimensions)
+  - [5.2 Variable dimension set (required by D7)](#52-variable-dimension-set-required-by-d7)
+  - [5.3 One rubric, two implementations](#53-one-rubric-two-implementations)
+  - [5.3.1 The rubric promotion step — DONE (promote_rubric.py)](#531-the-rubric-promotion-step-done-promote_rubricpy)
+  - [5.4 Two refusals, and no score gates](#54-two-refusals-and-no-score-gates)
+  - [5.5 The verdict and the one gate must be computed, not written](#55-the-verdict-and-the-one-gate-must-be-computed-not-written)
+  - [5.6 Unit discipline (measured)](#56-unit-discipline-measured)
+  - [5.7 Egress boundary](#57-egress-boundary)
+  - [5.8 The rubric is the asset, and it sits behind a free form](#58-the-rubric-is-the-asset-and-it-sits-behind-a-free-form)
+  - [5.9 Dependency on a single model vendor](#59-dependency-on-a-single-model-vendor)
+- [6. L4 — Delivery](#6-l4-delivery)
+  - [6.1 The cost question, answered honestly](#61-the-cost-question-answered-honestly)
+  - [6.2 Two streams](#62-two-streams)
+  - [6.3 The provider abstraction](#63-the-provider-abstraction)
+  - [6.4 Brevo is a processor, never a contact store](#64-brevo-is-a-processor-never-a-contact-store)
+  - [6.5 Own your suppression list](#65-own-your-suppression-list)
+  - [6.6 Unsubscribe must be real](#66-unsubscribe-must-be-real)
+  - [6.7 The report must survive its own delivery](#67-the-report-must-survive-its-own-delivery)
+  - [6.7.1  THE REPORT IS WRITTEN FOR THE SUBMITTER, NOT FOR US (D56 — Sean's ruling, 30 Sep)](#671-the-report-is-written-for-the-submitter-not-for-us-d56-seans-ruling-30-sep)
+  - [6.7.2  OPEN DEFECTS FOUND BY SUBMITTING A REAL BUSINESS (30 Sep — NOT FIXED, NEEDS A RULING)](#672-open-defects-found-by-submitting-a-real-business-30-sep-not-fixed-needs-a-ruling)
+  - [6.7.3  THE REPORT MUST USE THE SUBMITTER'S OWN WORDS (D58 — Sean's ruling, 30 Sep)](#673-the-report-must-use-the-submitters-own-words-d58-seans-ruling-30-sep)
+  - [6.7.4  THE INSUFFICIENCY REFUSAL IS NOW WIRED (D59 — 30 Sep)](#674-the-insufficiency-refusal-is-now-wired-d59-30-sep)
+  - [6.7.7 BLAST RADIUS — RUN, AND IT FOUND A LAUNCH-GATE DEFECT IN THE CANARY (BUILT)](#677-blast-radius-run-and-it-found-a-launch-gate-defect-in-the-canary-built)
+  - [6.7.6  THE COMPETITIVE SECTION WAS EMPTY BECAUSE THE RIVALS' SITES WERE NEVER READ (BUILT)](#676-the-competitive-section-was-empty-because-the-rivals-sites-were-never-read-built)
+  - [6.7.5  THE MODEL IS NOT DETERMINISTIC, AND THE PROJECT HAS BEEN TREATING IT AS IF IT WERE](#675-the-model-is-not-deterministic-and-the-project-has-been-treating-it-as-if-it-were)
+  - [6.7.5a WHAT THE INSTABILITY ACTUALLY IS — measured, and not what was assumed](#675a-what-the-instability-actually-is-measured-and-not-what-was-assumed)
+  - [6.7.5b  THE AMPLIFIER IS QUANTISATION — PROVEN, and it is THE finding](#675b-the-amplifier-is-quantisation-proven-and-it-is-the-finding)
+- [7. L5 — CRM, data model, retention](#7-l5-crm-data-model-retention)
+  - [7.1 Full pipeline (defined now so nothing is re-scoped later)](#71-full-pipeline-defined-now-so-nothing-is-re-scoped-later)
+  - [7.2 Company size routes the offer (Q10)](#72-company-size-routes-the-offer-q10)
+  - [7.3 The claimed-facts rule](#73-the-claimed-facts-rule)
+  - [7.4 Entities and the deletion guarantee](#74-entities-and-the-deletion-guarantee)
+  - [7.5 Retention must name a period](#75-retention-must-name-a-period)
+  - [7.6 The system of record has no durability story](#76-the-system-of-record-has-no-durability-story)
+  - [7.7 The data is research, and that needs its own consent purpose](#77-the-data-is-research-and-that-needs-its-own-consent-purpose)
+  - [7.7.1 The cold start is not a cold start — the calibration corpus is the seed](#771-the-cold-start-is-not-a-cold-start-the-calibration-corpus-is-the-seed)
+  - [7.7.2 Publication and confidentiality — the option space (D26)](#772-publication-and-confidentiality-the-option-space-d26)
+  - [7.11 Nothing here stays true — the reliability problem (D26 direction)](#711-nothing-here-stays-true-the-reliability-problem-d26-direction)
+  - [7.13 Naming and scoring competitors is not a compliance question (D25/D31)](#713-naming-and-scoring-competitors-is-not-a-compliance-question-d25d31)
+  - [7.14 The toolkit is one touchpoint in a trust sequence (D32, D33 answered)](#714-the-toolkit-is-one-touchpoint-in-a-trust-sequence-d32-d33-answered)
+  - [7.12 What the test can and cannot conclude (D29, quantified)](#712-what-the-test-can-and-cannot-conclude-d29-quantified)
+  - [7.8 Where the form data may and may not be used](#78-where-the-form-data-may-and-may-not-be-used)
+  - [7.9 The competitive fact this design has to answer for](#79-the-competitive-fact-this-design-has-to-answer-for)
+  - [7.10 The toolkit IS the test — sequencing accepted as D29](#710-the-toolkit-is-the-test-sequencing-accepted-as-d29)
+- [8. Accountability, operations, and asset protection](#8-accountability-operations-and-asset-protection)
+  - [8.1 Who owns a wrong answer (Q6)](#81-who-owns-a-wrong-answer-q6)
+  - [8.2 Instrumentation (Q7)](#82-instrumentation-q7)
+  - [8.3 The pipeline monitors nothing — and this is an observability company](#83-the-pipeline-monitors-nothing-and-this-is-an-observability-company)
+  - [8.4 Failure modes the queue introduces](#84-failure-modes-the-queue-introduces)
+  - [8.5 Cost ceilings (Q10)](#85-cost-ceilings-q10)
+  - [8.6 The rubric is the asset (Q9)](#86-the-rubric-is-the-asset-q9)
+- [9. Jurisdiction](#9-jurisdiction)
+- [10. Calibration and regression](#10-calibration-and-regression)
+  - [10.1 The calibration corpus](#101-the-calibration-corpus)
+  - [10.1.1 Two corpora, two jobs — do not conflate them](#1011-two-corpora-two-jobs-do-not-conflate-them)
+  - [10.2 Provenance — every report carries](#102-provenance-every-report-carries)
+  - [10.3 The canary](#103-the-canary)
+  - [10.4 Degradation ladder](#104-degradation-ladder)
+  - [10.5 What the calibration gate can and cannot prove (Q1)](#105-what-the-calibration-gate-can-and-cannot-prove-q1)
+  - [10.6b Fresh blind regrades — MA and CR pass on clean labels, and the old labels were the fault](#106b-fresh-blind-regrades-ma-and-cr-pass-on-clean-labels-and-the-old-labels-were-the-fault)
+  - [10.6c Competitive room reframed: CROWDING → DOMINANCE (Sean: *"hawker stalls would be 5"*)](#106c-competitive-room-reframed-crowding-dominance-sean-hawker-stalls-would-be-5)
+  - [10.6d  position_strength COLLAPSED INTO mental_advantage — 25% of the composite was measuring an existing dimension](#106d-position_strength-collapsed-into-mental_advantage-25-of-the-composite-was-measuring-an-existing-dimension)
+  - [10.6e Fresh blind regrade: PS and DR — ONE INVALID, TWO REAL DEFECTS (D52, D53)](#106e-fresh-blind-regrade-ps-and-dr-one-invalid-two-real-defects-d52-d53)
+  - [10.10 What is genuinely OPEN — and why none of it closes by editing](#1010-what-is-genuinely-open-and-why-none-of-it-closes-by-editing)
+  - [10.9  The launch gate is CLOSED — and what closing it does NOT prove](#109-the-launch-gate-is-closed-and-what-closing-it-does-not-prove)
+  - [10.6 Launch gate](#106-launch-gate)
+  - [10.7 What calibration established (v1.2.0 → v1.8.0)](#107-what-calibration-established-v120-v180)
+  - [10.8 The canary — built, baselined, running](#108-the-canary-built-baselined-running)
+- [11. Two-stage ship (per §12's D4 — not §13's D4, which is the refuse-ruling)](#11-two-stage-ship-per-12s-d4-not-13s-d4-which-is-the-refuse-ruling)
+- [12. Verified findings — constraints on the design](#12-verified-findings-constraints-on-the-design)
+- [13. Decisions required](#13-decisions-required)
+- [14. What this spec does not claim](#14-what-this-spec-does-not-claim)
+
 **Status:** DRAFT v50.6 — **⚠ THE 120-CASE REGRADE IS NOT A RELIABLE REFERENCE, and Sean has now confirmed this himself: every case re-examined (7 so far, across DEF, DR and PS) has confirmed the INSTRUMENT and contradicted his 27-Sep regrade. His PS regrade column is additionally the SUPERSEDED RECALL CONSTRUCT (r=+0.82, 67% identical to MA). Measured against properly-graded references the instrument is sound; against the quick regrade it reads 50.8% exact, and the regrade is the wrong number.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
@@ -2433,6 +2565,761 @@ claim is asserted against the gate's own `DEFAULT_LINK_TTL`.**
 **⚠ REPRODUCE:** *`python3 specs/calibration/sandbox/mailer.py` (9/9); `test_mail_branches.py` (both fallback branches
 on the serving path).*
 
+## 4.6 The competitor scan is a scored pass, not best-effort (D25 direction) ⚠
+
+> **⚠ BUILD STATUS, ADDED v38: THIS SECTION IS SPEC'D AND DIRECTED (D25) BUT NOT BUILT.** **The runtime
+> has NO competitor scanner.** What exists is *competitor DISCOVERY* only, and only as **hand-curated
+> per-CATEGORY dictionaries** in `build_v2_set.py` / `build_v3_hbb.py` — a set was written once for
+> "consumer electronics retail" and reused for every business in that category. **There is no
+> per-business scan, and nothing that captures a rival's POSITIONING, size or pricing** — i.e. columns 2,
+> 3 and 4 of the table below do not exist in production. **The corpus's `_derivation_method` string is a
+> TEMPLATE, not a research record** (identical shape for every case in a category).
+>
+> **⚠ AND THE RUBRIC WAS CONSUMING IT AS THOUGH IT WERE RESEARCH.** *PS's instruction asks "is that claim
+> already owned by a named occupant of the derived competitive set?" — while the set supplies names, tiers
+> and a price-floor label and nothing about what any occupant HOLDS.* **So the model was inferring
+> "ownership" from its own category memory.** *Fixed at the rubric level in **v1.18.1** (see §10.6e) by
+> restricting the basis to the supplied set and capping unproven flanks at 3.* **The scan remains the real
+> fix — see §4.6.1.**
+
+**Directed by Sean:** the same method the competitive-analysis projects use — *"exercise the web search
+protocol skill to find and score other competitors, just like what we did for our competitive analysis
+projects."* §4.4 already listed *"competitor set via search"*, but as **best-effort enrichment behind a
+hard timeout** (§4.5). **This escalates it: the competitor scan is a deliberate, protocol-governed pass,
+gated by §3.11.**
+
+**Protocol, not ad-hoc searching.** The scan follows `web-search-scraping-protocol`'s chain:
+`search → fetch → extract → escalate → grade`. Two of its rules are load-bearing here:
+
+- **The validity gate is mandatory** (§4.1) — measured at **60% silent failure** (6 of 10 mixed URLs
+  returned a Cloudflare challenge or CSS shell *as ordinary text, with no error*). A block page reaching
+  Jev means **Jev scores a Cloudflare challenge as though it were a competitor's website.** This is
+  already the highest-risk seam in the system and this section widens it — so the gate's coverage must
+  extend to every URL the scan touches, not only the enrichment URLs.
+- **The reward layer grades every capture** (§4.2) — grounding and coverage verdicts feed the *"what we
+  checked / what we couldn't check"* block. **A scan that silently captured nothing must say so**, not
+  produce an empty comparison that reads as "you have no competitors."
+
+**What the scan produces, and where each part goes:**
+
+| Captured | Becomes | Dimension |
+|---|---|---|
+| Named competitors in the category | The competitor set | Position strength |
+| Their positioning / messaging | Differentiation contrast | Position strength · Mental advantage |
+| Their size, tenure, footprint | Scale contrast | Defensibility |
+| Their pricing where public | Price-band context | Competitive room |
+| **Failed or blocked captures** | **The honest-limits block** | — |
+
+**Three rules that keep this honest:**
+
+1. **Observed ≠ claimed.** §7.3's split applies in full: scan-derived material is `observed`, form
+   answers are `claimed`, registries stay `not checked` (§4.3). **A competitor's marketing claim is
+   not evidence of their position** — it is evidence of what they say, which is a different and weaker
+   claim, and the report must not conflate them.
+2. **No score for a named competitor may be published to a third party.** The scan compares the
+   *submitter* to the pool. Printing "Competitor X scores 43" about a business that never consented,
+   never saw it and cannot dispute it is a different product with a different risk profile — see
+   **D31**.
+3. **The scan's result is perishable** (§7.11) and must carry a fetch timestamp.
+
+### 4.6.0a ⚠⚠ THE SCAN COULD NOT READ THE PAGES — and reported the wrong reason (30 Sep)
+
+**FOUND BY SEAN SUBMITTING A REAL BUSINESS** *(Aurora Energy Research — a strong, well-qualified
+prospect: real category, four named rivals, a live site).* **Its report said "NO OCCUPANT COULD BE
+ESTABLISHED" and refused the submission. Three verified defects, all in the scan.**
+
+**1. ⚠ A GRADING BUG SILENTLY DISCARDED SUCCESSFULLY-READ PAGES.** *`grade_capture` scanned for the
+literal string **`"noscript"` in the RAW HTML**, and did so **before** checking how much text it
+had received.* **Aurora's page carries a `<noscript>` tag in its source — so a fully-read page was
+graded `"shell", 0 usable content`.** *That single ordering error is why a populated category
+reported **"NO OCCUPANT COULD BE ESTABLISHED"**.*
+**⚠ THE RULE: substantial text beats every marker.** *Check the **visible** length first, scan
+markers against **visible text only**, and treat the markers as a **diagnosis of a failure rather
+than a test in their own right** — **a page that yielded something needs no explanation.**
+⚠ *A challenge marker is the one exception and still wins outright, since a denial is a denial
+however much text accompanies it.*
+
+**2. ⚠ THERE WAS NO BROWSER RUNG — urllib cannot read most modern business sites.** *Measured on
+the same URL: **urllib → 0 chars. Playwright → 6,059 chars in 2.8s**, including all four of
+Aurora's own customer segments (Financial Sector, Utilities, Developers, Energy Consumers).*
+**So the scanner was not failing to FIND competitors — it was failing to READ the pages,
+including the submitter's own — and its verdict named the wrong cause.**
+*Fixed: `fetch()` escalates to Playwright **only when the plain fetch yielded nothing usable**,
+with one lazily-created browser per scan and an explicit `close_browser()`. Sites serving static
+HTML keep the fast path and pay nothing.*
+**⚠ IT DOES NOT DEFEAT INTENTIONAL GATES.** *A bot wall, captcha or paywall is the publisher's
+decision and stays unread; the browser recovers content that was **mis-served to a non-browser
+client**, never content that was withheld. The distinction is the same one the honest UA protects.*
+
+**3. ⚠ ONE PUBLISHER WAS COUNTED AS TWO INDEPENDENT SOURCES.** *`www.auroraer.com` and
+`auroraer.com/global-presence/singapore` were treated as independent, so **Aurora's own navigation
+text corroborated itself** and passed the two-source rule.*
+*Fixed: `publisher()` reduces a URL to its **registrable domain** for independence counting —
+**independence is about who is speaking, and subdomains of one organisation are one speaker**.*
+
+**MEASURED EFFECT: readability 1 of 12 candidates → 7 → 10 of 12.** **⚠ But this is READABILITY,
+not analysis — see §4.6.0b.**
+
+### 4.6.0b ⚠⚠ OCCUPANT MINING IS A NEGATIVE RESULT — DO NOT RETRY THE HEURISTICS (30 Sep)
+
+**⚠ THE COMPETITIVE ANALYSIS STILL DOES NOT WORK, AND THIS IS THE REASON.** *With **10 readable
+pages**, the occupant miner returned **"Create", "Energy", "Manage", "USD"** as the rivals of a
+power-market analytics firm — **navigation furniture and currency codes presented as competitors**.*
+
+**⚠ FIVE FIXES HAVE BEEN ATTEMPTED AND FIVE HAVE FAILED:**
+
+| # | defect found | status |
+|---|---|---|
+| 1 | hyphen splitting — `"Each-A-Cup"` → `"Each"` + `"Cup"` | fixed |
+| 2 | stray single words — `"Updated"`, `"Business"` | fixed |
+| 3 | case duplicates — `"KOI"` and `"Koi"` as two occupants | fixed |
+| 4 | **navigation labels** — `"Discover"`, `"Know"`, `"Global Presence"`, `"Who"` | **STILL BROKEN** |
+| 5 | **currency / UI tokens** — `"USD"`, `"Create"`, `"Energy"`, `"Manage"` | **STILL BROKEN** |
+
+**⚠ THE PATTERN IS THE FINDING: every fix reveals a NEW class of capitalised non-brand text.**
+*That is the signature of **a mechanism that cannot be patched**, not one that needs another rule.*
+**⚠ AND TWO-SOURCE CORROBORATION CANNOT SAVE IT** — *navigation labels and currency codes appear on
+every site in every category, so they are **the most corroborated strings on the web**.*
+**⚠ A sixth tuning attempt was deliberately NOT made** *(§10.6e's rule against fitting a rule to
+the case that motivated it).* **The negative result is recorded in `competitor_scan.py` at the
+function a future agent would edit, listing all five failed attempts.**
+
+**⚠⚠ AND THE OUTPUT IS DANGEROUS, NOT MERELY USELESS.** *`position_strength` is scored **AGAINST
+the supplied set**.* **An empty set caps at ADEQUATE (3) and says why; a junk set produces a
+confident judgement about rivals that do not exist.** *That is strictly worse than finding none —
+the §4.6 honest-limits rule protects the empty case and is defeated by a plausible-looking wrong one.*
+
+**⚠ WHAT TO DO INSTEAD — NOT YET BUILT, NEEDS A STEER:**
+
+1. **USE THE OWNER'S OWN NAMED RIVALS.** *The form already collects them and they are **reliable** —
+   the live case that exposed this named **"wood mac, afry, baringa, modo"**, all real competitors
+   of a firm in that category.* **⚠ And §3.6 already says the owner's list is "expected to be
+   incomplete" — incomplete and CORRECT beats complete and INVENTED.**
+2. **USE `tier_0_own_stated_position`.** *Reading the submitter's own site now works (§4.6.0a) and
+   is rich — 6,059 chars on that case, naming four customer segments.* **For a category where the
+   tool cannot name rivals, the submitter's own stated position is still real evidence.**
+3. **Only accept a scraped name when a source STATES an occupancy relationship in the same
+   sentence** — *a comparison table, a "competitors" page. `_says_occupant` approximates this and
+   does not achieve it, because its window test also passes navigation text.*
+   **⚠ It would need a structural test (table position, page type), not a keyword window.**
+
+**⚠ UNTIL THEN, THE SCRAPED OCCUPANT LIST MUST NOT BE TRUSTED AS A COMPETITIVE SET.**
+
+**✅ 4.6.0c BUILT (30 Sep): THE OWNER'S NAMED RIVALS NOW TAKE PRECEDENCE.** *Option 1 above is
+implemented, because it needs no new capability — §3.6 already collects the names.*
+
+*`to_competitive_set(result, owner_named=[...])` now puts the **business's own named rivals** in
+the set, and consults the scraped miner **only when the owner named nobody**.*
+
+**⚠ AN INVENTED RIVAL IS WORSE THAN A MISSING ONE, AND THAT IS WHY THE ORDER IS NOT A PREFERENCE.**
+*`position_strength` is scored **AGAINST the supplied set**, and there is already a cap for the
+**incomplete** case (the owner's list is "expected to be incomplete", §3.6) and **no cap for the
+INVENTED case**.* **So the two error directions are not symmetric: an incomplete set caps honestly,
+an invented set produces a confident judgement about rivals that do not exist.**
+
+**⚠ AND IT IS MARKED, NOT LAUNDERED.** *The set carries an explicit line:*
+*"these are the rivals the business named. The scan did NOT independently verify who occupies
+this category (see §4.6.0b) — so treat the set as the owner's view of who they compete with, not
+as a discovered landscape."* **⚠ An owner's list is still SELF-REPORTED, so it is used for NAMING
+only, never as evidence of what a rival CLAIMS.** *Naming who to look at is the owner's expertise;
+characterising them is the tool's job* — *the same subject-vs-object discipline as §4.4.1's
+heritage rule.*
+
+**VERIFIED:** *with the Aurora submission, the set now reads `wood mac / afry / baringa / modo —
+named as a competitor by the business itself` plus the honesty line; with no owner names it falls
+back to the honest empty set rather than scraped junk* (both paths exercised directly).
+
+### 4.6.1 The scan, built (v38) — and what it is NOT
+
+**`competitor_scan.py` runs the protocol-governed pass this section specifies**, producing the
+`derived_competitive_set` a submission would carry in production. **It is a REAL scan: the URLs are
+discovered by search and the text is fetched live, through the same validity gate the rest of the system
+uses.** *Run against a real category it returns a set with named occupants, what each one claims, and how
+each capture fared.*
+
+**⚠ WHAT IT IS NOT, STATED PLAINLY — three limits, because this is the component §4.6 already calls the
+highest-risk seam in the system:**
+
+1. **It is NOT validated against the corpus.** *The corpus's sets were hand-written per category, so there
+   is no record of what a scan *would* have returned for those 120 businesses.* **The scanner has been
+   proved to WORK (it discovers, fetches, extracts and grades), not proved ACCURATE (that its sets match
+   what a human analyst would have written).** *Re-deriving the corpus's sets by scan and re-scoring would
+   be the test, and it has not been run.*
+2. **The validity gate is MANDATORY and this section widens its surface.** *§4.1 measured a **60% silent
+   failure rate** — 6 of 10 mixed URLs returned a Cloudflare challenge or CSS shell as ordinary text, with
+   no error.* **A block page reaching Jev means Jev scores a Cloudflare challenge as a competitor's
+   website.** *The scanner therefore records a per-URL `capture_status` and refuses to present a blocked
+   capture as evidence; blocked URLs land in the honest-limits block.*
+3. **A scan with zero successful captures must NOT read as "you have no competitors."** *It must say the
+   scan failed.* **This is the failure mode that produces a confident, wrong report — the same class as the
+   60% silent failure, one layer up.**
+
+**⚠ AND THE COST, QUANTIFIED BEFORE IT IS SPENT — the §3.11 pre-flight gate exists for exactly this
+reason.** *Sean's condition, verbatim: "It burns a lot of tokens so let's make sure before we run the
+analysis we assess the input quality first."* **A scan is ~N searches + ~N fetches per submission.** *At
+the measured 0.48 s/case for scoring, the scan is orders of magnitude more expensive than the score itself
+— so it must fire ONLY after the input-quality gate passes, and only for submissions worth the spend.*
+
+### 4.6.2 ✅ THE COMPETITOR-SET METHOD — the proven five-pass sweep, and what the free report uses ⚠
+
+**SOURCE.** *Sean, 7 Oct: **"Review caica and sgsaladshop folders. How we found competitors for these projects
+is how we would find it for this tool as well."*** *Both folders are real worked examples:*
+`~/projects/CaiCa/competitive-analysis/` **and** `~/SaladShop/` *(with `output/competitors.json` plus the
+Camoufox/gosom scrapes).* **This section is that method, adopted as the spec's method for deriving the
+competitive set — and therefore for the X in §7.7's X/Y reveal.**
+
+**✅ THE METHOD IS ALREADY A DOCUMENTED SKILL, NOT FOLKLORE.** *`sg-competitor-scan` v1.0.0, author Gladwell,
+at `~/.hermes/profiles/gladwell/skills/research/sg-competitor-scan/`.* **Five passes, each closing a gap the
+previous one measurably missed:**
+
+| pass | what it does | the measured gap it closes |
+|---|---|---|
+| **A — Google Maps grid** | *Geography × term grid* (the SaladShop grid was **20 CBD areas × 9 terms = 180 cells**), scraping every Maps result: name, category, address, rating, review count. **Plus explicit hawker-centre checks**, and delivery/meal-prep brands as a separate adjacent set | *The v1 analysis used a single Maps pass and **missed 8 named players plus multiple hawker stalls*** |
+| **B — review-corpus sweep** | *`ddgs` across the known players + generic "best X Singapore review reddit" terms; extract review blogs via `curl`; **mine the prose for players you have not seen*** | *Maps indexes only **physical, listing-visible** shops.* **Small, delivery-only and shop-within-shop concepts are invisible to it** — *this pass caught **7 more** the grid never indexed* |
+| **C — verified counts** | *`gosom/google-maps-scraper` (Go) → real branch counts, review totals, ratings, per-rating distributions* | *Grid counts are estimates.* **It corrected the leader from ~10 branches to 36**, and another from ~8 to 10 |
+| **D — full review text** | *Anti-detect browser carrying a **signed-in session** clears the bot wall and the "limited view" gate* | *Un-signed-in Maps shows ~5–8 results and **zero** reviews.* **Took the corpus from ~1,100 to 12,523 texts** |
+| **E — saturation test** | *Deterministic classifier run before/after adding marginal data; measure whether conclusions move* | *Decides when to STOP buying volume.* **0/12 ranks moved → the corpus was decision-complete** |
+
+**✅ THE METHOD'S OUTPUT SHAPE — AND IT IS WHAT MAKES X POSSIBLE.** *`output/competitors.json`: a deduped list
+with, per brand, its locations, total reviews, average rating and the areas it was found in — so the set is
+**enumerable**, and each entry traces to a Maps listing or a citable review source.* **The SaladShop run
+yielded 26 unique competitors from Pass A alone**, with per-brand review volume (leader ~1,300; long tail
+under 50). *The corpus is auditable in both directions: a known brand missing from the output means the scan
+was incomplete.*
+
+**⚠⚠ THE FREE REPORT MUST NOT RUN THE FULL SWEEP — AND THE DIFFERENCE **IS** THE PAID BOUNDARY.**
+*The full five-pass sweep is a **consulting-grade** engagement: 180 Maps cells, a gosom scrape, a Camoufox
+full-text pull, a saturation experiment.* **That is the product §3.3 sells, not a free report.** *So the
+free/paid line is not a separate rule bolted on — it falls out of the method:*
+
+| | free report | paid engagement |
+|---|---|---|
+| **Enumeration** | *a **reduced** geography × term grid, enough to produce an honest count* | *the full grid + adjacent categories + hawker checks* |
+| **Verification** | *Pass C on the named rivals, to make Y trustworthy* | *Pass C on the whole set* |
+| **Depth** | *what each rival **claims**, read from its own page (Pass D's readability fix)* | *the full review-text corpus, theme saturation, white-space analysis* |
+| **The number** | *"we identified **X**; here are **Y**"* | *the complete set, analysed* |
+
+**⚠⚠ HOWEVER — SEE §4.6.2a, WHICH NARROWS THE FIRST ROW.** *This table is right about **X** (the count) and
+wrong if read as licence to cut the set behind **`position_strength`**.* **The competitive set is the yardstick
+for PS, not enrichment — so the free tier's reduced grid may honestly reduce the COUNT while PS must still be
+capped-and-labelled when the set cannot state what each occupant claims.** *A free report that projects a proven
+flank off a thin set is the one failure this design cannot afford.*
+
+***⚠ THE RULE FROM §7.7 STILL GOVERNS: withhold the ANALYSIS, never the ACCURACY of what is shown.*** *The
+free report's Y must be **correct as far as it goes** — a reduced grid may undercount X, but it must never
+mispresent what it did show.*
+
+**⚠⚠ WHAT THE EXISTING SCANNER IS, IN THESE TERMS — and why this is a REWIRE, not a rewrite.**
+*`competitor_scan.py` already does the right thing at the **fetch** layer: it discovers candidates by search,
+fetches them live, and grades every capture through the §4.1 validity gate.* **A live run read 11 of 12
+captures and reported the one failure honestly.** *What it lacks is (a) **enumeration breadth** — it issues
+one category query where the method uses a geography × term grid, and (b) **Passes B–E**.*
+**⚠ AND §4.6.0b's `extract_occupants()` name-miner should be RETIRED, NOT FIXED** — *the proven method never
+needs to mine brand names out of articles, because **Pass A enumerates them from the source that indexes
+businesses directly**.* *Four fixes to the miner already failed; the fifth is not the answer, and the method
+does not ask the question.*
+
+**⚠ WHERE THIS IS NOT YET WIRED — stated so it is not discovered late.** *(1) **The free path runs no research
+at all** (`server.py:261`, `do_scan` off by default) — **the method is documented and proven but not connected
+to a submission.** (2) **The reduced free grid is not defined** — how many areas × terms is a product/threshold
+decision (**Sean's**), not a technical one. (3) **The free-path spend ceiling** (blocker 3) interacts with
+this: a grid sweep multiplies search and fetch calls per submission, so the cost model must be settled before
+the grid is switched on.*
+
+**⚠ REPRODUCE:** *`cat ~/.hermes/profiles/gladwell/skills/research/sg-competitor-scan/SKILL.md` (the five
+passes); `python3 -c "import json;d=json.load(open('/Users/seanfzc/SaladShop/output/competitors.json'));print(d['competitor_count'], d['competitors'][0]['name'])"` (X=26); `ls ~/SaladShop/output/` (the gosom + Camoufox corpora).*
+
+**⚠⚠⚠ 4.6.2a THE COMPETITIVE SET IS NOT ENRICHMENT — IT IS THE YARDSTICK, AND THE SPEC CURRENTLY WEAKENS THE
+CORE TO PROTECT THE EDGE (Sean's principle, 7 Oct).**
+
+**SEAN'S RULING, VERBATIM.** ***"The answer is obvious which is why positioning theory even exists, which is to
+do detailed competitive analysis."***
+
+**⚠ THE IMPLIED QUESTION, AND WHY IT MATTERS.** *(Asked of §4.6.2: "how might you determine position strength if
+you use a smaller grid?")* *The instinct was to design a graceful fallback for a thin set.* **That instinct was
+wrong, and the reason is in the rubric's own definition of the dimension:**
+
+> *`position_strength` — "SCORE ONLY AGAINST THE SUPPLIED COMPETITIVE SET… **if the supplied set names no
+> occupant for the situation, the strongest claim available is ADEQUATE (3), never Strong or Dominant, because
+> a flank is only proven against a named rival.**"*
+
+***Position strength is not a property the tool measures about a business. It IS the comparison.*** *"Detailed
+competitive analysis" is not an **input** to the positioning judgment — **it is the positioning judgment.**
+So a thin set does not degrade the richness of a PS score; **it replaces the score with a different, easier
+question.*** **A reduced grid is therefore not a cheaper way to do the same analysis. It is a decision not to
+do the analysis.**
+
+**⚠⚠ AND THE SPEC CONTRADICTS ITSELF ON EXACTLY THIS POINT — §4.5 vs §5.1.** *§4.5 ("Non-load-bearing by
+construction") says: **"the form answers alone must carry all six scores. Enrichment is best-effort behind a
+hard timeout."*** *That rule was written for **genuine enrichment** — Places data, registries, review text —
+where §4.5 is right: a failed fetch should degrade depth, never existence.*
+***But `position_strength` is not enriched by the competitive set. It is `position_strength`.*** **Filed under
+"enrichment," the set inherits a best-effort contract that is correct for its neighbours and wrong for it.**
+*A failed fetch cannot be allowed to lower a score elsewhere; **here a missing rival does not merely lower the
+score — it makes the score meaningless, in the flattering direction.***
+
+**⚠ THE MEASUREMENT THAT SHARPENS IT — and it is the corpus, not a theory.** *In the 120-case corpus,
+**119 of 120 cases carry an analyst-authored `derived_competitive_set`** (a hand-built eight-tier frame that
+**explicitly states what each occupant claims** — e.g. *"BreadTalk owns 'iconic local', Four Leaves
+'everyday', TBB 'artisan'"*).* **The corpus's own ground truth was built the expensive way: by hand, per
+category.** *No corpus case was ever scored against a scan-derived set.* **Which means:**
+- **The close condition (99% within one band, D1) was measured against HAND-BUILT sets.** *It validates the
+  **rubric** — that the instrument reproduces Sean's judgment **given a correct set.***
+- ⚠ **It does NOT validate the PRODUCTION path**, which supplies a **machine-derived** set (§4.6.1, limit 1:
+  *"NOT validated against the corpus… proved to WORK, not proved ACCURATE"*).*
+- ***Both facts must be held at once: the rubric is validated, and the production data path is not.*** **A 99%
+  close condition and an unvalidated set-derivation step are not in tension — they are simply different claims,
+  and the second one is the one a live submission depends on.**
+
+**⚠⚠ WHAT THIS IMPLIES FOR THE FREE/PAID LINE — THE PREVIOUS SECTION'S TABLE IS TOO GENEROUS TO THE FREE SIDE.**
+*§4.6.2 proposed "a reduced grid, enough to produce an honest count" for the free report.* **That is defensible
+for X (the count) and NOT for PS (the score).** *The corrected position:*
+
+| | free report | paid engagement |
+|---|---|---|
+| **The count (X)** | *reduced grid — an undercount is honest if labelled* | *full grid* |
+| **Position strength** | ⚠ **must not be projected from an unverified set.** *If the set cannot name occupants **and state what they claim**, PS is capped at ADEQUATE by the rubric's own rule — and the report must say so rather than imply a measured flank* | *the full sweep, which is what makes a PS above ADEQUATE provable at all* |
+| **What that means commercially** | *the free tier can honestly show the **shape**; it cannot honestly sell a **proven flank*** | *proving the flank IS the product* |
+
+***⚠⚠ THE STRATEGIC CONSEQUENCE, STATED PLAINLY BECAUSE IT INVERTS THE OBVIOUS COST SAVING: "detailed
+competitive analysis" is the product, not an input to it.*** *The temptation is to make the free report
+cheaper by scanning less.* **But scanning less removes the thing that makes the free read worth anything —
+its central dimension — while still costing the whole pipeline.** *A free report that is cheap because it
+measured against a thin set is not a cheap version of the product; **it is a different and weaker product
+aimed at the exact prospect the paid engagement needs to convert.***
+
+**⚠ STILL SEAN'S CALL: how thin the free set may be, and whether the free tier caps PS at ADEQUATE and says
+so.** *The principle is now recorded; the threshold is his.*
+
+**⚠ REPRODUCE:** *`python3 -c "import json;d=json.load(open('/Users/seanfzc/projects/observeco-main/specs/calibration/inputs-v4/BK01-breadtalk.json'));print(d['derived_competitive_set']['tier_3_category_incumbent'])"` (a hand-built set that STATES what each occupant claims — the standard the production path must meet); `sed -n '/### 4.5 /,/^---/p'` vs `sed -n '/### 5.1 /,/^---/p'` for the §4.5/§5.1 contradiction.*
+
+
+---
+
+**✅ 3.7.22 THE FULL CORPUS RE-LOOK — ALL SIX DIMENSIONS, NOT JUST PS AND CR (7 Oct).**
+
+**SEAN'S DIRECTIVE, VERBATIM.** ***"I think you need to relook into the entire corpus instead of PS and CR. I
+much rather we have a full set of capabilities and then maybe for the free version it is a lite version of the
+entire thing."***
+
+**⚠ THE CRITICISM IS FAIR AND IT DESCRIBES MY ACTUAL HABIT.** *The recent work audited `position_strength` and
+`competitive_room` — the two dimensions that were *being changed*.* **That is auditing the parts you are
+already touching.** *A capability review has to be run over all six against the same 120 grades, or it is not a
+capability review.* **Below is the whole instrument.**
+
+**✅ THE FULL PICTURE — every dimension, on the cases where BOTH sides have a number.**
+
+| dimension | you graded | tool scored | **both (n)** | **exact** | **within-1** | **two+ off** | mean you | mean tool | **gap** |
+|---|---|---|---|---|---|---|---|---|---|
+| **position_strength** | 120 | 116 | **116** | 37% | **95%** | 5.2% | 3.05 | 2.93 | **−0.12** |
+| **mental_advantage** | 120 | 120 | **120** | **52%** | 93% | 6.7% | 3.24 | 2.77 | **−0.46** |
+| **defensibility** | 120 | 120 | **120** | **57%** | **96%** | 4.2% | 2.48 | 2.50 | **+0.02** |
+| **competitive_room** | 119 | 120 | **119** | 42% | 93% | **6.7%** | 2.65 | 2.81 | **+0.16** |
+| **market_headroom** | **7** | **6** | **5** | 80% | 100% | 0% | 3.20 | 3.40 | +0.20 |
+| **demand_reach** | 120 | 120 | **120** | 58% | 96% | 4.2% | 3.67 | 3.44 | −0.22 |
+
+**⚠⚠ FINDING 1 — THE INSTRUMENT COMPRESSES YOUR RANGE BY ABOUT A THIRD, AND THIS IS THE HEADLINE.**
+*Pooled over **all 600 (case, dimension) pairs** where both sides have a number:*
+
+> **tool = 0.648 × you + 0.94**  *(r = +0.705)*
+>
+> *A perfect reproduction would have slope **1.0**. This captures **65%** of the range you can see.*
+> ***So ~35% of every score gap you perceive is invisible to the tool.***
+
+*What that looks like, dimension-agnostically:*
+
+| you say | tool averages | error |
+|---|---|---|
+| **1** | 1.59 | **+0.59** *(too generous)* |
+| 2 | 2.24 | +0.24 |
+| 3 | 2.88 | −0.12 |
+| 4 | 3.53 | −0.47 |
+| **5** | 4.18 | **−0.82** *(too harsh)* |
+
+***⚠ THIS IS COMPRESSION, NOT A CEILING — AND THE DISTINCTION CHANGES THE FIX.*** *An earlier reading called this
+"the tool under-scores Sean." It does not. **It under-scores the top AND over-scores the bottom** — everything
+is pulled toward 2.9.* *That single behaviour explains the "ceiling" finding, the "tool is harsher" finding,
+and the under-awarding of 1s **as one defect, not three.*** **A ceiling would need a rubric re-anchor at the
+top; compression is a *measurement-resolution* problem, and re-anchoring the top ladder cannot fix it — which is
+consistent with the top-anchor rewrite having already FAILED (§6.7.x). The failed fix was aimed at the wrong
+shape.**
+
+**⚠⚠ FINDING 2 — `market_headroom` IS EFFECTIVELY INERT, AND IT IS A REAL CAPABILITY GAP.**
+*The tool returns **"not applicable — demand is served, contested"** for **114 of 120** cases; it scored **6**.
+**I first read this as the tool refusing to grade something Sean grades everywhere — that was WRONG, and the
+error is instructive:** *Sean graded market_headroom only **7 times**, and the tool's 6 scored cases are almost
+exactly the same seven (ASML, Boeing, Vicom, PCF, MY, NP02 — the supply-constrained manufacturers).* **Both
+sides are silent on the same 113, so there is no disagreement to fix.**
+
+***The real finding is different and it matters more: market_headroom is a dimension that can essentially never
+fire for the market this product is aimed at.*** *The corpus is retail / F&B / services, where **"demand is
+served" is the honest and almost-always-true answer**.* **The dimension only comes alive in supply-constrained
+categories (semiconductors, aerospace, vehicle inspection).** *So it is not broken — **it is inert for D3's
+weak-positioning SMEs**, and it carries **10% of the composite weight** regardless.* ***That is a capability
+question, not a bug: either the dimension is re-scoped for SME markets, or its weight moves, or its inertness is
+labelled. Sean's call.***
+
+**⚠ FINDING 3 — THE REFUSAL GATE FIRES IN 17 OF 120 (14%), AND THAT IS THE CAPABILITY COST WORKING.** *All 17
+land in `band=GATE` with **no composite** — the `input_sufficiency` refusal, correctly wired (§6.7.4).*
+**They cluster in the home-based / personal-service categories (`NP*`, `HC*`, `HF*`, `HB*`) — which is D3's own
+segment.** *So the refusal is honest, and it is also **the single largest source of "no report" in the target
+market**: about one in seven.*
+
+**⚠ FINDING 4 — TWO INPUTS DO ALMOST NO WORK.** *Across all 120 corpus cases, `website` is populated **18%** of
+the time (21/120) and `competitors_named_count` is a **band** ("3-5"), never a list.* **The instrument's
+richest potential input — the submitter's OWN site — is absent in 4 of 5 submissions, even though §4.6.0a proved
+reading it works (6,059 chars on the case that exposed the gap).** *This is the cheapest capability recovery
+available: **a field that is already on the form, already readable, and almost always empty.***
+
+**⚠⚠ FINDING 5 — THE FREE TIER SHOULD BE A LITE VERSION OF THE WHOLE INSTRUMENT (Sean's framing, adopted).
+⚠ SUPERSEDED IN PART BY §5.10 — Sean's sharper cut (open only the non-onerous dimensions) was **tested and the
+cost split does not survive it**: withholding the scan-needing dimensions renormalises half to two-thirds of the
+free band onto FAME and disagrees with the full reading in 1 case in 4. The cost boundary is kept, but drawn at
+**how much of the sweep is bought**, not at which dimensions. See §5.10.**
+***A reduced grid or a dropped dimension is not a lite version — it is a different instrument.*** *The six
+dimensions are a set: PS is the comparison, MA is recall, DEF is copyability, CR is the price floor, MH is unmet
+demand, DR is reach.* **Dropping one, or measuring one against a thinner yardstick, changes what the band
+means** — and the band is what the whole product communicates.
+**So the lite tier is defined as the SAME six dimensions, each at lower RESOLUTION, with the resolution stated:**
+- **Same dimensions, same rubric, same computation** — the free report is not a different reading.
+- **Lite = fewer rivals verified** (so PS/CR cap and say so) and **less depth in the narrative** (no review-corpus
+  themes, no white-space analysis).
+- **⚠ THE LINE: the free tier may know LESS, but it must never say MORE than it knows.** *That is §7.7's rule
+  restated for a tier boundary, and it is what keeps the free report honest and the paid upgrade desirable
+  rather than necessary-to-be-trusted.*
+
+**⚠ WHAT THIS SECTION DOES NOT DO.** *It does not change the rubric, the weights, or the close condition.*
+**The close condition holds on the terms it was measured (band agreement, 99% within one band).** *These findings
+are about **where the instrument is inert, compressed, or un-fed** — the next round of judgment calls, not
+errors in the current numbers.*
+
+**⚠ REPRODUCE:** *the six-dimension table and the compression regression are computed from
+`runs-1220-control` joined to `sean-regrade-raw.csv` on company name; `market_headroom_qualifier.disposition`
+gives the 114/120 inertness; `gates_firing` gives the 17 refusals.*
+
+
+**⚠⚠⚠ 3.7.23 C1 DIAGNOSED — THE COMPRESSION IS **NOT** A CALIBRATION PROBLEM, AND IT CANNOT BE RESCALED AWAY
+(7 Oct). This corrects the reading in §3.7.22 finding 1.**
+
+**⚠ WHAT WAS WRONG IN §3.7.22.** *That section reported the compression as "a measurement-resolution problem,"
+contrasted with "a ceiling," and implied the distinction told us which fix to apply.* **The distinction was
+right; the implication was not.** *"Resolution" sounds like something a transform or a scale change can repair.*
+**It cannot, and the tests below show that in three independent ways.**
+
+**✅ TEST 1 — IT IS NOT OUR ROUNDING.** *Comparing the model's **raw 0–4** score against the **rounded 1–5**
+display we publish, each regressed on Sean's grade:*
+
+| reading | slope | intercept | r |
+|---|---|---|---|
+| **RAW (0–4, continuous)** | **0.645** | −0.07 | +0.741 |
+| **DISPLAY (1–5, rounded)** | **0.648** | +0.94 | +0.705 |
+
+***Identical.*** *The quantisation step (§6.7.5b's amplifier) is **not** where the range is lost.*
+
+**✅ TEST 2 — AVERAGING OVER PROBABILITIES COSTS ONLY A FIFTH OF IT.** *The model returns a probability per
+level; we publish the **probability-weighted expectation**. Its own **argmax** — the single level it would
+pick if forced — has a higher slope:*
+
+| reading | slope |
+|---|---|
+| **expected value** *(what we publish)* | 0.648 |
+| **argmax** *(its single best answer)* | **0.721** |
+
+*So averaging flattens the signal by about **0.07 of slope**, roughly a fifth of the total shortfall.* **The
+rest is the model's own judgment being genuinely less dispersed than Sean's** — *mean top-probability is
+**0.617**, i.e. the model is reasonably decisive, so it is not hedging its way to the middle.*
+
+**⚠⚠ TEST 3 — THE DECISIVE ONE: A RECALIBRATION FITTED HERE LOSES ON HELD-OUT DATA.**
+*Fit an affine rescaling on a random half of the 599 pairs and test it on the other half — **the honest way**,
+rather than fitting and scoring on the same data:*
+
+| | test-half MAE |
+|---|---|
+| **as-is** | **0.552 levels** |
+| **recalibrated** | **0.616 levels** *(+0.064 — WORSE)* |
+
+***A rescaling makes it worse, not better.*** **And the headroom is real: the within-grade scatter (SD of the
+tool score at a fixed human grade) is 0.601 levels, while as-is MAE is 0.552 — the instrument is already
+performing slightly BETTER than a perfect monotone rescaler could be expected to reach on this data.**
+*There is nothing here for a transform to recover.*
+
+**⚠ AND IT IS NOT AN ARTEFACT OF THE FAMOUS BRANDS OR ONE CATEGORY.** *Dropping the global megabrands barely
+moves it (slope 0.642 → 0.619).* *It varies by category — home-nails 0.80, home-facial 0.74, home-baking 0.50,
+fast-food 0.35 — which is consistent with **a real property of how much dispersion each category admits**, not
+with a systematic bug.* **⚠ `home-not-permitted` returns a slope of −0.16 (n=26) — the one genuinely anomalous
+group, and it is the group D4 already refuses.**
+
+**⚠⚠⚠ THE CONCLUSIONS, IN ORDER OF IMPORTANCE.**
+
+**(1) DO NOT BUILD A RECALIBRATION.** *It is the obvious fix and it fails its own held-out test.* **This is
+recorded as a measured negative result so it cannot be retried later.**
+
+**(2) THE COMPRESSION IS THE MODEL'S DISPERSION, NOT A BUG** — *and the fix is therefore **rubric wording that
+demands more dispersion**, not arithmetic.* *That is a rubric change, and §5.3.1's promotion gate is the only
+correct path for it.*
+
+**(3) ⚠⚠ BUT IT CANNOT BE CALIBRATED YET, BECAUSE THE TARGET IS IN DOUBT — AND THAT IS THE REAL BLOCKER.**
+*§3.7.22 measured this against `sean-regrade-raw.csv`. That corpus carries **35–81% relabel noise**, and Sean's
+own standing instruction is: **"do not converge to my old numbers, because I suspect a lot of them are wrong."***
+***A rubric tuned to demand more dispersion would be fitted to the corpus's errors.*** *The close condition
+(99% within one band) still holds **on the terms it was measured** — but "the instrument is compressed relative
+to Sean" **cannot be closed by any change made today**, because the thing being matched is not trustworthy.*
+
+**⚠ SO THIS IS NOT A DEFECT TO FIX. IT IS A DEPENDENCY, AND IT IS NOW NAMED:**
+| what would close it | who | state |
+|---|---|---|
+| **Re-grade the corpus** *(a fresh, construct-correct PS sheet — §660 item (a)/(b): "his grades predate the position-strength construct and the sheet that asked the old question was invalid")* | **Sean** | **not done** |
+| Then, and only then, re-measure the compression against a trusted target | *engineering* | *blocked on the above* |
+| If dispersion is still short, change the rubric's level wording to demand it | *engineering, via `promote_rubric.py`* | *blocked on the above* |
+
+**⚠ WHAT HAPPENS IF NOTHING IS DONE — stated plainly, because "leave it" is a legitimate answer.** *The band is
+the product's headline, and band agreement is **99% within one band** — so the compression does **not** break
+the product as shipped.* *What it does mean is that **the fine differences an expert can see between two
+similar businesses are not reliably recoverable from the tool**, and the report should not pretend otherwise
+anywhere it ranks or compares.*
+
+**⚠ REPRODUCE:** *raw-vs-display slopes and the argmax comparison from `runs-1220-control`
+(`raw_jev_scores_0to4`, `dimensions_display_1to5`, `probabilities`); the split-half affine test by fitting
+`human ≈ b·tool + a` on a random half (seed 7) and scoring MAE on the other half — **note the regression must be
+run in the direction tool→human, since a forward fit applied backwards is what made the first attempt look
+catastrophic (+0.607); the correct figure is +0.064 and still negative.***
+
+**⚠⚠⚠ 3.7.24 C4 ROOT-CAUSED AND FIXED — THE RIVAL RESOLVER WAS DESTROYING THE OWNER'S OWN INPUT, TWICE
+(8 Oct). C4 was recorded as "2-of-6 rival resolution on F&B" and left as a limit to disclose or buy out
+of. **It was neither. It was two bugs, and both were our own.**
+
+**✅ DEFECT 1 — THE URL BUILDER DELETED THE HYPHEN.** *`_domain_candidates` tokenised `"Each-A-Cup"` to
+`['each','cup']` and joined it as `eachcup`, so the only candidates ever probed were `eachcup.com` and
+`each.*` — **all of which fail.** *The brand's real site is **`each-a-cup.com`, and it serves HTTP 200.***
+**The correct domain was unreachable by construction, and the case then reported `not_found` — the report
+blamed the rival's website for our builder's bug.**
+*⚠ **Second, nested bug:** the fix must build the hyphenated stem from the **raw name**, not the tokens,
+because `[t for t in toks if len(t) > 2]` **drops the `a`** — giving `each-cup`, which is still not the
+domain. The length filter exists to discard junk and it also discards the single letter that is the brand.
+
+**✅ DEFECT 2 — THE NAME TEST ATE THE JUNCTION.** *`_page_names_the_rival` required **exact adjacency**. The
+same length filter removed the `a`, so the pattern became `\beach\s+cup` — **while the page normalises to
+"each a cup", with the filtered token sitting between the two survivors.** *So a correctly-resolved, live,
+200-serving domain was **refused**, and the owner was told "a page could be a different business that shares
+the word" — **which is false.*** *It rendered **a limit of ours as a fact about their page**, the §4.6 failure,
+in a message printed to the business owner.*
+
+**✅ THE FIX, AND ITS MEASURED TRADE** — *one intervening token is now allowed:*
+
+| gap allowed | real rival pages accepted | known strangers accepted |
+|---|---|---|
+| **0 (was)** | **2 of 6** | 1 of 5 |
+| **1 (now)** | **4 of 6** | **1 of 5** |
+| 2 | 4 of 6 | 2 of 5 |
+
+***One intervening token doubles recall with no measured precision lost.*** *Two gains nothing and adds a
+false accept.* **The last-token extension is preserved unchanged** — *`"Wood Mac"` must still match `"Wood
+Mackenzie"`; it failed for a **different** reason and neither tolerance replaces the other.*
+
+**✅ VERIFIED.** *`Each-A-Cup` now reads **200 from `https://each-a-cup.com`** (was `not_found`).* *Old vs new
+across **14 name/page pairs: exactly ONE behavioural difference, and it is the intended one.*** **The
+adversarial page — "research on each and every cup of ocean water" — is still refused.** *No regression on
+Afry, Wood Mac, Chicha San Chen or Gong Cha, and no regression on the four known strangers.*
+
+**⚠ NOT FIXED, AND THIS IS A MEASURED LIMIT RATHER THAN AN OVERSIGHT: SINGLE-TOKEN NAMES** *(LiHO, Mixue,
+SaladStop!).* ***Five rules were written and all five were measured wrong in both directions,*** *and the
+category-overlap threshold has **no separation at all** — correct matches score 0 and 4, wrong ones 0 and 1.*
+**The code reports the limit honestly and states the remedy the owner controls: name the rival as the
+business writes it (`"KOI The"`, `"Modo Energy"`).** *⚠ **Buying confirmation costs one model call**, which
+§5.5's no-second-call constraint forbids without Sean's ruling — so this stays a *decision*, not a task.*
+
+**⚠ BLAST RADIUS.** *`competitor_scan.py` is the resolver §4.6.2's method calls; §6.7.13's single-token
+measurement is unchanged and still accurate; §6.7.16's apostrophe bug is the **same class** (one character
+of the owner's input silently rewritten) and is now recorded as three instances of it, not two.*
+
+**⚠ REPRODUCE:** *`_domain_candidates('Each-A-Cup')` must return `each-a-cup.com` at rank 1;
+`rival_reads(['Each-A-Cup'], category='bubble tea', market='singapore')` must return `capture_status='ok'`;
+and `curl -o /dev/null -w '%{http_code}' https://each-a-cup.com` must return 200.**
+
+
+---
+
+## 4.6.3 THE PS EVIDENCE PROTOCOL — how PS is graded, and how it is graded BY THE TOOL
+
+**⚠ WHY THIS SECTION EXISTS.** *Sean's direction (8 Oct): "establish a comfortable PS grading methodology yourself,
+because you will have to do the work yourself in a steady state condition. Then all I am doing is corroborate your
+results."* **So this is not a calibration aid. It is the production method, and it must be runnable by the tool,
+per submission, with no analyst in the loop.**
+
+### 4.6.3.1 WHAT PS ACTUALLY NEEDS — THE CLAIM-OWNERSHIP MAP
+
+**✅ FIRST, THE FINDING THAT SETS THE SCOPE.** *The scorer already receives `derived_competitive_set`
+(`run_jev.build_state`, lines 79–89).* **But look at what the set contains for BK01-breadtalk:**
+
+> *`tier_3_category_incumbent`: "BreadTalk owns 'iconic local', Four Leaves 'everyday', TBB 'artisan'."*
+
+***That line IS the answer to `position_strength`, pre-computed by a human analyst.*** *PS asks "can this business own
+a claim a named rival does not?" — and the input to the model already states who owns which claim.* **So the corpus's
+PS grades are as good as that map, and the 99% close condition validates the rubric GIVEN the map.** *⚠ §4.6.2a
+already flagged this: the machine-derived set is unmeasured.* **This section is how it gets derived, and the pilot
+below is its first measurement.**
+
+### 4.6.3.2 ⚠⚠ THE PILOT, AND THE ONE ERROR THAT MATTERS — ONE CATEGORY, SIX BRANDS, THREE CLAIMS
+
+*Method: resolve each named incumbent to its own domain, read it, extract claim-shaped sentences, compare against
+the analyst's `tier_3` labels.* **⚠ SAMPLE: one category (bakery), six brands, three checked claims. This is a
+PILOT, not a measurement of the corpus — it establishes that the method works and that the map is checkable.**
+
+| brand | analyst's `tier_3` label | what the brand's OWN page states | verdict |
+|---|---|---|---|
+| **BreadTalk** | *"iconic local"* | *"a distinctive, **award-winning Singaporean brand**… its signature Flosss"*; *"Flosss is an **iconic** product"*; *"**renowned** for the way it has revolutionised the culture of bread consumption"* | **✅ CONFIRMED**, verbatim |
+| **Tiong Bahru Bakery** | *"artisan"* | *"we set out to make simple things exceptionally well"*; *"our **obsession with craft**"*; *"our love of culture"* | **✅ SUPPORTED** *("craft")* |
+| **Four Leaves** | *"everyday"* | *"one of the **leading** companies in the bakery industry"*; *"a **trustworthy** bakery manufacturer"*; *"quality at all stages"*; *"our Central Factory"* | **❌ NOT SUPPORTED — and probably mis-assigned** |
+
+**⚠⚠⚠ "EVERYDAY" BELONGS TO PARIS BAGUETTE, AND THE PAGE SAYS SO VERBATIM.**
+*Paris Baguette's own site runs the campaign line **"#GoodBreadEveryday"** and states **"simple, honest breads made
+for the rhythm of everyday life."** Tiong Bahru Bakery also uses it: **"the everyday rituals that bring people
+together."*** **Four Leaves — the brand the map assigns "everyday" to — claims the opposite register: it presents
+itself as a leading industrial quality manufacturer with a Central Factory.** **Three brands; the label sits on the
+wrong one.** *So the corpus's PS evidence contains at least one mis-assigned claim, and PS is scored against it.*
+
+**⚠ AND THE CLAIM/MIND DISTINCTION IS REAL AND MUST NOT BE COLLAPSED.** *Four Leaves may well hold "everyday" **in
+the customer's mind** — that is a market fact — while its **published claim** is leadership.* **PS is scored against
+what rivals PUBLISH (§4.6.2a: "a flank is only proven against a named rival"), so the published claim is the right
+object.** *But a method that silently substitutes one for the other would be wrong in a way nobody could see.*
+
+### 4.6.3.3 ⚠⚠ THE METHODOLOGICAL RULE THE PILOT PROVED — READ THE ABOUT PAGE, NOT THE HOMEPAGE
+
+***The single most important operating rule, and it is a trap that nearly produced a false finding.***
+*Reading only homepages, the extraction returned **"no claim-shaped sentence"** for **both Four Leaves and Tiong
+Bahru Bakery** — i.e. it would have recorded two real rivals as stating no claim.* **But their About pages carry
+their claims.** *A modern retailer's homepage is a **shop** — promo tiles, cart strings ("Your go-to favourites are
+saved for easy reordering"), seasonal SKUs. The **About / Our Story page is the manifesto**, and that is where a
+positioning claim lives.*
+
+**⚠ SO AN EMPTY HOMEPAGE READ IS NOT "NO CLAIM" — IT IS A WRONG-SURFACE READ.** *The protocol must therefore walk a
+**surface ladder per rival**, and only report "no stated claim" after the whole ladder is exhausted:*
+| # | surface | why |
+|---|---|---|
+| 1 | **`/about`, `/about-us`, `/our-story`, `/pages/about-us`** | *the manifesto — **try this FIRST for claim extraction*** |
+| 2 | homepage | *brand line, campaign slogan* |
+| 3 | press / PR page | *the claim that was **announced** (PR precedes advertising — positioning-strategy) |
+| 4 | **review corpus (Pass B/D)** | *how third parties characterise it — the **mind** check, which is a DIFFERENT object from the claim* |
+
+**⚠ AND THE HONEST FAILURE MODES, both of which occurred in the pilot:**
+- **Duke Bakery returned 0 characters.** *That is a **blocked** read, not an absent claim.* §4.6.2's rule applies: it
+  must escalate to the browser tier and, failing that, be reported as **"could not be read"** — never as "states no
+  claim". *A tool failure must never render as a finding about the rival.*
+- **BreadTalk's claim was on the homepage**, so the ladder must not stop at the About page either. **The ladder is
+  walked to completion, and the FIRST surface yielding a claim does not terminate the pass — the later surfaces
+  can contradict it.**
+
+**⚠ THE CLAIM GATE STILL APPLIES** *(web-search-scraping-protocol: unescape entities; reject menu / order / cart /
+cookie vocabulary; reject price lists; require a length window and ≥1 **verb stem**, not a whole word — the
+`focus` failure).* *The pilot's raw output confirms the need: Polar Puffs' claim-shaped hits were a **delivery
+price line** and **customer testimonials**, and Paris Baguette's were an **emoji-laden promo tile** — all three would
+have been rendered as "what they say about themselves".*
+
+### 4.6.3.4 THE PIPELINE — WHAT I WILL ACTUALLY RUN
+
+> **⚠⚠ SUPERSEDED IN PART — READ 4.6.3.7 FIRST. THIS SECTION'S STEP 3 IS NOW KNOWN TO BE WRONG.**
+> *Step 3 below prescribes a **bounded category sweep** (Pass A reduced + Pass B) as the discovery
+> mechanism. **§4.6.3.8 measured that a category web search does not return competitors at all** —
+> twelve captures, every one a market-research report, not one a bakery. **The mechanism that works is
+> a BRAND-ORIENTED query, and discovery now runs on it** (§4.6.3.7–4.6.3.11). *Everything else in this
+> section still holds:* the **per-category caching rationale** (step 3), the **determinism constraint**
+> and the **§5.5 no-second-model-call rule** at the foot, and — importantly — **step 6's rule that a
+> thin set caps PS at ADEQUATE (3) and says so**, which 4.6.3.7 does not restate. **A reader
+> implementing from this section alone would build discovery that provably does not work.**
+
+1. **Situation.** *From the form: the buyer and the occasion. Deterministic.*
+2. **Subject's claim.** *Resolve the subject's own domain (`_domain_candidates`, **now hyphen-safe**), walk the
+   surface ladder, extract its claim through the gate.*
+3. **The set.** *Owner-named rivals (treated as the owner's perception, expected to be incomplete) + a **bounded
+   category sweep** (Pass A reduced + Pass B) + new entrants. **⚠ Per CATEGORY, once, cached, reused by every case
+   in that category** — this is what makes it affordable: the §4.6.2 full sweep is 180 cells for the whole
+   category, not per submission.*
+4. **The rivals' claims.** *Surface ladder per rival, claim gate, **domain + verbatim quote recorded for every
+   entry**.*
+5. **The claim-ownership map.** *Which named occupant owns which claim — the automated form of the analyst's
+   `tier_3` line.*
+6. **Score PS** *against **that** map, by the §4.6.2a rule: a claim a named rival already owns cannot be owned; a
+   thin set caps at ADEQUATE (3) and says so.*
+7. **Audit.** *Every read recorded with domain and status, so every refusal is a **stated limit** and not a
+   silent absence.*
+
+**⚠ DETERMINISM.** *The evidence is fetched and **cached per category**; the scoring stays bound to the rubric
+rule.* *Same category → same set → same map.* **⚠ AND THE CONSTRAINT THAT DOES NOT MOVE: §5.5 forbids a second model
+call for the REPORT.** *Deriving the map is **evidence assembly feeding the single scoring call**, not an extra
+call — the map is data, like the form.*
+
+### 4.6.3.5 D1–D4, DECIDED BY THE TOOL NOT THE USER (Sean's instruction, 8 Oct)
+
+*Sean: "I want you to answer D1 to D4 yourself."* **The reasoning is recorded because the answers are contestable.**
+
+| | decision | answer and why |
+|---|---|---|
+| **D1** | **How many cases?** | **All 120 — staged.** *The join to Sean's existing grades is the entire point: it yields C1's trusted target AND a measure of my agreement with him, for free.* **Stage 1 = one category, method frozen; Stage 2 = scale.** *Grading a subset saves little because the expensive part (the category sweep) is shared.* |
+| **D2** | **Fresh cases or the existing 120?** | **The existing 120.** *A fresh sample **breaks the join**, doubles the work, and loses the comparison that gives C1 its target.* |
+| **D3** | **Blind?** | **Yes — and it now means something stricter than it did for Sean.** *If I see the tool's PS score, or the analyst's `tier_3` map, I am **reproducing the answer rather than producing an independent target**.* **⚠ CONTAMINATION DISCLOSURE: I have already read BK01-breadtalk's `tier_3` map (§4.6.3.2), so BK01 is COMPROMISED as evidence and must be excluded from the blind set — or re-derived by someone who has not seen it.** *The pilot's other five brands remain clean.* |
+| **D4** | **The competitive set?** | **I derive it; I do not read the analyst's.** *⚠ And the comparison between my derived map and the analyst's is **itself the first measurement of set-derivation quality** — the exact thing §4.6.2a left unmeasured.* **This is why D4 is the highest-value of the four.** |
+
+**⚠ WHAT THIS DOES TO C1 AND C3.** *Both were blocked on a trusted target. **Grading PS by this method produces
+that target** — but only for PS. *C1's compression spans all six dimensions, so a PS-only pass closes C3 and
+**informs** C1 without fully closing it.* **The honest statement: this unblocks C3, and it gives C1 its first
+trustworthy dimension.**
+
+**⚠ REPRODUCE:** *fetch `https://www.fourleaves.com.sg/about-us` and `https://tiongbahrubakery.com/pages/our-story`
+— both return 200 and carry claims the **homepages do not**; fetch `https://parisbaguette.com.sg` for the verbatim
+"#GoodBreadEveryday"; the analyst labels are `derived_competitive_set.tier_3_category_incumbent` in
+`inputs-v4/BK01-breadtalk.json`; the prompt-side wiring is `run_jev.py:79–89`.*
+
+### 4.6.3.6 THE TOOL IS BUILT AND RUN — `ps_evidence.py`, AND THE THREE DEFECTS ITS FIRST RUN FOUND IN IT
+
+*`specs/calibration/ps_evidence.py` implements §4.6.3.4: a surface ladder per rival, the claim gate, candidate-domain
+fall-through, and a three-way outcome that never invents.*
+
+| run | claims recovered (bakery, 6 rivals) |
+|---|---|
+| **first working draft** | **2 of 6** |
+| **after the three fixes** | **5 of 6** |
+
+**⚠⚠ THE FIRST RUN FAILED ON THREE OF ITS OWN DEFECTS, ALL OF WHICH MADE A REAL RIVAL LOOK LIKE IT STATES NOTHING.**
+*Recorded because two of them are the same mistake the resolver already made once (§3.7.24) — **committing to a single
+guess** — and it recurred in new code within the hour.*
+
+1. **Only the FIRST candidate domain was tried.** *`_domain_candidates("Four Leaves")` returns `fourleaves.com`
+   first; the real site is `fourleaves.com.sg`. The whole ladder was walked on the wrong domain, so the rival came
+   back `could_not_read` — **while a hand read of `fourleaves.com.sg/about-us` returned 200 and carried its claim.**
+   Fixed by falling through the candidate domains.*
+2. **The surface cap truncated the ladder before the surface that mattered.** *`max_surfaces=4` stopped at
+   `[about-us, about, our-story, homepage]`; **Tiong Bahru Bakery's claim is on `/pages/our-story`**, which was never
+   reached, so it was reported `read_no_claim` — again contradicting a successful hand read.*
+3. **The homepage sat at the end of the ladder.** *BreadTalk's claim is on its **homepage**, not its About page, so a
+   truncating cap made it look like it states nothing.*
+
+**✅ AND THE SAFETY PROPERTY HELD THROUGHOUT, WHICH IS THE ONE THAT MATTERS: THE TOOL NEVER INVENTED A CLAIM.**
+*A wrong-surface read returns `read_no_claim`; a failed read returns `could_not_read`.* ***Neither is ever a fabricated
+finding about a rival.*** *The gate also visibly worked: Polar Puffs' raw claim-shaped hits were a **delivery price
+line** and **customer testimonials**, and Paris Baguette's were an **emoji-laden promo tile** — all three rejected.*
+
+**✅ FINAL RUN — 5 of 6, each with its domain and a verbatim quote:**
+| rival | surface that yielded it | derived claim (opening) |
+|---|---|---|
+| **BreadTalk** | **homepage** | *"over 700 outlets in 14 international markets… culinary magic"* |
+| **Four Leaves** | **/about-us** | *"we started our first outlet at Nutmeg Road… our Central Factory"* |
+| **Paris Baguette** | **/about** | *"our bakers, cakers and baristas go further every day to perfect their own craft"* |
+| **Tiong Bahru Bakery** | **/pages/our-story** | *"We first opened our doors in 2012 at 56 Eng Hoon Street"* |
+| **Duke Bakery** | **/about-us on `dukebakery.sg`** | *"Combining Japanese and European baking techniques, we craft soft, healthy breads"* |
+| **Polar Puffs & Cakes** | — | **⚠ `could_not_read`.** *Its real domain is `polarpuffs-cakes.com` — hyphenated at ONE internal boundary only, a form no simple rule generates. **Reported as a stated limit, correctly, not as an absence.*** |
+
+**⚠ SO THE METHOD IS RUNNABLE AND THE MAP IS DERIVABLE.** *5 of 6 rivals yielded a claim with provenance in ~70s of
+wall clock, and the single failure is flagged rather than hidden.* **⚠ BUT §4.6.3.2's FINDING STANDS AND IS NOT
+SOFTENED BY THIS: the derived claims do NOT match the analyst's `tier_3` labels.** *Four Leaves derives as
+"leading / Central Factory", **not** "everyday"; **Paris Baguette's own copy carries "everyday".** ***Deriving the map
+does not confirm the map the corpus was scored against — it contradicts it on at least one incumbent.***
+
+**⚠ REPRODUCE:** *from `specs/calibration/`: `python3 ps_evidence.py "BreadTalk" "Four Leaves" "Paris Baguette"
+"Tiong Bahru Bakery" "Polar Puffs & Cakes" "Duke Bakery"`.*
+
+
+---
+
 ### 4.6.3.7 ★★ THE CLAIM MAP, LOCKED IN — and HOW IT COMPARES WITH THE RANGE OF COMPETITORS
 
 **(Sean's instruction, 17 Oct: *"lock in the claim map, but the process must include how it compares
@@ -2791,6 +3678,601 @@ the remaining number-drift risk, and it is in the budget, not in discovery.**
 
 **⚠ Still open: a cold market is slow.** *`warm_market` is unbounded by design; wiring it to a cron
 entry is the remaining step, and the cache makes every market a one-time cost per 30 days.*
+
+## 4.6.4 THE CLAIM/MIND PROTOCOL — VERIFYING WHAT CUSTOMERS THINK, NOT JUST WHAT THE BRAND SAYS
+
+**⚠ SEAN'S DIRECTION (8 Oct):** ***"To achieve the claim/mind distinction, it is important to independently verify what their
+customers think. To do so you need as part of the process to get customers reviews assessed. B2C can be derived from Google
+reviews just like what we did for bubble tea with caica and sgsaladshop. Run similar processes. B2B is different, and you need to
+figure a way to get b2b customers feedback somehow. If there is a difference in claim/mind, we have a problem with there worth
+flagging. For new companies that do not have a mind distinction yet, then their claim has to be evaluated against their
+competitors' claim."***
+
+**⚠ WHY THIS COMPLETES §4.6.3.** *§4.6.3 derives what a brand **PUBLISHES**.* **That is only half the object.** *A brand can
+publish "artisan" while its customers experience "cheap and convenient" — and per positioning theory that is not a positioning
+at all, it is **unfulfilled copy**.* **The law that governs it: judge *sets-the-reference* vs *follows-it*, never popularity**
+*(positioning-strategy).* *A brand following its category's language holds no position however loudly it says it.*
+
+### 4.6.4.1 ⚠ THE THREE-WAY RULE — SEAN'S, AND IT DECIDES THE WHOLE PIPELINE
+
+```
+STEP 1.  Is there INDEPENDENT CUSTOMER EVIDENCE for this business?
+         B2C -> Google reviews (proven path), plus any category review site
+         B2B -> G2 / Capterra / Clutch / tender records / corroborated client list
+
+  NO  ->  NEW OR UNOBSERVED: no mind yet.
+          ***Evaluate the CLAIM against COMPETITORS' CLAIMS only*** (§4.6.3's map).
+          ⚠ Report the limit explicitly: "no independent customer evidence found, so the
+            claim could not be tested against what customers actually think."
+            A limit is stated, never smoothed over -- and never reported as an absence of customers.
+
+  YES ->  Compare the customers' OWN WORDS against the brand's published claim.
+          AGREE     -> the position is real and supported.
+          DISAGREE  -> ⚠⚠ FLAG IT: the brand claims X; its customers describe Y.
+```
+
+**⚠ THE FLAG IS THE PRODUCT.** **A claim/mind divergence is a finding worth raising on its own** — *it is the difference
+between "we say we are artisan" and "our customers say we are the cheap option", and the second is the truth the owner is
+paying to hear.* **It must render in plain English, as a consequence, not as a metric.**
+
+### 4.6.4.2 B2C — THE PROVEN PATH, AND ITS EXACT BLOCKER *MEASURED TODAY*
+
+**The machinery exists and is validated** *(web-search-scraping-protocol; `client-competitive-analysis/scripts/gmaps_reviews_scraper.py`,
+"VALIDATED 2026-09-11 … 69–140 verbatim reviews per place")*. **The SaladShop 12,523-text corpus on disk is the same path.**
+
+**⚠⚠⚠ AND IT IS BLOCKED RIGHT NOW ON ONE THING: THE GOOGLE SESSION IS STALE.** *A probe was run today against two bakery
+brands (`probe_b2c_reviews.py`, then `diag_b2c_mind.py`).* **Result, and it is unambiguous:**
+
+| reading | value |
+|---|---|
+| place cards found | **11** *(enumeration works)* |
+| **signed-out limited-view banner** | **True — ON BOTH BRANDS** |
+| review-tab button present | **False** |
+| **review cards captured** | **0** |
+
+***The profile was seeded from the Firefox login on 25 Aug; the Google session has since expired, so Maps serves the
+signed-out "limited view" that carries NO review feed.*** **This is a stated limit with a named cause, not an absence of
+reviews** — *and the distinction is the whole point of §4.6.2's rule.*
+
+**⚠ THE REMEDY IS SEAN'S, AND IT IS SMALL:** *re-login to Google in **Firefox**, quit Firefox (which flushes cookies to
+disk), and the profile can be re-seeded with `cookies.sqlite` + `key4.db` + `cert9.db` only.* **⚠ Copy ONLY those three —
+`compatibility.ini` is an FF-version lock that makes Camoufox refuse to open the profile (validated bug, 2026-09-15).**
+
+**⚠ AND TWO DEFECTS THE PROBE FOUND IN MY OWN CODE, BOTH FIXED:**
+1. **`links[0]` was taken blindly.** *For "Tiong Bahru Bakery Singapore" the **first** place card is **`Kopi & Tarts @ City
+   Square Mall`** — a different business — and for BreadTalk it is the same. The probe scraped the wrong business and would
+   have reported its reviews as the brand's.* ***Same "commit to the first guess" class as §3.7.24 and §4.6.3.6.*** **Fixed by
+   matching the card's name against the brand** *(verified: now picks `BreadTalk` at index 1 and `Tiong Bahru Bakery` at index 2).*
+2. **A zero was reported without a reason.** *"0 reviews" is exactly the silent failure §4.6.2 forbids.* **The diagnostic now
+   pairs every count with a verdict** — *`SESSION STALE` vs `FLOW DEFECT`* — *which is how the stale login was identified
+   rather than guessed at.*
+
+### 4.6.4.3 B2B — THE PART THAT HAD TO BE DESIGNED, AND THE LADDER
+
+***B2C review sites index PLACES. B2B review sites index VENDORS. So the source depends on how the thing is bought — and
+there is no single equivalent of Google Maps.*** *The ladder, most-corroborated first:*
+
+| # | where B2B customers actually speak | covers | ⚠ caveat |
+|---|---|---|---|
+| **1** | **G2, Capterra, TrustRadius, Gartner Peer Insights, Product Hunt** | *software / SaaS* | *Cloudflare-walled — needs the protocol's Camoufox tier; many SMEs absent entirely* |
+| **2** | **Clutch, GoodFirms, DesignRush** | *agencies, professional services* | *verified-client reviews; thin for small firms* |
+| **3** | **Marketplace reviews** — AppExchange, AWS Marketplace, Shopify App Store | *marketplace-sold* | ***strongest of all**: tied to a real purchase* |
+| **4** | **Tender / procurement award records** *(GeBIZ in SG)* | *government, regulated suppliers* | ***not opinion — a recorded buyer DECISION.*** *A repeat winner has a demonstrated mind position* |
+| **5** | **Analyst peer-review sections + Magic Quadrant / Forrester Wave** | *enterprise* | *professional-buyer consensus, not verbatim voice* |
+| **6** | **⚠ THIRD-PARTY CORROBORATION OF THE CLIENT LIST** | *everything else* | *see below — the substitution that makes B2B tractable* |
+| **7** | LinkedIn recommendations, case studies, Reddit/HN threads | *anything* | *⚠ WEAKEST: self-selected or anecdotal. Never the sole basis* |
+
+**⚠⚠ #6 IS THE ONE THAT MAKES B2B WORK, AND IT IS A GENUINE SUBSTITUTION RATHER THAN A COMPROMISE.**
+*A B2B firm's own case-study page is **self-published — that is claim, not mind**, and it must never be counted as customer
+evidence.* **But it becomes evidence when the named customer's OWN site names the vendor back.** ***The client's own site is a
+third party saying "we chose them" — which is precisely the sentence the mind test needs.*** **So the rule: a client logo
+counts as mind evidence ONLY when the client's own domain independently mentions the vendor.** *Everything else stays claim.*
+
+**⚠ AND THE HONEST FLOOR, WHICH WILL BE THE COMMON CASE:** *most B2B SMEs — and certainly the home-based and personal-service
+businesses in D3's segment — will have **no reviews, no analyst coverage and no corroborated client list**.* ***For them the
+answer is STEP-1-NO: no mind exists to test, and the claim is assessed against competitors' claims alone, with the limit
+stated.*** **⚠ Do NOT manufacture a mind from testimonials.** *A self-selected quote is the same failure as an invented claim.*
+
+### 4.6.4.4 ⚠ HOW "AGREE" AND "DISAGREE" ARE ACTUALLY DECIDED — NOT BY IMPRESSION
+
+**Two tests, in order. The second is the one that matters.**
+
+**Test 1 — vocabulary overlap.** *Do the reviewers' distinctive terms for the brand match the claim's distinctive terms?*
+*Cheap, mechanical, and necessary but **not sufficient**.*
+
+**⚠ TEST 2 — ATTRIBUTION: DO THE CUSTOMERS CREDIT *THIS BRAND* WITH THE CLAIM, OR TREAT IT AS TRUE OF THE WHOLE CATEGORY?**
+***This is the sets-the-reference test, and it is the discriminator.*** *If reviewers say "their bread is fresh" alongside "all
+these bakeries are fresh", the claim is a **category convention** and the brand owns nothing — **even though the words
+match.*** *The claim is real only when reviewers attribute it to this brand **against** the alternatives.*
+**⚠ Operationalised:** *does a review name the rival as the comparison?* ***"I go here instead of X because…" is the sentence
+that proves a position exists.*** *A review with no competitor in it is category talk, and category talk corroborates nobody.*
+
+**⚠ AND THE FAILURE DIRECTIONS TO STATE, BOTH REAL:** *too few reviews to test at all* (report the count and refuse the
+verdict), and *reviews that are about the visit rather than the brand* **— a bakery's reviews are mostly about whether the
+bun was warm.** *A corpus of service impressions cannot settle a positioning question, and must say so rather than being
+pressed into service.*
+
+**⚠ REPRODUCE:** *`/tmp/mind_diag.json` holds the per-brand diagnosis (`limited_view: true`, `cards: 0`); the scraper is
+`client-competitive-analysis/scripts/gmaps_reviews_scraper.py`; the diagnostic is
+`profiles/accelerator/cache/scratch/diag_b2c_mind.py`; re-seed by re-logging into Google in Firefox and copying
+`cookies.sqlite` + `key4.db` + `cert9.db` into the Camoufox profile.*
+
+### 4.6.4.5 ⚠⚠ THE MIND CAPTURE NOW RUNS END-TO-END — AND ITS FIRST HONEST RESULT IS *INCONCLUSIVE*, NOT A FLAG
+
+**✅ SEAN RE-LOGGED INTO GOOGLE IN FIREFOX AND THE WHOLE CHAIN NOW WORKS.** *Three bakery brands captured
+(50/30/30 verbatim reviews). Four defects were found and fixed to get there — **three in the pipeline, one in my own
+metric** — and the result is more useful than a clean pass would have been.*
+
+| # | defect | evidence it was real |
+|---|---|---|
+| **1** | **The cookie seed omitted the WAL.** *`cookies.sqlite-wal` was **557KB** and 26 seconds old when the login was fresh — the new session was in the WAL, not yet checkpointed. The project scraper's `SEED_FILES` copies only `cookies.sqlite`.* | *Before: **`limited_view: True`, 0 cards**. After seeding **`cookies.sqlite` + `-wal` + `-shm`**: `limited_view: False`* |
+| **2** | **The place ID was thrown away.** *`href.split("data=")[0]` is the scraper's **DEDUPE KEY**, and I used it as the destination — which strips the `data=!4m…!3m…` that identifies the place, so the page loaded as a shell.* | *Before: **review tab absent, 0 cards**. Navigating the FULL href: **tab=True, 100 cards**.* |
+| **3** | **The review TEXT was taken from the whole card.** *`inner_text()` on the card container returned **Google's UI chrome and the owner's replies**: the top "words" across 100 BreadTalk reviews came back as `share/photos/reviews/guide/owner/response`.* | *Sampling `.wiI7pd` (the review body) instead: the text becomes real customer voice — "the old aunty on duty… is very rude".* |
+| **4** | **⚠ MY OWN METRIC SELF-MATCHED.** *My rival detector reported **9 rival mentions for Tiong Bahru Bakery** — and **all nine were the brand naming ITSELF**, because `"tiong bahru"` is a substring of `"Tiong Bahru Bakery"` and my exclusion tested `r != b.lower()` against the full name.* | *Reading the flagged reviews: **not one of them names an alternative.** After the fix: **zero rival comparisons.*** |
+| | | ***⚠ Defect 4 is `"independence means who is SPEAKING"` and `"a subdomain split quietly doubles a single voice"` — the protocol's own documented failure, and I reproduced it as a substring match.*** |
+
+**⚠⚠⚠ THE RESULT — AND IT IS NOT THE ONE SEAN'S RULE ANTICIPATED. THE CORPUS CANNOT SETTLE THE QUESTION.**
+
+| brand | n | language of the reviews | rival named *(after fixing self-match)* | claim language present |
+|---|---|---|---|---|
+| **BreadTalk** | 50 | **service-dominated** *(staff 15, service 12, **rude 10**, cashier 7)* | **0** | **none** |
+| **Paris Baguette** | 30 | **service-dominated** *(32 service vs 15 product)* | **0** | **none** |
+| **Tiong Bahru Bakery** | 30 | **product/experience** *(croissant, seating, air-con, prices)* | **0** | **none** |
+
+***No review of any of the three brands compares it against a named alternative, and none uses the brand's own positioning
+language.*** **By §4.6.4.4's Test 2 — "a review with no competitor in it is category talk, and category talk corroborates
+nobody" — this corpus corroborates nobody.**
+
+**⚠ SO THE HONEST VERDICT IS `INCONCLUSIVE`, NOT "CLAIM/MIND DIVERGENCE FLAGGED".** *The reason is the one §4.6.4.4
+predicted before the data existed: **"a bakery's reviews are mostly about whether the bun was warm… such a corpus cannot
+settle a positioning question, and must say so rather than being pressed into service."*** *That is exactly what these are —
+service and product impressions.* **⚠ Reporting these as "the market disagrees with your positioning" would be the
+confident-garbage failure this whole protocol exists to prevent.**
+
+**⚠⚠ AND THE PRECONDITION SEAN'S RULE NEEDS, NOW MEASURED: BEFORE TESTING CLAIM AGAINST MIND, CHECK THE CORPUS IS ABOUT THE
+BRAND AND NOT ABOUT THE VISIT.** *A corpus dominated by service/product impressions **cannot** return a divergence finding,
+however large it grows.* **So the mind test needs a gate on corpus TYPE, and baked-goods retail fails it.** *⚠ This does not
+weaken the rule — it says where the rule can be applied.*
+
+**⚠ ONE GENUINE SIGNAL, AND IT POINTS AT THE EARLIER FINDING.** *A TBB reviewer writes **"Tiong Bahru Bakery has been an
+iconic café in the area"**.* **⚠ "Iconic" is BreadTalk's analyst-assigned claim, not TBB's** — *whose analyst label is
+"artisan".* **So the claim vocabulary does surface in the mind, but attached to the wrong brand** — *consistent with
+§4.6.3.2, where the `tier_3` labels were measured to sit on the wrong brands.*
+
+**⚠⚠ THREE LIMITS ON THIS RESULT, ALL OF WHICH BOUND IT HARD.**
+1. **n is 30–50 reviews per brand.** *That is thin for a positioning claim and thinner after the corpus turns out to be
+   service impressions.* **It is enough to establish the corpus TYPE, not to measure a mind.**
+2. **Keyword counting is a weak test.** *"craft" not appearing as a word does not mean customers do not experience craft —
+   they may write "the croissant is way better than X".* ***So "claim language: none" is a weak-evidence result and must NOT
+   be read as "the claim is unperceived".***
+3. **Bakery is one category, and it is the least likely to bear a positioning corpus at all.** *⚠ The method is not
+   discredited by this — **the category was badly chosen for a first test, and that is now measured rather than assumed.***
+
+**⚠ REPRODUCE:** *`capture_b2c_mind.py <brand…>` (writes `/tmp/mind_capture.json`); the run needed
+`cookies.sqlite` + `-wal` + `-shm` + `key4.db` + `cert9.db` seeded from the Firefox login **while Firefox was running**;
+full place hrefs are in the enumeration, never the `data=`-stripped form; review bodies come from `.wiI7pd`.*
+
+### 4.6.4.6 ⚠⚠⚠ SECOND CORPUS, SAME VERDICT — AND NOW THE CAUSE IS ESTABLISHED. GOOGLE MAPS REVIEWS ARE THE WRONG INSTRUMENT FOR POSITIONING
+
+*Sean's instruction was to run the same process on the category he named — the CaiCa / SaladShop corpora.*
+**The SaladShop corpus was already on disk: 142 entries, 28 chains, 12,523 verbatim reviews.** *The result is a
+measured negative, and a structural one.*
+
+**⚠⚠ THE FINDING: THE UNIT OF A GOOGLE MAPS REVIEW IS THE OUTLET, NOT THE BRAND.**
+***142 entries resolve to 28 chains*** — *"Stuff'D" alone appears as 30+ separate places, each with ~200 reviews.*
+**A Google Maps review is attached to a PLACE — the branch the customer walked into.** *Positioning is a
+**brand-level** property.* **So a mind built from Maps reviews is a mind about *that outlet*, and no amount of volume
+turns outlet experience into brand position.** *This is why no positioning signal appeared in either corpus, and it is
+a property of the instrument, not of the categories tested.*
+
+**⚠ AND THE CORPUS IS ABOUT THE VISIT, IN BOTH CATEGORIES, MEASURED.**
+*Per 200-review sample of the salad corpus: **Stuff'D carries ~113–146 service-impression mentions** (staff, rude,
+queue, cashier) against 33–100 product mentions.* **The bakery corpus measured the same thing (§4.6.4.5).** *Two
+categories, 12,633 reviews, one conclusion: **food-retail reviews describe the visit.***
+
+**⚠⚠ AND THE ATTRIBUTION TEST NEEDS A CORRECTION I FOUND IN MY OWN ANALYSIS — TWICE.**
+*Measuring cross-brand comparison required identifying when a review names a rival, and **three successive versions
+were wrong**:*
+1. **Substring matching self-matched.** *9 "rival mentions" for Tiong Bahru Bakery were the brand inside its own name
+   (§4.6.4.5).*
+2. **Word-boundary matching on raw brand names matched English words.** *`crunch` inside "lacks crunch",
+   `corner` inside "bottom left corner", `grains` inside "grain bowl".* ***The protocol's own rule — "navigation
+   labels and currency codes appear on every site in every category, so they are the MOST-corroborated strings" —
+   applies to BRAND NAMES made of common words.***
+3. **A frequency filter (drop keys in >3% of ALL reviews) removed `daily`, `salad`, `stuff`, `super` — and still left
+   the decisive case: `Salad Shop`, a brand **literally named after the generic phrase**, collected **168 of the 449
+   hits**. Every one is a false positive.*
+
+**⚠ SO THE CLEANED NUMBER IS NOT DEFENSIBLE EITHER.** *3.59% cross-brand mentions became, on inspection, a fraction of
+that — and the residue is quality-and-value comparison ("generous with the dressing"), **not positioning-claim
+comparison.*** **⚠ An automated "who owns which claim" test cannot be built on this corpus, and I stopped refining
+because each fix exposed the next class of junk — the protocol's stated signal that the MECHANISM is wrong.**
+
+**⚠⚠ WHAT THIS MEANS FOR SEAN'S RULE, STATED PLAINLY.**
+***Google Maps reviews answer "what do customers care about" — which is what the CaiCa and SaladShop theme analyses
+actually measured, and it is genuinely useful. They do NOT answer "which brand owns which claim."*** **The claim/mind
+test needs an instrument whose reviews are *about the vendor's differentiation and name the alternative* — and food
+retail, reviewed by the visit, is the opposite of that.**
+
+**✅ AND THE INVERSION THIS PRODUCES: THE B2B DESIGN OF §4.6.4.3 IS THE BETTER INSTRUMENT, NOT THE FALLBACK.**
+*G2 / Capterra / Clutch reviews are **inherently comparative and vendor-level**: a reviewer states what they evaluated,
+what they switched from, and why. That is the attribution sentence §4.6.4.4 needs* — ***"I go here instead of X because…"
+is the NORM on a B2B review site and the exception on Google Maps.*** **So the mind test should be attempted on a B2B
+category FIRST, where the instrument matches the question.**
+
+**⚠ AND THE B2C BRANCH STILL HAS A HOME, NARROWLY DEFINED:** *a category where the buyer **researches and compares**
+rather than transacting* — *high-ticket, considered purchase, switching intent voiced.* **⚠ That is a hypothesis, not a
+finding, and must be tested before it is relied on.**
+
+**⚠ REPRODUCE:** *`google_reviews_full.json` — 142 entries / 28 chains / 12,523 reviews; aggregate by CHAIN before any
+brand-level statement; the generic-key test is key-frequency across ALL reviews (`>3%` dropped `daily`, `salad`,
+`stuff`, `super`); `Salad Shop` is the case that defeats frequency filtering.*
+
+### 4.6.4.7 ⚠⚠⚠ THE B2B TEST — AND THE RULE IT EXPOSES: IT IS NOT B2C-vs-B2B, IT IS WHETHER THE REVIEW FORM ASKS THE COMPARISON QUESTION
+
+*Option 1: test the B2B mind instrument on a real B2B category.* **Case: `C9-b2b-it-services`** — *a Singapore
+managed-IT and cybersecurity firm for SMEs; claim **"one accountable team for every layer of your IT, instead of
+juggling eight vendors"**, differentiator **"we publish our rates"**.*
+
+**⚠ FIRST PROBLEM, AND IT IS STRUCTURAL TO B2B INTAKE: THE OWNER NAMED ARCHETYPES, NOT COMPANIES.**
+*His `competitors_named` is: "One in-house IT hire (the alternative to buying)", "Separate single-service vendors
+(the status quo we replace)", "The larger established MSPs with longer client relationships", "Cheaper per-ticket IT
+support shops".* **The analyst's own diagnostic: "The owner did NOT name any of the six competitors found… the
+blindspot is structural."** ***You cannot look up "the larger established MSPs" on G2.*** **So for B2B the named set
+must be derived before any mind work can begin — the same conclusion as §4.6.3, one step earlier in the pipeline.**
+
+**⚠ SECOND PROBLEM, AND IT IS A DEAD END: THE B2B DIRECTORIES ARE BOT-WALLED, AND THEY FAIL *SILENTLY*.**
+*Clutch / DesignRush / TechBehemoths were all attempted through the static ladder **and** through a real stealth
+browser (the same Camoufox profile that had just worked on Google Maps).* **Clutch returned an 813-character shell.**
+*DesignRush returned 1,465 chars and TechBehemoths 1,590 — **and both were NAVIGATION MENUS** ("AGENCIES / Web Design
+Companies / PPC Agencies / Branding Agencies").* **A naive extractor rendered those menus as VENDOR NAMES.**
+***That is the protocol's worst documented failure — a block page returning as ordinary text — and it produced a
+plausible-looking garbage vendor list that only reading the output caught.*** **Recorded as a NEGATIVE; not patched
+again (the protocol's own stop rule).**
+
+**✅ THE ROUTE THAT WORKED: GOOGLE MAPS FOR THE SET, BECAUSE A MANAGED-IT FIRM IS A LOCAL B2B SERVICE.**
+*29 named MSPs derived from three category searches* — **and the capture ran clean** *(tab opened, `limited_view:
+False`, verbatim text)*. **⚠ The derivation needed noise-stripping: the same search returned a fibre-products
+distributor and, memorably, **"WINZ CREDIT PTE LTD — Best Money Lender in Clementi"**. A category query returns
+lookalikes.* **⚠ AND REVIEW VOLUME IS AN ORDER OF MAGNITUDE LOWER THAN B2C: 40 / 11 / 7 / 1 reviews** *on the sample
+captured.* ***B2B firms simply have far fewer reviews, which caps what any mind test can do here.***
+
+**⚠⚠⚠ THE RESULT — AND IT REFUTES THE HYPOTHESIS I GAVE SEAN, WHILE EXPLAINING WHY.**
+| finding | measured |
+|---|---|
+| **B2B reviews ARE about the vendor relationship, not the visit** | **✅ CONFIRMED** — *IT Block **relationship 27 vs service 11**; iXiZ **9 vs 4*** ("partnering with Ixiz since 2007", "under the good hands of Roy Chan… for many years"). *Contrast food retail's "rude staff" / "the bun was warm".* |
+| **B2B reviews name an alternative** | **❌ ZERO of 59.** *No `switched`, no `compared`, no `alternative`, no `instead of`, no `previously` — on any brand.* |
+| **B2B reviews use the vendor's positioning language** | **❌ ZERO.** *The claim is "one team instead of juggling eight vendors" / "we publish our rates"; the reviews say "professional, knowledgeable, quick to respond". Generic service-praise, not the claim.* |
+
+***So the attribution sentence — "I chose X over Y because…" — is absent from B2B Google reviews too.*** **My
+hypothesis was that B2B is the better instrument. It is not, and the reason matters more than the refutation.**
+
+**⚠⚠⚠ WHY — AND THIS IS THE RULE. GOOGLE REVIEWS ARE POST-PURCHASE.** *Their author has already chosen, and is
+describing their own experience with the vendor they picked.* ***A satisfied customer does not narrate the
+alternative they rejected.*** **The comparison happens in the BUYING DECISION, which is exactly what a Google review
+is not.** *B2B's improvement — reviews about the relationship rather than the visit — does not change that, because
+relationship depth and competitive comparison are different things.*
+
+**✅ SO THE DISCRIMINATOR IS NOT B2C-vs-B2B. IT IS WHETHER THE REVIEW FORM ASKS THE COMPARISON QUESTION.**
+*Google's form asks "how was your experience".* ***G2, Capterra, TrustRadius, Clutch and Gartner Peer Insights ask
+"what alternatives did you consider", "what do you dislike", "what problems does it solve" — the comparison is
+SOLICITED, so it appears in the text.*** **That is why those platforms are the right instrument — the platform's
+form, not the buyer's nature.**
+
+**⚠ AND IT GIVES THE MIND TEST A CLEAN PRECONDITION, WHICH REPLACES THE ONE IN §4.6.4.5:**
+```
+CAN THIS CATEGORY BE MIND-TESTED AT ALL?
+  A review corpus whose FORM asks about alternatives -> YES, test attribution.
+  A post-purchase corpus (Google Maps, Trustpilot, Yelp) -> NO. Attribution is absent BY CONSTRUCTION,
+      not by scarcity, and more volume will not produce it.
+      -> fall to the claim-vs-claims branch (§4.6.3), limit stated.
+```
+***That single test replaces the corpus-type check, and it is measurable before any capture: read the review form.***
+
+### 4.6.4.8 ✅ THE FORM HYPOTHESIS, MEASURED — AND THE INSTRUMENT IT ACTUALLY IDENTIFIES
+
+*Option 1, run to completion: read the review FORMS and test whether a comparative corpus is reachable.*
+**Verdict: the hypothesis is SUPPORTED in mechanism, and the measurement identifies a sharper instrument than
+the one I proposed.** *Five platforms measured; the two largest are walled.*
+
+**✅ THE FORM IS THE DISCRIMINATOR — 4 OF 5 SOLICIT THE COMPARISON, QUOTED VERBATIM.**
+| platform | form asks about alternatives? | verbatim wording | corpus reachable? |
+|---|---|---|---|
+| **G2** | **YES** | *"Did your company switch to {product} from another software?"* → *"What did you switch from?"* → *"Why did you switch? How does {product} compare to your previous system?"* | ❌ **DataDome** |
+| **TrustRadius** | **YES** | *"Alternatives Evaluated: Which other similar products have you used or evaluated? Explain how this product stacks up against them and why you selected it."* | ✅ 6,396 chars |
+| **Clutch** | **YES (partial)** | *"Why did you select {vendor} over others?"* / *"How did you select this vendor and what were the deciding factors?"* | ✅ **13,010 chars, 110 review bodies (independently re-verified)** |
+| **Gartner Peer Insights** | **YES** | *"Which other vendors did you consider in your evaluation?"* — answers are **named vendors** | ❌ **403 `cf-mitigated: challenge`** |
+| **Capterra** | **❌ NO** | *"Pros: What did you like most…"* / *"Cons: What did you like least…"* / *"Describe your overall experience"* — **no alternatives field** | ✅ 3,121 chars |
+
+**⚠ AND CAPTERRA IS A NATURAL CONTROL.** *It shares G2's corporate group and engineering, and it is the **one**
+platform that asks nothing about alternatives.* ***Same company, same stack, different question — and the
+comparison field is absent.*** **That is the cleanest available evidence that the QUESTION, not the customer or the
+platform's ownership, determines whether an alternative gets named** — *and it corroborates §4.6.4.7's finding that
+the post-purchase state of the Google reviewer is not the cause.*
+
+**⚠⚠ BUT THE MEASUREMENT REFUTES THE INSTRUMENT I PROPOSED, AND THAT IS THE USEFUL PART.**
+*Every alternatives question asks **which vendors were weighed and why this one was chosen** — a
+**purchase-decision comparison**, not "does what you claim match what we think".* **So the corpus yields a
+consideration set and a choice rationale — which is NOT the claim-vs-vocabulary test of §4.6.4.4.**
+
+**✅ THE INSTRUMENT IT ACTUALLY IDENTIFIES — AND IT IS BETTER THAN MINE.**
+***"Why did you select {vendor} over others?" is the mind-test instrument.*** **It does not measure whether customers
+repeat the claim's words; it measures whether the claim is what WINS THE BUSINESS.**
+```
+claim: "we publish our rates"    buyer says "we chose them because they publish rates"  -> claim CORROBORATED
+claim: "one team instead of eight vendors"  buyer says "we chose them because they were cheapest"
+                                                           -> ⚠ claim CONTRADICTED: price wins, not the claim
+```
+***That is a stronger test than vocabulary overlap, because a buyer stating their own selection reason cannot be
+coached, and it is exactly the "why did you choose X over Y" sentence §4.6.4.4 concluded was absent from Google
+reviews.*** **It is absent from Google because Google does not ask it — and present on TrustRadius, Clutch, G2 and
+Gartner because they do.**
+
+**⚠ SO THE MIND TEST HAS A MEASURED SCOPE, AND IT IS NARROW: TRUSTRADIUS AND CLUTCH.**
+*Only these two combine a form that solicits the comparison **with a corpus that can actually be read**.*
+**G2 and Gartner Peer Insights ask the right question and are the two largest sources — and both are bot-walled.**
+***"The form asks it" ≠ "the answers can be read."***
+**⚠ AND CLUTCH'S VERSION IS WEAKER THAN IT LOOKS:** *its selection question offers **factor chips** ("Good value for
+cost", "UX expertise", "High ratings") rather than a free-text list of named alternatives — **so Clutch yields
+selection CRITERIA, which is what matters for the claim test, but not a named consideration set.***
+
+**✅ PRACTICAL CONSEQUENCE — AND IT PUTS OUR OWN CATEGORY IN SCOPE.** *TrustRadius and Clutch serve **software and
+agencies**.* **So the mind test applies to SaaS and agency/services categories, and everything else falls to the
+claim-vs-claims branch (§4.6.3) with the limit stated.** ***Clutch covers agency firms — and ObserveCo is itself a
+consulting firm — so the mind test is applicable to our own category, which is the one we can validate it against.***
+
+### 4.6.4.9 THE PRECONDITION GATE, AS CODE — `specs/calibration/mind_test.py`
+
+**⚠ THE §4.6.4.7 RULE IS NOW ENFORCED BY A FUNCTION THAT CANNOT GUESS.** *`can_mind_test(platform, registry)`
+returns YES / NO / **UNKNOWN**, and **YES only when the caller's registry says the form solicits comparisons**.*
+**There is no built-in fallback and no default: an absent key, an empty or `None` registry, or an uninterpretable
+value all return UNKNOWN.** *UNKNOWN is deliberately **not** collapsed into NOT_APPLICABLE — asserting a corpus is
+non-comparative when that is unknown would be the same class of error as guessing YES.*
+
+**✅ THE THREE EXCLUSIONS THAT BIT US ARE ALL ENFORCED:** *(a) the brand's own name is masked out of its own reviews,
+**and** a rival that is a token-subset of the brand name is dropped, both recorded in `excluded.brand_self_alias`;
+(b) a rival whose every token is in the caller's `generic` set is dropped into `excluded.generic_common_word` —
+**whole-word matching alone provably does not fix "corner" in "bottom left corner"**, so the caller's set is the
+load-bearing input; (c) whole-word, case-insensitive, hyphen/apostrophe tolerant.* **Evidence: the self-test's
+`SELF_MATCH_BRAND_REPEATED`, `SELF_MATCH_MASKED_ACROSS_BRAND_NAME`, `GENERIC_WORD_RIVAL_EXCLUDED`.**
+
+**⚠ VERDICTS NEVER SMOOTH A LIMIT:** *attribution found **and** claim-term overlap → AGREES; attribution without
+overlap → DISAGREES with `divergence_flag=True` **and `weak_evidence=True`**; no attribution → **INCONCLUSIVE with
+`divergence_flag=False`** and the §4.6.4.4 wording that category talk corroborates nobody; post-purchase platform →
+**NOT_APPLICABLE, `branch="claim_vs_claims"`**; unusable corpus → **REFUSED, same fallback branch**.*
+
+**✅ VERIFIED INDEPENDENTLY, NOT TAKEN ON REPORT:** *the self-test runs **21 checks, 21 passed, exit 0** under
+`/Users/seanfzc/.hermes/hermes-agent/venv/bin/python` (958 lines, 17 functions; the size is docstrings and 36
+synthetic fixtures, not bloat).* **Determinism holds ACROSS processes, not just within one.** *Refusals are
+exercised for bot-wall, navigation chrome, empty, too-thin and `None` corpora — **the failure mode that produced a
+fake vendor list in §4.6.4.7 is now a tested refusal.***
+
+**⚠ LIMITS, STATED:** *the refusal thresholds (`MIN_REVIEWS=5`, `MIN_TOKENS=100`, `CHROME_SHARE=0.6`) are in-code
+constants and **uncalibrated** — labelled as such and overridable per call. **⚠ And brand aliases remain the
+caller's job:** *only the single `brand` string is masked — **"TBB" for "Tiong Bahru Bakery" must be supplied, and
+the module will not guess an abbreviation.***
+
+**⚠ REPRODUCE:** *`b2b_mind.py` (enumerate `managed IT services Singapore` → 29 named MSPs → capture;
+`/tmp/b2b_enum.json`, `/tmp/b2b_reviews.json`); `derive_b2b_set.py` shows the three directories failing
+(813/1465/1590 chars, menus only); §4.6.4.4's Test 2 is the attribution test that returns zero here; the case is
+`inputs-v4/C9-b2b-it-services.json`.*
+
+**⚠⚠⚠ 3.7.25 C2 RESOLVED — `market_headroom` IS INERT BY DELIBERATE DESIGN, NOT BY DEFECT. AND ITS REAL
+CONSEQUENCE IS THE LITE TIER, NOT THE FULL REPORT (8 Oct).**
+
+**⚠ WHAT THIS CORRECTS IN §3.7.22 — TWO FACTS, NOT A JUDGEMENT.** *§3.7.22 was careful and fair: it called
+the inertness "not broken", "a capability question, not a bug", and it noted both sides are silent on the
+same 113 cases so there is no disagreement to fix. That reasoning stands.* **But two of its statements are
+factually wrong, and both matter:**
+**(i) "it carries 10% of the composite weight regardless" — IT DOES NOT.** ***The dimension is EXCLUDED from
+the weighted average and the remaining weights are renormalised.*** *Verified on BK01-breadtalk:
+`weights_used_renormalised` = MA 20→**30.77**, DEF 20→**30.77**, CR 15→**23.08**, DR 10→**15.38**, summing to
+100. The 10% is redistributed, not carried.*
+**(ii) It treats the drop as still-open — IT IS ALREADY A SETTLED, DOCUMENTED DECISION.** *The rubric's own
+version history records it as **decision A3**, with its rationale and its measurement:*
+
+> ***"In an elastic-capacity market, unmet demand cannot accumulate: any shortfall is absorbed by rivals
+> opening capacity, so the crowding/unmet axis is a constant and scoring it multiplies a near-constant by
+> its weight. Verified: 12 of 17 cases span raw 1.78–1.98, a 0.10 band narrower than the 0.08 noise floor.
+> In an inelastic market the shortfall has nowhere to go and shows up as an order book, which is
+> measurable."***
+
+***So the inertness is the thing working as designed.*** *§3.7.22 re-derived a deliberate decision from the
+outside and filed it as a fault.* **And the 10% is not lost: `weights_used_renormalised` redistributes it
+proportionally across the dimensions actually assessed** — *verified on BK01-breadtalk: MA 20→30.77, DEF
+20→30.77, CR 15→23.08, DR 10→15.38, summing to 100.*
+
+**✅ AND THE READER GETS A SUBSTANTIVE FINDING, NOT A HOLE.** *The client-facing dict renders the
+not-applicable dimension as a **sentence**:* *"Demand in your market is served and contested. Buyers can
+already get what you sell, so there is no pool of unmet demand to step into — growth means taking share
+from an existing player."* **That meets the value-unit standard — an empty state carries an actionable
+sentence, never a bare "N/A".**
+
+**⚠⚠ THE SIDE EFFECT, AND WHAT CAN BE DONE ABOUT IT.** *Renormalising **promotes `mental_advantage`**, and
+when `position_strength` is also missing it reaches **30.77% — the heaviest dimension in the report,
+against a nominal 20%.** *Because `mental_advantage` is the **worst-measured** dimension in the corpus
+(−0.46), that is the composite leaning hardest on its least reliable input.*
+
+**✅ WHY IT IS BOUNDED, AND CHEAPER TO FIX THAN IT LOOKS.**
+**(a) The band EDGES stay valid.** *The bands are anchored to the scale's own arithmetic — all-dims-at-3 =
+57.50 — and that property is **invariant under renormalisation**: whether or not `market_headroom` is
+included, all-assessed-dims-at-X still yields X.* **Verified numerically at levels 2, 3 and 4: identical to
+1e-9.** *So a promoted weight changes **which dimension drives** the composite, not **what the number
+means**.* **The band words do not move.**
+**(b) The exposure is already measured.** *The rubric records that changing the weight denominator moved
+the composite by **mean 2.4 pts, max 8**, and that **3 band words depended on which dimensions were
+counted** — which is exactly why the evidence floor was moved to 0.0 so that **all cases share one
+dimension set, `market_headroom` excepted**.* **The mitigation is already in place.**
+**(c) It varies in exactly two ways:** *`market_headroom` (structural, 95%) and `position_strength`
+(**4 of 120**, 3.3%).* **Nothing else moves.**
+
+**⚠ THE OPTIONS, WITH MY RECOMMENDATION.**
+| # | option | verdict |
+|---|---|---|
+| **1** | **Disclose the dimension set with the composite** — *"based on 4 of 6 dimensions (position strength and market headroom not assessed)"* | ✅ **RECOMMENDED.** *The renormalisation is currently **invisible to the reader**. The number is honest; the **basis** is hidden. One sentence fixes it, with no measurement risk and no rubric change* |
+| **2** | Leave it entirely | *Defensible — (a) and (b) show the band is safe — but the reader cannot tell a 6-dimension composite from a 4-dimension one* |
+| **3** | Score a missing dimension at 3 (neutral) instead of renormalising | ❌ **REJECTED.** *It **fabricates a score for a dimension we did not assess** — the null-not-faked principle, and precisely what §5.10.2 forbids on the lite tier* |
+| **4** | Suppress the band whenever a heavy dimension is missing | *Over-reacts to 4 of 120 cases; the band edges are already valid per (a)* |
+
+**⚠⚠⚠ AND THE FINDING THAT ACTUALLY MATTERS — C2'S CONSEQUENCE LANDS ON THE LITE TIER.**
+*Lite assesses exactly three dimensions: `mental_advantage` (20%), `market_headroom` (10%), `demand_reach`
+(10%) — chosen because they need no competitor sweep.* **But `market_headroom` returns "not applicable"
+in 114 of 120 cases.** ***So in ~95% of lite reports one of the three free dimensions is inert, and the
+lite read effectively rests on `mental_advantage` and `demand_reach` alone.*** **⚠ Those are the two
+worst-measured dimensions in the six-dimension audit (−0.46 and −0.22).** *The free tier's evidence base is
+**one live dimension plus one that is unavailable nine times in ten**, and both are the least
+reproducible in the corpus.* **⚠ This is a live problem for §5.10 and it is a DESIGN question, not a bug:
+the cheap dimensions were chosen for cost, and cost turns out to correlate with weak measurement.**
+
+**⚠ A HAZARD FOUND WHILE MEASURING THIS, WORTH KNOWING.** *`dimensions_display_1to5` **carries placeholder
+values for dimensions that are declared unscored** — BK01 shows `position_strength: 4` and
+`market_headroom: 3` in that dict while both are in `dimensions_unscored` and excluded from the weights.*
+**The client path is NOT affected: the renderer consumes `display_for_client`, which correctly renders
+`market_headroom` as the sentence and `position_strength` as "insufficient evidence to score".**
+*⚠ But **every analysis script reads the raw dict**, and any that fails to filter `dimensions_unscored`
+will compute findings over fabricated scores.* *⚠ §3.7.22's audit DID filter (which is why it reports n=116
+for position_strength and n=5 for market_headroom, not 120), and §3.7.23's compression test filtered too —
+but this is a standing trap for the next analysis.*
+
+**⚠ BLAST RADIUS.** *§3.7.22's framing of `market_headroom` as a defect is **superseded** by this section —
+the inertness is deliberate; the live issue is the lite tier's evidence base. §5.10's "assess three"
+should cite this: **one of its three is inert 95% of the time.***
+
+**⚠ REPRODUCE:** *`market_headroom_qualifier.disposition` gives 114 `not_applicable` / 6 `scored`;
+`weights_used_renormalised` shows the redistribution (BK01: MA 30.77); `display_for_client` shows the
+reader gets the sentence; the anchor invariance is checked by computing the composite with and without
+`market_headroom` at levels 2/3/4; the missing-dimension counts are `dimensions_unscored` tallied per
+dimension.*
+
+
+---
+
+### 4.6.4.10 ✅ CONSULTING-AGENCY VALIDATION — THE RAW-REVIEW ROUTE FAILS, THE SYNTHESIS ROUTE WORKS, AND IT FOUND A SYSTEMATIC GAP
+
+*Ran on our own category — Singapore consulting/agency firms on Clutch — because §4.6.4.8 put it in scope and it
+is the one category we can also check by hand.*
+
+**⚠⚠ FIRST, §4.6.4.8 IS PARTLY REFUTED, AND THE CORRECTION MATTERS. THE SELECTION QUESTION IS ON THE FORM BUT NOT ON
+THE PUBLISHED PAGE.**
+*Step 2 read the live Clutch profile structure: it renders `BACKGROUND / OPPORTUNITY / CHALLENGE / SOLUTION /
+RESULTS & FEEDBACK / RATINGS` — **there is NO "Why did you select {vendor} over others?" section, and no
+"Alternatives" section, on the public profile.*** **The form asks the question and the published corpus does not show
+the answer.** *Then 8 Singapore consulting profiles were read in full — **68,081 characters** — and searched for
+selection-reason language (`we chose`, `selected because`, `compared`, `over other`, `switch from`, `evaluated`,
+`previous vendor`…):*
+```
+profiles rendering a selection/alternatives SECTION: 0 of 8
+selection-reason language hits across 68,081 chars: 0
+```
+***⚠ AND THE ZERO WAS VERIFIED BEFORE IT WAS BELIEVED.*** **A regex returning an absolute zero is more likely a broken
+harness than a finding, so control words were counted first: `project` 10–15, `team` 15–18, `client` 16–18, `review`
+14, `company` 17–23.** ***The harness works; the zero is real.*** **So §4.6.4.8's practical conclusion — "the mind test
+has a home on Clutch" — is WRONG as stated, and the reason is that a form's question does not survive into the
+published corpus.**
+
+**✅ BUT THE VALIDATION FOUND SOMETHING BETTER, AND IT IS USABLE. CLUTCH PUBLISHES A THIRD-PARTY SYNTHESIS OF WHAT
+CLIENTS ACTUALLY VALUED.** *The readable profile carries exactly two things, and neither is raw reviewer prose:*
+1. **the AGENCY'S OWN BLURB** — *"Make your brand easy to find and hard to forget. We are a Strategic Branding and
+   Design Agency."* → **that IS the published CLAIM (§4.6.3's object).**
+2. **a CLUTCH EDITORIAL SYNTHESIS of the verified reviews** — *"Clients appreciate their value for cost, noting
+   efficient communication and tailored services… **This summary is based on verified Clutch reviews.**"*
+   → **that IS a MIND signal: a third party's reading of what customers actually valued.**
+*Plus structured themes Clutch extracts (`Top Mentions`: "High-Quality Work (4)", "Timely (3)", "Knowledgeable (2)").*
+
+**✅ AND RUN ON SIX AGENCIES IT PRODUCED A SYSTEMATIC GAP — THE FLAG THE PRODUCT EXISTS TO RAISE.**
+| agency | CLAIM (their own words) | MIND (Clutch's synthesis of verified clients) | verdict |
+|---|---|---|---|
+| **Gohan Strategy** | *"Make your brand easy to find and **hard to forget**… transforming your brand's vision into revenue"* | *"offers **competitive pricing**… Clients appreciate their **value for cost**… efficient communication"* | **⚠ DIVERGES** — claim is transformation; the mind is cost |
+| **KeyHole Insights** | *"the intersection of **data analytics, market research, strategy and storytelling**"* | *"offers **competitive pricing**… clients **liken their services to major firms at lower costs**"* | **⚠ DIVERGES** — clients position them as a **cheap substitute for the big firms**, not as an insight specialist |
+| **TDCX** | *"**Award-Winning** Digital Economy Enabler… innovation and operational precision"* | *"High-Quality Work (4), Proactive (3), Results-Oriented (3), Timely (3)"* | **⚠ DIVERGES** — distinctive scale/innovation claims flatten into **generic quality themes** |
+| **STUDIO DAM** | *"**ESG Certified** design consultancy… efficient and **timeless** design"* | *"offers **competitive pricing** with high value… understanding client needs"* | **⚠ DIVERGES** — ESG and timelessness absent |
+| **Creative For More** | *"strategy must come **before execution**… tailored, **data-driven** marketing systems"* | *"**fair pricing**… clients report significant **ROI, +250% lead generation, +45% revenue**"* | **PARTIAL** — the **outcome** claim is corroborated; the **mechanism** claim is absent |
+| **Margin Wheeler** | *"**leading** corporate service provider… **chartered accountants** and certified corporate secretaries"* | *"good **value for cost**… **transparent pricing**… Knowledgeable (2)"* | **PARTIAL** — expertise is perceived, but weakly; price and timeliness dominate |
+
+***⚠⚠ THE PATTERN: EVERY CLAIM IS ABOUT DISTINCTIVE EXPERTISE. EVERY MIND IS ABOUT PRICE AND GENERIC SERVICE
+QUALITIES.*** *"Value for cost" leads the synthesis for 5 of the 6.* **That is precisely the claim/mind divergence
+§4.6.4.1 exists to flag — measured on real data, in our own category.**
+
+**⚠⚠ BUT ONE CONFOUND MUST BE CARRIED WITH THIS RESULT, AND IT IS SERIOUS.** ***Clutch is a marketplace whose
+editorial summary is built to support PRICING COMPARISON — its profile leads with a "Pricing Snapshot" and "Rating
+for cost".*** **So "the mind is about price" may be partly CLUTCH'S FRAMING rather than the customers'.** *The honest
+statement is: **the synthesis route yields a usable claim/mind comparison, with a known systematic bias toward price
+that must be discounted when reading it.*** **⚠ It is NOT a neutral instrument.**
+
+**✅ AND THE ATTRIBUTION TEST SURVIVES HERE, INSIDE THE SYNTHESIS.** *KeyHole's synthesis contains **"clients liken
+their services to major firms at lower costs"** — a genuine comparison sentence, the thing that was **absent in 59
+Google reviews**.* **⚠ §4.6.4.4's Test 1/Test 2 were written for raw review text; on Clutch they must run against the
+SYNTHESIS, which paraphrases** — *a literal keyword test misses it (that is how the 0 above occurred).*
+
+**⚠ SO THE CORRECTED DESIGN, REPLACING §4.6.4.8's CONCLUSION:**
+```
+CLAIM  = the vendor's own published blurb (already sourced, §4.6.3)
+MIND   = Clutch's editorial synthesis + extracted Top Mentions   [third-party, price-biased]
+        NOT the raw reviews (not published; 0/8 sections, 0 selection language)
+RUN ON = consulting / agency / SaaS firms with a Clutch profile  -> our own category qualifies
+LIMIT  = state that the synthesis is Clutch's aggregate and leads with pricing by construction
+```
+### 4.6.4.11 ⚠⚠ §4.6.4.10's HEADLINE IS REFUTED — THE PRICE DOMINANCE IS CLUTCH'S EDITORIAL FRAME, NOT THE CUSTOMERS'
+
+*The confound flagged in §4.6.4.10 was tested rather than carried, and the test is decisive.* **Clutch publishes
+TWO aggregates on the same profile:**
+- **SURFACE A — "What Clients Have Said":** *the editorial synthesis, price-led by construction (the profile leads
+  with a "Pricing Snapshot" and "Rating for cost").*
+- **SURFACE B — "Review Highlights":** *titled paraphrases of what individual clients said — a different block,
+  derived from client statements rather than the marketplace's pricing frame.*
+
+**Both surfaces were read from the same six agencies and classified identically:**
+```
+PRICE share — SURFACE A (summary):    100%   (6 of 6 agencies say "competitive pricing / value for cost")
+PRICE share — SURFACE B (highlights):   3%   (2 of 71 client-derived statements)
+
+SURFACE B composition: OTHER 36 | EXPERTISE 15 | DELIVERY 11 | OUTCOME 7 | PRICE 2
+```
+
+**⚠⚠ SO §4.6.4.10's HEADLINE FINDING — "every claim is about distinctive expertise, every mind is about price" — IS
+WRONG, AND I AM DOWNGRADING IT.** ***The price dominance is an artefact of reading the editorial summary.*** *On the
+client-derived surface, price is almost absent (2 of 71).* **The §4.6.4.10 table's "⚠ DIVERGES" verdicts are
+therefore NOT supported — they were produced by comparing a vendor's claim against Clutch's pricing frame.**
+
+**✅ THE CORRECTED READING — AND IT REVERSES THE CONCLUSION.** *On SURFACE B, **expertise appears in 15 of 71
+statements (21%)** — "praised for its strong branding and design expertise, successfully helping various companies
+… realign, launch, or rebrand their identities" (Gohan); "successfully executed branding and rebranding projects …
+enhancing brand propositions" (STUDIO DAM); "effective brand and marketing strategies" (KeyHole).*
+***So claims about distinctive expertise are broadly CORROBORATED by the client-derived surface, not contradicted.***
+**The mind test on Clutch, read correctly, returns AGREEMENT for most of these agencies.**
+
+**⚠⚠ AND THIS IS THE PRODUCT-RELEVANT FINDING, WHICH IS WHY THE TEST WAS WORTH RUNNING.**
+***Reading the wrong surface MANUFACTURES false divergences.*** **Had Clutch's editorial summary been fed to the
+scorer, the tool would have flagged six consulting firms as "claim/mind divergent" when the client-derived evidence
+says their expertise claims hold.** *A false divergence flag is worse than no flag: it tells a paying customer their
+positioning is broken when it is not, in the one report whose whole value is that its flags can be trusted.*
+**⇒ HARD RULE: the mind instrument must read CLIENT-DERIVED aggregates only; a marketplace's PRICING SUMMARY and any
+"rating for cost" surface are INELIGIBLE INPUTS.**
+
+**⚠ LIMITS, STATED — THIS CORRECTED READING IS WEAKER THAN IT LOOKS:**
+1. **BOTH surfaces are Clutch-authored.** *"Review Highlights" is paraphrase, not raw customer voice.* **⚠ Neither
+   surface is a verbatim reviewer quote, so no Clutch-derived reading is a primary-source mind measure.**
+2. **The classifier is keyword-based and 36 of 71 statements fell into OTHER** — *mostly operational detail ("they use
+   Slack, Zoom and email effectively", "developed a transparent performance monitoring system").* ***A 51% unclassified
+   bucket means the category shares are indicative, not precise.***
+3. **Six agencies.** *One category, one marketplace.*
+
+**⚠ SO THE MIND TEST'S STATUS AFTER THIS: it is runnable on Clutch, it must read CLIENT-DERIVED aggregates only, and
+its output on six consulting agencies is AGREEMENT — not divergence.** *The claim/mind FLAG has not yet been observed
+on real data.* **⚠ Which means §4.6.4.1's flag remains a designed capability that is UNPROVEN, and the honest thing to
+say about it is exactly that.**
+
+**⚠ REPRODUCE:** *`confound_test.py` (both surfaces, same six agencies, identical classifier;
+`/tmp/confound_test.json`); SURFACE A extraction is the `What Clients Have Said` … `This summary is based on` region;
+SURFACE B is the `Review Highlights` … `Reviews` region split into statements ≥40 chars.*
+**⚠ REPRODUCE:** *`consulting_set.py` (directory reads fine via Camoufox — 28,228 chars, 200 links; the earlier
+813-char shell was the `/sg/it-services/...` path, a different wall); `consulting_decide.py` (0/8 sections,
+0 hits in 68,081 chars); `verify_zero.py` (control-word proof the zero is real); `claim_vs_mind.py` (the six
+side-by-side pairs); artifacts `/tmp/consulting_*.json`, `/tmp/claim_vs_mind.json`.*
+
+**⚠ REPRODUCE:** *the five forms are quoted with source URLs in `/tmp/ws_a_forms.md` (24.9 KB, with a raw appendix);
+Clutch reachability re-verified independently by `verify_clutch.py` (13,010 chars, 110 bodies); the implementation of
+this section's verdict rules is `specs/calibration/mind_test.py` (§4.6.4.9).*
 
 ### 4.6.4.12 ⚠⚠⚠ OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST
 
@@ -3474,1346 +4956,6 @@ reads 2).* **These are not in conflict and the instrument must not be tuned to m
 **DR asks whether the business can REACH customers; PS asks whether its POSITION is strong.** *A
 chain with nationwide showrooms plainly reaches customers — and can still hold a claim that any
 rival matches.* **Reach is not position, and position is not reach.**
-
-### 4.6 The competitor scan is a scored pass, not best-effort (D25 direction) ⚠
-
-> **⚠ BUILD STATUS, ADDED v38: THIS SECTION IS SPEC'D AND DIRECTED (D25) BUT NOT BUILT.** **The runtime
-> has NO competitor scanner.** What exists is *competitor DISCOVERY* only, and only as **hand-curated
-> per-CATEGORY dictionaries** in `build_v2_set.py` / `build_v3_hbb.py` — a set was written once for
-> "consumer electronics retail" and reused for every business in that category. **There is no
-> per-business scan, and nothing that captures a rival's POSITIONING, size or pricing** — i.e. columns 2,
-> 3 and 4 of the table below do not exist in production. **The corpus's `_derivation_method` string is a
-> TEMPLATE, not a research record** (identical shape for every case in a category).
->
-> **⚠ AND THE RUBRIC WAS CONSUMING IT AS THOUGH IT WERE RESEARCH.** *PS's instruction asks "is that claim
-> already owned by a named occupant of the derived competitive set?" — while the set supplies names, tiers
-> and a price-floor label and nothing about what any occupant HOLDS.* **So the model was inferring
-> "ownership" from its own category memory.** *Fixed at the rubric level in **v1.18.1** (see §10.6e) by
-> restricting the basis to the supplied set and capping unproven flanks at 3.* **The scan remains the real
-> fix — see §4.6.1.**
-
-**Directed by Sean:** the same method the competitive-analysis projects use — *"exercise the web search
-protocol skill to find and score other competitors, just like what we did for our competitive analysis
-projects."* §4.4 already listed *"competitor set via search"*, but as **best-effort enrichment behind a
-hard timeout** (§4.5). **This escalates it: the competitor scan is a deliberate, protocol-governed pass,
-gated by §3.11.**
-
-**Protocol, not ad-hoc searching.** The scan follows `web-search-scraping-protocol`'s chain:
-`search → fetch → extract → escalate → grade`. Two of its rules are load-bearing here:
-
-- **The validity gate is mandatory** (§4.1) — measured at **60% silent failure** (6 of 10 mixed URLs
-  returned a Cloudflare challenge or CSS shell *as ordinary text, with no error*). A block page reaching
-  Jev means **Jev scores a Cloudflare challenge as though it were a competitor's website.** This is
-  already the highest-risk seam in the system and this section widens it — so the gate's coverage must
-  extend to every URL the scan touches, not only the enrichment URLs.
-- **The reward layer grades every capture** (§4.2) — grounding and coverage verdicts feed the *"what we
-  checked / what we couldn't check"* block. **A scan that silently captured nothing must say so**, not
-  produce an empty comparison that reads as "you have no competitors."
-
-**What the scan produces, and where each part goes:**
-
-| Captured | Becomes | Dimension |
-|---|---|---|
-| Named competitors in the category | The competitor set | Position strength |
-| Their positioning / messaging | Differentiation contrast | Position strength · Mental advantage |
-| Their size, tenure, footprint | Scale contrast | Defensibility |
-| Their pricing where public | Price-band context | Competitive room |
-| **Failed or blocked captures** | **The honest-limits block** | — |
-
-**Three rules that keep this honest:**
-
-1. **Observed ≠ claimed.** §7.3's split applies in full: scan-derived material is `observed`, form
-   answers are `claimed`, registries stay `not checked` (§4.3). **A competitor's marketing claim is
-   not evidence of their position** — it is evidence of what they say, which is a different and weaker
-   claim, and the report must not conflate them.
-2. **No score for a named competitor may be published to a third party.** The scan compares the
-   *submitter* to the pool. Printing "Competitor X scores 43" about a business that never consented,
-   never saw it and cannot dispute it is a different product with a different risk profile — see
-   **D31**.
-3. **The scan's result is perishable** (§7.11) and must carry a fetch timestamp.
-
-### 4.6.0a ⚠⚠ THE SCAN COULD NOT READ THE PAGES — and reported the wrong reason (30 Sep)
-
-**FOUND BY SEAN SUBMITTING A REAL BUSINESS** *(Aurora Energy Research — a strong, well-qualified
-prospect: real category, four named rivals, a live site).* **Its report said "NO OCCUPANT COULD BE
-ESTABLISHED" and refused the submission. Three verified defects, all in the scan.**
-
-**1. ⚠ A GRADING BUG SILENTLY DISCARDED SUCCESSFULLY-READ PAGES.** *`grade_capture` scanned for the
-literal string **`"noscript"` in the RAW HTML**, and did so **before** checking how much text it
-had received.* **Aurora's page carries a `<noscript>` tag in its source — so a fully-read page was
-graded `"shell", 0 usable content`.** *That single ordering error is why a populated category
-reported **"NO OCCUPANT COULD BE ESTABLISHED"**.*
-**⚠ THE RULE: substantial text beats every marker.** *Check the **visible** length first, scan
-markers against **visible text only**, and treat the markers as a **diagnosis of a failure rather
-than a test in their own right** — **a page that yielded something needs no explanation.**
-⚠ *A challenge marker is the one exception and still wins outright, since a denial is a denial
-however much text accompanies it.*
-
-**2. ⚠ THERE WAS NO BROWSER RUNG — urllib cannot read most modern business sites.** *Measured on
-the same URL: **urllib → 0 chars. Playwright → 6,059 chars in 2.8s**, including all four of
-Aurora's own customer segments (Financial Sector, Utilities, Developers, Energy Consumers).*
-**So the scanner was not failing to FIND competitors — it was failing to READ the pages,
-including the submitter's own — and its verdict named the wrong cause.**
-*Fixed: `fetch()` escalates to Playwright **only when the plain fetch yielded nothing usable**,
-with one lazily-created browser per scan and an explicit `close_browser()`. Sites serving static
-HTML keep the fast path and pay nothing.*
-**⚠ IT DOES NOT DEFEAT INTENTIONAL GATES.** *A bot wall, captcha or paywall is the publisher's
-decision and stays unread; the browser recovers content that was **mis-served to a non-browser
-client**, never content that was withheld. The distinction is the same one the honest UA protects.*
-
-**3. ⚠ ONE PUBLISHER WAS COUNTED AS TWO INDEPENDENT SOURCES.** *`www.auroraer.com` and
-`auroraer.com/global-presence/singapore` were treated as independent, so **Aurora's own navigation
-text corroborated itself** and passed the two-source rule.*
-*Fixed: `publisher()` reduces a URL to its **registrable domain** for independence counting —
-**independence is about who is speaking, and subdomains of one organisation are one speaker**.*
-
-**MEASURED EFFECT: readability 1 of 12 candidates → 7 → 10 of 12.** **⚠ But this is READABILITY,
-not analysis — see §4.6.0b.**
-
-### 4.6.0b ⚠⚠ OCCUPANT MINING IS A NEGATIVE RESULT — DO NOT RETRY THE HEURISTICS (30 Sep)
-
-**⚠ THE COMPETITIVE ANALYSIS STILL DOES NOT WORK, AND THIS IS THE REASON.** *With **10 readable
-pages**, the occupant miner returned **"Create", "Energy", "Manage", "USD"** as the rivals of a
-power-market analytics firm — **navigation furniture and currency codes presented as competitors**.*
-
-**⚠ FIVE FIXES HAVE BEEN ATTEMPTED AND FIVE HAVE FAILED:**
-
-| # | defect found | status |
-|---|---|---|
-| 1 | hyphen splitting — `"Each-A-Cup"` → `"Each"` + `"Cup"` | fixed |
-| 2 | stray single words — `"Updated"`, `"Business"` | fixed |
-| 3 | case duplicates — `"KOI"` and `"Koi"` as two occupants | fixed |
-| 4 | **navigation labels** — `"Discover"`, `"Know"`, `"Global Presence"`, `"Who"` | **STILL BROKEN** |
-| 5 | **currency / UI tokens** — `"USD"`, `"Create"`, `"Energy"`, `"Manage"` | **STILL BROKEN** |
-
-**⚠ THE PATTERN IS THE FINDING: every fix reveals a NEW class of capitalised non-brand text.**
-*That is the signature of **a mechanism that cannot be patched**, not one that needs another rule.*
-**⚠ AND TWO-SOURCE CORROBORATION CANNOT SAVE IT** — *navigation labels and currency codes appear on
-every site in every category, so they are **the most corroborated strings on the web**.*
-**⚠ A sixth tuning attempt was deliberately NOT made** *(§10.6e's rule against fitting a rule to
-the case that motivated it).* **The negative result is recorded in `competitor_scan.py` at the
-function a future agent would edit, listing all five failed attempts.**
-
-**⚠⚠ AND THE OUTPUT IS DANGEROUS, NOT MERELY USELESS.** *`position_strength` is scored **AGAINST
-the supplied set**.* **An empty set caps at ADEQUATE (3) and says why; a junk set produces a
-confident judgement about rivals that do not exist.** *That is strictly worse than finding none —
-the §4.6 honest-limits rule protects the empty case and is defeated by a plausible-looking wrong one.*
-
-**⚠ WHAT TO DO INSTEAD — NOT YET BUILT, NEEDS A STEER:**
-
-1. **USE THE OWNER'S OWN NAMED RIVALS.** *The form already collects them and they are **reliable** —
-   the live case that exposed this named **"wood mac, afry, baringa, modo"**, all real competitors
-   of a firm in that category.* **⚠ And §3.6 already says the owner's list is "expected to be
-   incomplete" — incomplete and CORRECT beats complete and INVENTED.**
-2. **USE `tier_0_own_stated_position`.** *Reading the submitter's own site now works (§4.6.0a) and
-   is rich — 6,059 chars on that case, naming four customer segments.* **For a category where the
-   tool cannot name rivals, the submitter's own stated position is still real evidence.**
-3. **Only accept a scraped name when a source STATES an occupancy relationship in the same
-   sentence** — *a comparison table, a "competitors" page. `_says_occupant` approximates this and
-   does not achieve it, because its window test also passes navigation text.*
-   **⚠ It would need a structural test (table position, page type), not a keyword window.**
-
-**⚠ UNTIL THEN, THE SCRAPED OCCUPANT LIST MUST NOT BE TRUSTED AS A COMPETITIVE SET.**
-
-**✅ 4.6.0c BUILT (30 Sep): THE OWNER'S NAMED RIVALS NOW TAKE PRECEDENCE.** *Option 1 above is
-implemented, because it needs no new capability — §3.6 already collects the names.*
-
-*`to_competitive_set(result, owner_named=[...])` now puts the **business's own named rivals** in
-the set, and consults the scraped miner **only when the owner named nobody**.*
-
-**⚠ AN INVENTED RIVAL IS WORSE THAN A MISSING ONE, AND THAT IS WHY THE ORDER IS NOT A PREFERENCE.**
-*`position_strength` is scored **AGAINST the supplied set**, and there is already a cap for the
-**incomplete** case (the owner's list is "expected to be incomplete", §3.6) and **no cap for the
-INVENTED case**.* **So the two error directions are not symmetric: an incomplete set caps honestly,
-an invented set produces a confident judgement about rivals that do not exist.**
-
-**⚠ AND IT IS MARKED, NOT LAUNDERED.** *The set carries an explicit line:*
-*"these are the rivals the business named. The scan did NOT independently verify who occupies
-this category (see §4.6.0b) — so treat the set as the owner's view of who they compete with, not
-as a discovered landscape."* **⚠ An owner's list is still SELF-REPORTED, so it is used for NAMING
-only, never as evidence of what a rival CLAIMS.** *Naming who to look at is the owner's expertise;
-characterising them is the tool's job* — *the same subject-vs-object discipline as §4.4.1's
-heritage rule.*
-
-**VERIFIED:** *with the Aurora submission, the set now reads `wood mac / afry / baringa / modo —
-named as a competitor by the business itself` plus the honesty line; with no owner names it falls
-back to the honest empty set rather than scraped junk* (both paths exercised directly).
-
-### 4.6.1 The scan, built (v38) — and what it is NOT
-
-**`competitor_scan.py` runs the protocol-governed pass this section specifies**, producing the
-`derived_competitive_set` a submission would carry in production. **It is a REAL scan: the URLs are
-discovered by search and the text is fetched live, through the same validity gate the rest of the system
-uses.** *Run against a real category it returns a set with named occupants, what each one claims, and how
-each capture fared.*
-
-**⚠ WHAT IT IS NOT, STATED PLAINLY — three limits, because this is the component §4.6 already calls the
-highest-risk seam in the system:**
-
-1. **It is NOT validated against the corpus.** *The corpus's sets were hand-written per category, so there
-   is no record of what a scan *would* have returned for those 120 businesses.* **The scanner has been
-   proved to WORK (it discovers, fetches, extracts and grades), not proved ACCURATE (that its sets match
-   what a human analyst would have written).** *Re-deriving the corpus's sets by scan and re-scoring would
-   be the test, and it has not been run.*
-2. **The validity gate is MANDATORY and this section widens its surface.** *§4.1 measured a **60% silent
-   failure rate** — 6 of 10 mixed URLs returned a Cloudflare challenge or CSS shell as ordinary text, with
-   no error.* **A block page reaching Jev means Jev scores a Cloudflare challenge as a competitor's
-   website.** *The scanner therefore records a per-URL `capture_status` and refuses to present a blocked
-   capture as evidence; blocked URLs land in the honest-limits block.*
-3. **A scan with zero successful captures must NOT read as "you have no competitors."** *It must say the
-   scan failed.* **This is the failure mode that produces a confident, wrong report — the same class as the
-   60% silent failure, one layer up.**
-
-**⚠ AND THE COST, QUANTIFIED BEFORE IT IS SPENT — the §3.11 pre-flight gate exists for exactly this
-reason.** *Sean's condition, verbatim: "It burns a lot of tokens so let's make sure before we run the
-analysis we assess the input quality first."* **A scan is ~N searches + ~N fetches per submission.** *At
-the measured 0.48 s/case for scoring, the scan is orders of magnitude more expensive than the score itself
-— so it must fire ONLY after the input-quality gate passes, and only for submissions worth the spend.*
-
-### 4.6.2 ✅ THE COMPETITOR-SET METHOD — the proven five-pass sweep, and what the free report uses ⚠
-
-**SOURCE.** *Sean, 7 Oct: **"Review caica and sgsaladshop folders. How we found competitors for these projects
-is how we would find it for this tool as well."*** *Both folders are real worked examples:*
-`~/projects/CaiCa/competitive-analysis/` **and** `~/SaladShop/` *(with `output/competitors.json` plus the
-Camoufox/gosom scrapes).* **This section is that method, adopted as the spec's method for deriving the
-competitive set — and therefore for the X in §7.7's X/Y reveal.**
-
-**✅ THE METHOD IS ALREADY A DOCUMENTED SKILL, NOT FOLKLORE.** *`sg-competitor-scan` v1.0.0, author Gladwell,
-at `~/.hermes/profiles/gladwell/skills/research/sg-competitor-scan/`.* **Five passes, each closing a gap the
-previous one measurably missed:**
-
-| pass | what it does | the measured gap it closes |
-|---|---|---|
-| **A — Google Maps grid** | *Geography × term grid* (the SaladShop grid was **20 CBD areas × 9 terms = 180 cells**), scraping every Maps result: name, category, address, rating, review count. **Plus explicit hawker-centre checks**, and delivery/meal-prep brands as a separate adjacent set | *The v1 analysis used a single Maps pass and **missed 8 named players plus multiple hawker stalls*** |
-| **B — review-corpus sweep** | *`ddgs` across the known players + generic "best X Singapore review reddit" terms; extract review blogs via `curl`; **mine the prose for players you have not seen*** | *Maps indexes only **physical, listing-visible** shops.* **Small, delivery-only and shop-within-shop concepts are invisible to it** — *this pass caught **7 more** the grid never indexed* |
-| **C — verified counts** | *`gosom/google-maps-scraper` (Go) → real branch counts, review totals, ratings, per-rating distributions* | *Grid counts are estimates.* **It corrected the leader from ~10 branches to 36**, and another from ~8 to 10 |
-| **D — full review text** | *Anti-detect browser carrying a **signed-in session** clears the bot wall and the "limited view" gate* | *Un-signed-in Maps shows ~5–8 results and **zero** reviews.* **Took the corpus from ~1,100 to 12,523 texts** |
-| **E — saturation test** | *Deterministic classifier run before/after adding marginal data; measure whether conclusions move* | *Decides when to STOP buying volume.* **0/12 ranks moved → the corpus was decision-complete** |
-
-**✅ THE METHOD'S OUTPUT SHAPE — AND IT IS WHAT MAKES X POSSIBLE.** *`output/competitors.json`: a deduped list
-with, per brand, its locations, total reviews, average rating and the areas it was found in — so the set is
-**enumerable**, and each entry traces to a Maps listing or a citable review source.* **The SaladShop run
-yielded 26 unique competitors from Pass A alone**, with per-brand review volume (leader ~1,300; long tail
-under 50). *The corpus is auditable in both directions: a known brand missing from the output means the scan
-was incomplete.*
-
-**⚠⚠ THE FREE REPORT MUST NOT RUN THE FULL SWEEP — AND THE DIFFERENCE **IS** THE PAID BOUNDARY.**
-*The full five-pass sweep is a **consulting-grade** engagement: 180 Maps cells, a gosom scrape, a Camoufox
-full-text pull, a saturation experiment.* **That is the product §3.3 sells, not a free report.** *So the
-free/paid line is not a separate rule bolted on — it falls out of the method:*
-
-| | free report | paid engagement |
-|---|---|---|
-| **Enumeration** | *a **reduced** geography × term grid, enough to produce an honest count* | *the full grid + adjacent categories + hawker checks* |
-| **Verification** | *Pass C on the named rivals, to make Y trustworthy* | *Pass C on the whole set* |
-| **Depth** | *what each rival **claims**, read from its own page (Pass D's readability fix)* | *the full review-text corpus, theme saturation, white-space analysis* |
-| **The number** | *"we identified **X**; here are **Y**"* | *the complete set, analysed* |
-
-**⚠⚠ HOWEVER — SEE §4.6.2a, WHICH NARROWS THE FIRST ROW.** *This table is right about **X** (the count) and
-wrong if read as licence to cut the set behind **`position_strength`**.* **The competitive set is the yardstick
-for PS, not enrichment — so the free tier's reduced grid may honestly reduce the COUNT while PS must still be
-capped-and-labelled when the set cannot state what each occupant claims.** *A free report that projects a proven
-flank off a thin set is the one failure this design cannot afford.*
-
-***⚠ THE RULE FROM §7.7 STILL GOVERNS: withhold the ANALYSIS, never the ACCURACY of what is shown.*** *The
-free report's Y must be **correct as far as it goes** — a reduced grid may undercount X, but it must never
-mispresent what it did show.*
-
-**⚠⚠ WHAT THE EXISTING SCANNER IS, IN THESE TERMS — and why this is a REWIRE, not a rewrite.**
-*`competitor_scan.py` already does the right thing at the **fetch** layer: it discovers candidates by search,
-fetches them live, and grades every capture through the §4.1 validity gate.* **A live run read 11 of 12
-captures and reported the one failure honestly.** *What it lacks is (a) **enumeration breadth** — it issues
-one category query where the method uses a geography × term grid, and (b) **Passes B–E**.*
-**⚠ AND §4.6.0b's `extract_occupants()` name-miner should be RETIRED, NOT FIXED** — *the proven method never
-needs to mine brand names out of articles, because **Pass A enumerates them from the source that indexes
-businesses directly**.* *Four fixes to the miner already failed; the fifth is not the answer, and the method
-does not ask the question.*
-
-**⚠ WHERE THIS IS NOT YET WIRED — stated so it is not discovered late.** *(1) **The free path runs no research
-at all** (`server.py:261`, `do_scan` off by default) — **the method is documented and proven but not connected
-to a submission.** (2) **The reduced free grid is not defined** — how many areas × terms is a product/threshold
-decision (**Sean's**), not a technical one. (3) **The free-path spend ceiling** (blocker 3) interacts with
-this: a grid sweep multiplies search and fetch calls per submission, so the cost model must be settled before
-the grid is switched on.*
-
-**⚠ REPRODUCE:** *`cat ~/.hermes/profiles/gladwell/skills/research/sg-competitor-scan/SKILL.md` (the five
-passes); `python3 -c "import json;d=json.load(open('/Users/seanfzc/SaladShop/output/competitors.json'));print(d['competitor_count'], d['competitors'][0]['name'])"` (X=26); `ls ~/SaladShop/output/` (the gosom + Camoufox corpora).*
-
-**⚠⚠⚠ 4.6.2a THE COMPETITIVE SET IS NOT ENRICHMENT — IT IS THE YARDSTICK, AND THE SPEC CURRENTLY WEAKENS THE
-CORE TO PROTECT THE EDGE (Sean's principle, 7 Oct).**
-
-**SEAN'S RULING, VERBATIM.** ***"The answer is obvious which is why positioning theory even exists, which is to
-do detailed competitive analysis."***
-
-**⚠ THE IMPLIED QUESTION, AND WHY IT MATTERS.** *(Asked of §4.6.2: "how might you determine position strength if
-you use a smaller grid?")* *The instinct was to design a graceful fallback for a thin set.* **That instinct was
-wrong, and the reason is in the rubric's own definition of the dimension:**
-
-> *`position_strength` — "SCORE ONLY AGAINST THE SUPPLIED COMPETITIVE SET… **if the supplied set names no
-> occupant for the situation, the strongest claim available is ADEQUATE (3), never Strong or Dominant, because
-> a flank is only proven against a named rival.**"*
-
-***Position strength is not a property the tool measures about a business. It IS the comparison.*** *"Detailed
-competitive analysis" is not an **input** to the positioning judgment — **it is the positioning judgment.**
-So a thin set does not degrade the richness of a PS score; **it replaces the score with a different, easier
-question.*** **A reduced grid is therefore not a cheaper way to do the same analysis. It is a decision not to
-do the analysis.**
-
-**⚠⚠ AND THE SPEC CONTRADICTS ITSELF ON EXACTLY THIS POINT — §4.5 vs §5.1.** *§4.5 ("Non-load-bearing by
-construction") says: **"the form answers alone must carry all six scores. Enrichment is best-effort behind a
-hard timeout."*** *That rule was written for **genuine enrichment** — Places data, registries, review text —
-where §4.5 is right: a failed fetch should degrade depth, never existence.*
-***But `position_strength` is not enriched by the competitive set. It is `position_strength`.*** **Filed under
-"enrichment," the set inherits a best-effort contract that is correct for its neighbours and wrong for it.**
-*A failed fetch cannot be allowed to lower a score elsewhere; **here a missing rival does not merely lower the
-score — it makes the score meaningless, in the flattering direction.***
-
-**⚠ THE MEASUREMENT THAT SHARPENS IT — and it is the corpus, not a theory.** *In the 120-case corpus,
-**119 of 120 cases carry an analyst-authored `derived_competitive_set`** (a hand-built eight-tier frame that
-**explicitly states what each occupant claims** — e.g. *"BreadTalk owns 'iconic local', Four Leaves
-'everyday', TBB 'artisan'"*).* **The corpus's own ground truth was built the expensive way: by hand, per
-category.** *No corpus case was ever scored against a scan-derived set.* **Which means:**
-- **The close condition (99% within one band, D1) was measured against HAND-BUILT sets.** *It validates the
-  **rubric** — that the instrument reproduces Sean's judgment **given a correct set.***
-- ⚠ **It does NOT validate the PRODUCTION path**, which supplies a **machine-derived** set (§4.6.1, limit 1:
-  *"NOT validated against the corpus… proved to WORK, not proved ACCURATE"*).*
-- ***Both facts must be held at once: the rubric is validated, and the production data path is not.*** **A 99%
-  close condition and an unvalidated set-derivation step are not in tension — they are simply different claims,
-  and the second one is the one a live submission depends on.**
-
-**⚠⚠ WHAT THIS IMPLIES FOR THE FREE/PAID LINE — THE PREVIOUS SECTION'S TABLE IS TOO GENEROUS TO THE FREE SIDE.**
-*§4.6.2 proposed "a reduced grid, enough to produce an honest count" for the free report.* **That is defensible
-for X (the count) and NOT for PS (the score).** *The corrected position:*
-
-| | free report | paid engagement |
-|---|---|---|
-| **The count (X)** | *reduced grid — an undercount is honest if labelled* | *full grid* |
-| **Position strength** | ⚠ **must not be projected from an unverified set.** *If the set cannot name occupants **and state what they claim**, PS is capped at ADEQUATE by the rubric's own rule — and the report must say so rather than imply a measured flank* | *the full sweep, which is what makes a PS above ADEQUATE provable at all* |
-| **What that means commercially** | *the free tier can honestly show the **shape**; it cannot honestly sell a **proven flank*** | *proving the flank IS the product* |
-
-***⚠⚠ THE STRATEGIC CONSEQUENCE, STATED PLAINLY BECAUSE IT INVERTS THE OBVIOUS COST SAVING: "detailed
-competitive analysis" is the product, not an input to it.*** *The temptation is to make the free report
-cheaper by scanning less.* **But scanning less removes the thing that makes the free read worth anything —
-its central dimension — while still costing the whole pipeline.** *A free report that is cheap because it
-measured against a thin set is not a cheap version of the product; **it is a different and weaker product
-aimed at the exact prospect the paid engagement needs to convert.***
-
-**⚠ STILL SEAN'S CALL: how thin the free set may be, and whether the free tier caps PS at ADEQUATE and says
-so.** *The principle is now recorded; the threshold is his.*
-
-**⚠ REPRODUCE:** *`python3 -c "import json;d=json.load(open('/Users/seanfzc/projects/observeco-main/specs/calibration/inputs-v4/BK01-breadtalk.json'));print(d['derived_competitive_set']['tier_3_category_incumbent'])"` (a hand-built set that STATES what each occupant claims — the standard the production path must meet); `sed -n '/### 4.5 /,/^---/p'` vs `sed -n '/### 5.1 /,/^---/p'` for the §4.5/§5.1 contradiction.*
-
-
----
-
-**✅ 3.7.22 THE FULL CORPUS RE-LOOK — ALL SIX DIMENSIONS, NOT JUST PS AND CR (7 Oct).**
-
-**SEAN'S DIRECTIVE, VERBATIM.** ***"I think you need to relook into the entire corpus instead of PS and CR. I
-much rather we have a full set of capabilities and then maybe for the free version it is a lite version of the
-entire thing."***
-
-**⚠ THE CRITICISM IS FAIR AND IT DESCRIBES MY ACTUAL HABIT.** *The recent work audited `position_strength` and
-`competitive_room` — the two dimensions that were *being changed*.* **That is auditing the parts you are
-already touching.** *A capability review has to be run over all six against the same 120 grades, or it is not a
-capability review.* **Below is the whole instrument.**
-
-**✅ THE FULL PICTURE — every dimension, on the cases where BOTH sides have a number.**
-
-| dimension | you graded | tool scored | **both (n)** | **exact** | **within-1** | **two+ off** | mean you | mean tool | **gap** |
-|---|---|---|---|---|---|---|---|---|---|
-| **position_strength** | 120 | 116 | **116** | 37% | **95%** | 5.2% | 3.05 | 2.93 | **−0.12** |
-| **mental_advantage** | 120 | 120 | **120** | **52%** | 93% | 6.7% | 3.24 | 2.77 | **−0.46** |
-| **defensibility** | 120 | 120 | **120** | **57%** | **96%** | 4.2% | 2.48 | 2.50 | **+0.02** |
-| **competitive_room** | 119 | 120 | **119** | 42% | 93% | **6.7%** | 2.65 | 2.81 | **+0.16** |
-| **market_headroom** | **7** | **6** | **5** | 80% | 100% | 0% | 3.20 | 3.40 | +0.20 |
-| **demand_reach** | 120 | 120 | **120** | 58% | 96% | 4.2% | 3.67 | 3.44 | −0.22 |
-
-**⚠⚠ FINDING 1 — THE INSTRUMENT COMPRESSES YOUR RANGE BY ABOUT A THIRD, AND THIS IS THE HEADLINE.**
-*Pooled over **all 600 (case, dimension) pairs** where both sides have a number:*
-
-> **tool = 0.648 × you + 0.94**  *(r = +0.705)*
->
-> *A perfect reproduction would have slope **1.0**. This captures **65%** of the range you can see.*
-> ***So ~35% of every score gap you perceive is invisible to the tool.***
-
-*What that looks like, dimension-agnostically:*
-
-| you say | tool averages | error |
-|---|---|---|
-| **1** | 1.59 | **+0.59** *(too generous)* |
-| 2 | 2.24 | +0.24 |
-| 3 | 2.88 | −0.12 |
-| 4 | 3.53 | −0.47 |
-| **5** | 4.18 | **−0.82** *(too harsh)* |
-
-***⚠ THIS IS COMPRESSION, NOT A CEILING — AND THE DISTINCTION CHANGES THE FIX.*** *An earlier reading called this
-"the tool under-scores Sean." It does not. **It under-scores the top AND over-scores the bottom** — everything
-is pulled toward 2.9.* *That single behaviour explains the "ceiling" finding, the "tool is harsher" finding,
-and the under-awarding of 1s **as one defect, not three.*** **A ceiling would need a rubric re-anchor at the
-top; compression is a *measurement-resolution* problem, and re-anchoring the top ladder cannot fix it — which is
-consistent with the top-anchor rewrite having already FAILED (§6.7.x). The failed fix was aimed at the wrong
-shape.**
-
-**⚠⚠ FINDING 2 — `market_headroom` IS EFFECTIVELY INERT, AND IT IS A REAL CAPABILITY GAP.**
-*The tool returns **"not applicable — demand is served, contested"** for **114 of 120** cases; it scored **6**.
-**I first read this as the tool refusing to grade something Sean grades everywhere — that was WRONG, and the
-error is instructive:** *Sean graded market_headroom only **7 times**, and the tool's 6 scored cases are almost
-exactly the same seven (ASML, Boeing, Vicom, PCF, MY, NP02 — the supply-constrained manufacturers).* **Both
-sides are silent on the same 113, so there is no disagreement to fix.**
-
-***The real finding is different and it matters more: market_headroom is a dimension that can essentially never
-fire for the market this product is aimed at.*** *The corpus is retail / F&B / services, where **"demand is
-served" is the honest and almost-always-true answer**.* **The dimension only comes alive in supply-constrained
-categories (semiconductors, aerospace, vehicle inspection).** *So it is not broken — **it is inert for D3's
-weak-positioning SMEs**, and it carries **10% of the composite weight** regardless.* ***That is a capability
-question, not a bug: either the dimension is re-scoped for SME markets, or its weight moves, or its inertness is
-labelled. Sean's call.***
-
-**⚠ FINDING 3 — THE REFUSAL GATE FIRES IN 17 OF 120 (14%), AND THAT IS THE CAPABILITY COST WORKING.** *All 17
-land in `band=GATE` with **no composite** — the `input_sufficiency` refusal, correctly wired (§6.7.4).*
-**They cluster in the home-based / personal-service categories (`NP*`, `HC*`, `HF*`, `HB*`) — which is D3's own
-segment.** *So the refusal is honest, and it is also **the single largest source of "no report" in the target
-market**: about one in seven.*
-
-**⚠ FINDING 4 — TWO INPUTS DO ALMOST NO WORK.** *Across all 120 corpus cases, `website` is populated **18%** of
-the time (21/120) and `competitors_named_count` is a **band** ("3-5"), never a list.* **The instrument's
-richest potential input — the submitter's OWN site — is absent in 4 of 5 submissions, even though §4.6.0a proved
-reading it works (6,059 chars on the case that exposed the gap).** *This is the cheapest capability recovery
-available: **a field that is already on the form, already readable, and almost always empty.***
-
-**⚠⚠ FINDING 5 — THE FREE TIER SHOULD BE A LITE VERSION OF THE WHOLE INSTRUMENT (Sean's framing, adopted).
-⚠ SUPERSEDED IN PART BY §5.10 — Sean's sharper cut (open only the non-onerous dimensions) was **tested and the
-cost split does not survive it**: withholding the scan-needing dimensions renormalises half to two-thirds of the
-free band onto FAME and disagrees with the full reading in 1 case in 4. The cost boundary is kept, but drawn at
-**how much of the sweep is bought**, not at which dimensions. See §5.10.**
-***A reduced grid or a dropped dimension is not a lite version — it is a different instrument.*** *The six
-dimensions are a set: PS is the comparison, MA is recall, DEF is copyability, CR is the price floor, MH is unmet
-demand, DR is reach.* **Dropping one, or measuring one against a thinner yardstick, changes what the band
-means** — and the band is what the whole product communicates.
-**So the lite tier is defined as the SAME six dimensions, each at lower RESOLUTION, with the resolution stated:**
-- **Same dimensions, same rubric, same computation** — the free report is not a different reading.
-- **Lite = fewer rivals verified** (so PS/CR cap and say so) and **less depth in the narrative** (no review-corpus
-  themes, no white-space analysis).
-- **⚠ THE LINE: the free tier may know LESS, but it must never say MORE than it knows.** *That is §7.7's rule
-  restated for a tier boundary, and it is what keeps the free report honest and the paid upgrade desirable
-  rather than necessary-to-be-trusted.*
-
-**⚠ WHAT THIS SECTION DOES NOT DO.** *It does not change the rubric, the weights, or the close condition.*
-**The close condition holds on the terms it was measured (band agreement, 99% within one band).** *These findings
-are about **where the instrument is inert, compressed, or un-fed** — the next round of judgment calls, not
-errors in the current numbers.*
-
-**⚠ REPRODUCE:** *the six-dimension table and the compression regression are computed from
-`runs-1220-control` joined to `sean-regrade-raw.csv` on company name; `market_headroom_qualifier.disposition`
-gives the 114/120 inertness; `gates_firing` gives the 17 refusals.*
-
-
-**⚠⚠⚠ 3.7.23 C1 DIAGNOSED — THE COMPRESSION IS **NOT** A CALIBRATION PROBLEM, AND IT CANNOT BE RESCALED AWAY
-(7 Oct). This corrects the reading in §3.7.22 finding 1.**
-
-**⚠ WHAT WAS WRONG IN §3.7.22.** *That section reported the compression as "a measurement-resolution problem,"
-contrasted with "a ceiling," and implied the distinction told us which fix to apply.* **The distinction was
-right; the implication was not.** *"Resolution" sounds like something a transform or a scale change can repair.*
-**It cannot, and the tests below show that in three independent ways.**
-
-**✅ TEST 1 — IT IS NOT OUR ROUNDING.** *Comparing the model's **raw 0–4** score against the **rounded 1–5**
-display we publish, each regressed on Sean's grade:*
-
-| reading | slope | intercept | r |
-|---|---|---|---|
-| **RAW (0–4, continuous)** | **0.645** | −0.07 | +0.741 |
-| **DISPLAY (1–5, rounded)** | **0.648** | +0.94 | +0.705 |
-
-***Identical.*** *The quantisation step (§6.7.5b's amplifier) is **not** where the range is lost.*
-
-**✅ TEST 2 — AVERAGING OVER PROBABILITIES COSTS ONLY A FIFTH OF IT.** *The model returns a probability per
-level; we publish the **probability-weighted expectation**. Its own **argmax** — the single level it would
-pick if forced — has a higher slope:*
-
-| reading | slope |
-|---|---|
-| **expected value** *(what we publish)* | 0.648 |
-| **argmax** *(its single best answer)* | **0.721** |
-
-*So averaging flattens the signal by about **0.07 of slope**, roughly a fifth of the total shortfall.* **The
-rest is the model's own judgment being genuinely less dispersed than Sean's** — *mean top-probability is
-**0.617**, i.e. the model is reasonably decisive, so it is not hedging its way to the middle.*
-
-**⚠⚠ TEST 3 — THE DECISIVE ONE: A RECALIBRATION FITTED HERE LOSES ON HELD-OUT DATA.**
-*Fit an affine rescaling on a random half of the 599 pairs and test it on the other half — **the honest way**,
-rather than fitting and scoring on the same data:*
-
-| | test-half MAE |
-|---|---|
-| **as-is** | **0.552 levels** |
-| **recalibrated** | **0.616 levels** *(+0.064 — WORSE)* |
-
-***A rescaling makes it worse, not better.*** **And the headroom is real: the within-grade scatter (SD of the
-tool score at a fixed human grade) is 0.601 levels, while as-is MAE is 0.552 — the instrument is already
-performing slightly BETTER than a perfect monotone rescaler could be expected to reach on this data.**
-*There is nothing here for a transform to recover.*
-
-**⚠ AND IT IS NOT AN ARTEFACT OF THE FAMOUS BRANDS OR ONE CATEGORY.** *Dropping the global megabrands barely
-moves it (slope 0.642 → 0.619).* *It varies by category — home-nails 0.80, home-facial 0.74, home-baking 0.50,
-fast-food 0.35 — which is consistent with **a real property of how much dispersion each category admits**, not
-with a systematic bug.* **⚠ `home-not-permitted` returns a slope of −0.16 (n=26) — the one genuinely anomalous
-group, and it is the group D4 already refuses.**
-
-**⚠⚠⚠ THE CONCLUSIONS, IN ORDER OF IMPORTANCE.**
-
-**(1) DO NOT BUILD A RECALIBRATION.** *It is the obvious fix and it fails its own held-out test.* **This is
-recorded as a measured negative result so it cannot be retried later.**
-
-**(2) THE COMPRESSION IS THE MODEL'S DISPERSION, NOT A BUG** — *and the fix is therefore **rubric wording that
-demands more dispersion**, not arithmetic.* *That is a rubric change, and §5.3.1's promotion gate is the only
-correct path for it.*
-
-**(3) ⚠⚠ BUT IT CANNOT BE CALIBRATED YET, BECAUSE THE TARGET IS IN DOUBT — AND THAT IS THE REAL BLOCKER.**
-*§3.7.22 measured this against `sean-regrade-raw.csv`. That corpus carries **35–81% relabel noise**, and Sean's
-own standing instruction is: **"do not converge to my old numbers, because I suspect a lot of them are wrong."***
-***A rubric tuned to demand more dispersion would be fitted to the corpus's errors.*** *The close condition
-(99% within one band) still holds **on the terms it was measured** — but "the instrument is compressed relative
-to Sean" **cannot be closed by any change made today**, because the thing being matched is not trustworthy.*
-
-**⚠ SO THIS IS NOT A DEFECT TO FIX. IT IS A DEPENDENCY, AND IT IS NOW NAMED:**
-| what would close it | who | state |
-|---|---|---|
-| **Re-grade the corpus** *(a fresh, construct-correct PS sheet — §660 item (a)/(b): "his grades predate the position-strength construct and the sheet that asked the old question was invalid")* | **Sean** | **not done** |
-| Then, and only then, re-measure the compression against a trusted target | *engineering* | *blocked on the above* |
-| If dispersion is still short, change the rubric's level wording to demand it | *engineering, via `promote_rubric.py`* | *blocked on the above* |
-
-**⚠ WHAT HAPPENS IF NOTHING IS DONE — stated plainly, because "leave it" is a legitimate answer.** *The band is
-the product's headline, and band agreement is **99% within one band** — so the compression does **not** break
-the product as shipped.* *What it does mean is that **the fine differences an expert can see between two
-similar businesses are not reliably recoverable from the tool**, and the report should not pretend otherwise
-anywhere it ranks or compares.*
-
-**⚠ REPRODUCE:** *raw-vs-display slopes and the argmax comparison from `runs-1220-control`
-(`raw_jev_scores_0to4`, `dimensions_display_1to5`, `probabilities`); the split-half affine test by fitting
-`human ≈ b·tool + a` on a random half (seed 7) and scoring MAE on the other half — **note the regression must be
-run in the direction tool→human, since a forward fit applied backwards is what made the first attempt look
-catastrophic (+0.607); the correct figure is +0.064 and still negative.***
-
-**⚠⚠⚠ 3.7.24 C4 ROOT-CAUSED AND FIXED — THE RIVAL RESOLVER WAS DESTROYING THE OWNER'S OWN INPUT, TWICE
-(8 Oct). C4 was recorded as "2-of-6 rival resolution on F&B" and left as a limit to disclose or buy out
-of. **It was neither. It was two bugs, and both were our own.**
-
-**✅ DEFECT 1 — THE URL BUILDER DELETED THE HYPHEN.** *`_domain_candidates` tokenised `"Each-A-Cup"` to
-`['each','cup']` and joined it as `eachcup`, so the only candidates ever probed were `eachcup.com` and
-`each.*` — **all of which fail.** *The brand's real site is **`each-a-cup.com`, and it serves HTTP 200.***
-**The correct domain was unreachable by construction, and the case then reported `not_found` — the report
-blamed the rival's website for our builder's bug.**
-*⚠ **Second, nested bug:** the fix must build the hyphenated stem from the **raw name**, not the tokens,
-because `[t for t in toks if len(t) > 2]` **drops the `a`** — giving `each-cup`, which is still not the
-domain. The length filter exists to discard junk and it also discards the single letter that is the brand.
-
-**✅ DEFECT 2 — THE NAME TEST ATE THE JUNCTION.** *`_page_names_the_rival` required **exact adjacency**. The
-same length filter removed the `a`, so the pattern became `\beach\s+cup` — **while the page normalises to
-"each a cup", with the filtered token sitting between the two survivors.** *So a correctly-resolved, live,
-200-serving domain was **refused**, and the owner was told "a page could be a different business that shares
-the word" — **which is false.*** *It rendered **a limit of ours as a fact about their page**, the §4.6 failure,
-in a message printed to the business owner.*
-
-**✅ THE FIX, AND ITS MEASURED TRADE** — *one intervening token is now allowed:*
-
-| gap allowed | real rival pages accepted | known strangers accepted |
-|---|---|---|
-| **0 (was)** | **2 of 6** | 1 of 5 |
-| **1 (now)** | **4 of 6** | **1 of 5** |
-| 2 | 4 of 6 | 2 of 5 |
-
-***One intervening token doubles recall with no measured precision lost.*** *Two gains nothing and adds a
-false accept.* **The last-token extension is preserved unchanged** — *`"Wood Mac"` must still match `"Wood
-Mackenzie"`; it failed for a **different** reason and neither tolerance replaces the other.*
-
-**✅ VERIFIED.** *`Each-A-Cup` now reads **200 from `https://each-a-cup.com`** (was `not_found`).* *Old vs new
-across **14 name/page pairs: exactly ONE behavioural difference, and it is the intended one.*** **The
-adversarial page — "research on each and every cup of ocean water" — is still refused.** *No regression on
-Afry, Wood Mac, Chicha San Chen or Gong Cha, and no regression on the four known strangers.*
-
-**⚠ NOT FIXED, AND THIS IS A MEASURED LIMIT RATHER THAN AN OVERSIGHT: SINGLE-TOKEN NAMES** *(LiHO, Mixue,
-SaladStop!).* ***Five rules were written and all five were measured wrong in both directions,*** *and the
-category-overlap threshold has **no separation at all** — correct matches score 0 and 4, wrong ones 0 and 1.*
-**The code reports the limit honestly and states the remedy the owner controls: name the rival as the
-business writes it (`"KOI The"`, `"Modo Energy"`).** *⚠ **Buying confirmation costs one model call**, which
-§5.5's no-second-call constraint forbids without Sean's ruling — so this stays a *decision*, not a task.*
-
-**⚠ BLAST RADIUS.** *`competitor_scan.py` is the resolver §4.6.2's method calls; §6.7.13's single-token
-measurement is unchanged and still accurate; §6.7.16's apostrophe bug is the **same class** (one character
-of the owner's input silently rewritten) and is now recorded as three instances of it, not two.*
-
-**⚠ REPRODUCE:** *`_domain_candidates('Each-A-Cup')` must return `each-a-cup.com` at rank 1;
-`rival_reads(['Each-A-Cup'], category='bubble tea', market='singapore')` must return `capture_status='ok'`;
-and `curl -o /dev/null -w '%{http_code}' https://each-a-cup.com` must return 200.**
-
-
----
-
-## 4.6.3 THE PS EVIDENCE PROTOCOL — how PS is graded, and how it is graded BY THE TOOL
-
-**⚠ WHY THIS SECTION EXISTS.** *Sean's direction (8 Oct): "establish a comfortable PS grading methodology yourself,
-because you will have to do the work yourself in a steady state condition. Then all I am doing is corroborate your
-results."* **So this is not a calibration aid. It is the production method, and it must be runnable by the tool,
-per submission, with no analyst in the loop.**
-
-### 4.6.3.1 WHAT PS ACTUALLY NEEDS — THE CLAIM-OWNERSHIP MAP
-
-**✅ FIRST, THE FINDING THAT SETS THE SCOPE.** *The scorer already receives `derived_competitive_set`
-(`run_jev.build_state`, lines 79–89).* **But look at what the set contains for BK01-breadtalk:**
-
-> *`tier_3_category_incumbent`: "BreadTalk owns 'iconic local', Four Leaves 'everyday', TBB 'artisan'."*
-
-***That line IS the answer to `position_strength`, pre-computed by a human analyst.*** *PS asks "can this business own
-a claim a named rival does not?" — and the input to the model already states who owns which claim.* **So the corpus's
-PS grades are as good as that map, and the 99% close condition validates the rubric GIVEN the map.** *⚠ §4.6.2a
-already flagged this: the machine-derived set is unmeasured.* **This section is how it gets derived, and the pilot
-below is its first measurement.**
-
-### 4.6.3.2 ⚠⚠ THE PILOT, AND THE ONE ERROR THAT MATTERS — ONE CATEGORY, SIX BRANDS, THREE CLAIMS
-
-*Method: resolve each named incumbent to its own domain, read it, extract claim-shaped sentences, compare against
-the analyst's `tier_3` labels.* **⚠ SAMPLE: one category (bakery), six brands, three checked claims. This is a
-PILOT, not a measurement of the corpus — it establishes that the method works and that the map is checkable.**
-
-| brand | analyst's `tier_3` label | what the brand's OWN page states | verdict |
-|---|---|---|---|
-| **BreadTalk** | *"iconic local"* | *"a distinctive, **award-winning Singaporean brand**… its signature Flosss"*; *"Flosss is an **iconic** product"*; *"**renowned** for the way it has revolutionised the culture of bread consumption"* | **✅ CONFIRMED**, verbatim |
-| **Tiong Bahru Bakery** | *"artisan"* | *"we set out to make simple things exceptionally well"*; *"our **obsession with craft**"*; *"our love of culture"* | **✅ SUPPORTED** *("craft")* |
-| **Four Leaves** | *"everyday"* | *"one of the **leading** companies in the bakery industry"*; *"a **trustworthy** bakery manufacturer"*; *"quality at all stages"*; *"our Central Factory"* | **❌ NOT SUPPORTED — and probably mis-assigned** |
-
-**⚠⚠⚠ "EVERYDAY" BELONGS TO PARIS BAGUETTE, AND THE PAGE SAYS SO VERBATIM.**
-*Paris Baguette's own site runs the campaign line **"#GoodBreadEveryday"** and states **"simple, honest breads made
-for the rhythm of everyday life."** Tiong Bahru Bakery also uses it: **"the everyday rituals that bring people
-together."*** **Four Leaves — the brand the map assigns "everyday" to — claims the opposite register: it presents
-itself as a leading industrial quality manufacturer with a Central Factory.** **Three brands; the label sits on the
-wrong one.** *So the corpus's PS evidence contains at least one mis-assigned claim, and PS is scored against it.*
-
-**⚠ AND THE CLAIM/MIND DISTINCTION IS REAL AND MUST NOT BE COLLAPSED.** *Four Leaves may well hold "everyday" **in
-the customer's mind** — that is a market fact — while its **published claim** is leadership.* **PS is scored against
-what rivals PUBLISH (§4.6.2a: "a flank is only proven against a named rival"), so the published claim is the right
-object.** *But a method that silently substitutes one for the other would be wrong in a way nobody could see.*
-
-### 4.6.3.3 ⚠⚠ THE METHODOLOGICAL RULE THE PILOT PROVED — READ THE ABOUT PAGE, NOT THE HOMEPAGE
-
-***The single most important operating rule, and it is a trap that nearly produced a false finding.***
-*Reading only homepages, the extraction returned **"no claim-shaped sentence"** for **both Four Leaves and Tiong
-Bahru Bakery** — i.e. it would have recorded two real rivals as stating no claim.* **But their About pages carry
-their claims.** *A modern retailer's homepage is a **shop** — promo tiles, cart strings ("Your go-to favourites are
-saved for easy reordering"), seasonal SKUs. The **About / Our Story page is the manifesto**, and that is where a
-positioning claim lives.*
-
-**⚠ SO AN EMPTY HOMEPAGE READ IS NOT "NO CLAIM" — IT IS A WRONG-SURFACE READ.** *The protocol must therefore walk a
-**surface ladder per rival**, and only report "no stated claim" after the whole ladder is exhausted:*
-| # | surface | why |
-|---|---|---|
-| 1 | **`/about`, `/about-us`, `/our-story`, `/pages/about-us`** | *the manifesto — **try this FIRST for claim extraction*** |
-| 2 | homepage | *brand line, campaign slogan* |
-| 3 | press / PR page | *the claim that was **announced** (PR precedes advertising — positioning-strategy) |
-| 4 | **review corpus (Pass B/D)** | *how third parties characterise it — the **mind** check, which is a DIFFERENT object from the claim* |
-
-**⚠ AND THE HONEST FAILURE MODES, both of which occurred in the pilot:**
-- **Duke Bakery returned 0 characters.** *That is a **blocked** read, not an absent claim.* §4.6.2's rule applies: it
-  must escalate to the browser tier and, failing that, be reported as **"could not be read"** — never as "states no
-  claim". *A tool failure must never render as a finding about the rival.*
-- **BreadTalk's claim was on the homepage**, so the ladder must not stop at the About page either. **The ladder is
-  walked to completion, and the FIRST surface yielding a claim does not terminate the pass — the later surfaces
-  can contradict it.**
-
-**⚠ THE CLAIM GATE STILL APPLIES** *(web-search-scraping-protocol: unescape entities; reject menu / order / cart /
-cookie vocabulary; reject price lists; require a length window and ≥1 **verb stem**, not a whole word — the
-`focus` failure).* *The pilot's raw output confirms the need: Polar Puffs' claim-shaped hits were a **delivery
-price line** and **customer testimonials**, and Paris Baguette's were an **emoji-laden promo tile** — all three would
-have been rendered as "what they say about themselves".*
-
-### 4.6.3.4 THE PIPELINE — WHAT I WILL ACTUALLY RUN
-
-1. **Situation.** *From the form: the buyer and the occasion. Deterministic.*
-2. **Subject's claim.** *Resolve the subject's own domain (`_domain_candidates`, **now hyphen-safe**), walk the
-   surface ladder, extract its claim through the gate.*
-3. **The set.** *Owner-named rivals (treated as the owner's perception, expected to be incomplete) + a **bounded
-   category sweep** (Pass A reduced + Pass B) + new entrants. **⚠ Per CATEGORY, once, cached, reused by every case
-   in that category** — this is what makes it affordable: the §4.6.2 full sweep is 180 cells for the whole
-   category, not per submission.*
-4. **The rivals' claims.** *Surface ladder per rival, claim gate, **domain + verbatim quote recorded for every
-   entry**.*
-5. **The claim-ownership map.** *Which named occupant owns which claim — the automated form of the analyst's
-   `tier_3` line.*
-6. **Score PS** *against **that** map, by the §4.6.2a rule: a claim a named rival already owns cannot be owned; a
-   thin set caps at ADEQUATE (3) and says so.*
-7. **Audit.** *Every read recorded with domain and status, so every refusal is a **stated limit** and not a
-   silent absence.*
-
-**⚠ DETERMINISM.** *The evidence is fetched and **cached per category**; the scoring stays bound to the rubric
-rule.* *Same category → same set → same map.* **⚠ AND THE CONSTRAINT THAT DOES NOT MOVE: §5.5 forbids a second model
-call for the REPORT.** *Deriving the map is **evidence assembly feeding the single scoring call**, not an extra
-call — the map is data, like the form.*
-
-### 4.6.3.5 D1–D4, DECIDED BY THE TOOL NOT THE USER (Sean's instruction, 8 Oct)
-
-*Sean: "I want you to answer D1 to D4 yourself."* **The reasoning is recorded because the answers are contestable.**
-
-| | decision | answer and why |
-|---|---|---|
-| **D1** | **How many cases?** | **All 120 — staged.** *The join to Sean's existing grades is the entire point: it yields C1's trusted target AND a measure of my agreement with him, for free.* **Stage 1 = one category, method frozen; Stage 2 = scale.** *Grading a subset saves little because the expensive part (the category sweep) is shared.* |
-| **D2** | **Fresh cases or the existing 120?** | **The existing 120.** *A fresh sample **breaks the join**, doubles the work, and loses the comparison that gives C1 its target.* |
-| **D3** | **Blind?** | **Yes — and it now means something stricter than it did for Sean.** *If I see the tool's PS score, or the analyst's `tier_3` map, I am **reproducing the answer rather than producing an independent target**.* **⚠ CONTAMINATION DISCLOSURE: I have already read BK01-breadtalk's `tier_3` map (§4.6.3.2), so BK01 is COMPROMISED as evidence and must be excluded from the blind set — or re-derived by someone who has not seen it.** *The pilot's other five brands remain clean.* |
-| **D4** | **The competitive set?** | **I derive it; I do not read the analyst's.** *⚠ And the comparison between my derived map and the analyst's is **itself the first measurement of set-derivation quality** — the exact thing §4.6.2a left unmeasured.* **This is why D4 is the highest-value of the four.** |
-
-**⚠ WHAT THIS DOES TO C1 AND C3.** *Both were blocked on a trusted target. **Grading PS by this method produces
-that target** — but only for PS. *C1's compression spans all six dimensions, so a PS-only pass closes C3 and
-**informs** C1 without fully closing it.* **The honest statement: this unblocks C3, and it gives C1 its first
-trustworthy dimension.**
-
-**⚠ REPRODUCE:** *fetch `https://www.fourleaves.com.sg/about-us` and `https://tiongbahrubakery.com/pages/our-story`
-— both return 200 and carry claims the **homepages do not**; fetch `https://parisbaguette.com.sg` for the verbatim
-"#GoodBreadEveryday"; the analyst labels are `derived_competitive_set.tier_3_category_incumbent` in
-`inputs-v4/BK01-breadtalk.json`; the prompt-side wiring is `run_jev.py:79–89`.*
-
-### 4.6.3.6 THE TOOL IS BUILT AND RUN — `ps_evidence.py`, AND THE THREE DEFECTS ITS FIRST RUN FOUND IN IT
-
-*`specs/calibration/ps_evidence.py` implements §4.6.3.4: a surface ladder per rival, the claim gate, candidate-domain
-fall-through, and a three-way outcome that never invents.*
-
-| run | claims recovered (bakery, 6 rivals) |
-|---|---|
-| **first working draft** | **2 of 6** |
-| **after the three fixes** | **5 of 6** |
-
-**⚠⚠ THE FIRST RUN FAILED ON THREE OF ITS OWN DEFECTS, ALL OF WHICH MADE A REAL RIVAL LOOK LIKE IT STATES NOTHING.**
-*Recorded because two of them are the same mistake the resolver already made once (§3.7.24) — **committing to a single
-guess** — and it recurred in new code within the hour.*
-
-1. **Only the FIRST candidate domain was tried.** *`_domain_candidates("Four Leaves")` returns `fourleaves.com`
-   first; the real site is `fourleaves.com.sg`. The whole ladder was walked on the wrong domain, so the rival came
-   back `could_not_read` — **while a hand read of `fourleaves.com.sg/about-us` returned 200 and carried its claim.**
-   Fixed by falling through the candidate domains.*
-2. **The surface cap truncated the ladder before the surface that mattered.** *`max_surfaces=4` stopped at
-   `[about-us, about, our-story, homepage]`; **Tiong Bahru Bakery's claim is on `/pages/our-story`**, which was never
-   reached, so it was reported `read_no_claim` — again contradicting a successful hand read.*
-3. **The homepage sat at the end of the ladder.** *BreadTalk's claim is on its **homepage**, not its About page, so a
-   truncating cap made it look like it states nothing.*
-
-**✅ AND THE SAFETY PROPERTY HELD THROUGHOUT, WHICH IS THE ONE THAT MATTERS: THE TOOL NEVER INVENTED A CLAIM.**
-*A wrong-surface read returns `read_no_claim`; a failed read returns `could_not_read`.* ***Neither is ever a fabricated
-finding about a rival.*** *The gate also visibly worked: Polar Puffs' raw claim-shaped hits were a **delivery price
-line** and **customer testimonials**, and Paris Baguette's were an **emoji-laden promo tile** — all three rejected.*
-
-**✅ FINAL RUN — 5 of 6, each with its domain and a verbatim quote:**
-| rival | surface that yielded it | derived claim (opening) |
-|---|---|---|
-| **BreadTalk** | **homepage** | *"over 700 outlets in 14 international markets… culinary magic"* |
-| **Four Leaves** | **/about-us** | *"we started our first outlet at Nutmeg Road… our Central Factory"* |
-| **Paris Baguette** | **/about** | *"our bakers, cakers and baristas go further every day to perfect their own craft"* |
-| **Tiong Bahru Bakery** | **/pages/our-story** | *"We first opened our doors in 2012 at 56 Eng Hoon Street"* |
-| **Duke Bakery** | **/about-us on `dukebakery.sg`** | *"Combining Japanese and European baking techniques, we craft soft, healthy breads"* |
-| **Polar Puffs & Cakes** | — | **⚠ `could_not_read`.** *Its real domain is `polarpuffs-cakes.com` — hyphenated at ONE internal boundary only, a form no simple rule generates. **Reported as a stated limit, correctly, not as an absence.*** |
-
-**⚠ SO THE METHOD IS RUNNABLE AND THE MAP IS DERIVABLE.** *5 of 6 rivals yielded a claim with provenance in ~70s of
-wall clock, and the single failure is flagged rather than hidden.* **⚠ BUT §4.6.3.2's FINDING STANDS AND IS NOT
-SOFTENED BY THIS: the derived claims do NOT match the analyst's `tier_3` labels.** *Four Leaves derives as
-"leading / Central Factory", **not** "everyday"; **Paris Baguette's own copy carries "everyday".** ***Deriving the map
-does not confirm the map the corpus was scored against — it contradicts it on at least one incumbent.***
-
-**⚠ REPRODUCE:** *from `specs/calibration/`: `python3 ps_evidence.py "BreadTalk" "Four Leaves" "Paris Baguette"
-"Tiong Bahru Bakery" "Polar Puffs & Cakes" "Duke Bakery"`.*
-
-
----
-
-## 4.6.4 THE CLAIM/MIND PROTOCOL — VERIFYING WHAT CUSTOMERS THINK, NOT JUST WHAT THE BRAND SAYS
-
-**⚠ SEAN'S DIRECTION (8 Oct):** ***"To achieve the claim/mind distinction, it is important to independently verify what their
-customers think. To do so you need as part of the process to get customers reviews assessed. B2C can be derived from Google
-reviews just like what we did for bubble tea with caica and sgsaladshop. Run similar processes. B2B is different, and you need to
-figure a way to get b2b customers feedback somehow. If there is a difference in claim/mind, we have a problem with there worth
-flagging. For new companies that do not have a mind distinction yet, then their claim has to be evaluated against their
-competitors' claim."***
-
-**⚠ WHY THIS COMPLETES §4.6.3.** *§4.6.3 derives what a brand **PUBLISHES**.* **That is only half the object.** *A brand can
-publish "artisan" while its customers experience "cheap and convenient" — and per positioning theory that is not a positioning
-at all, it is **unfulfilled copy**.* **The law that governs it: judge *sets-the-reference* vs *follows-it*, never popularity**
-*(positioning-strategy).* *A brand following its category's language holds no position however loudly it says it.*
-
-### 4.6.4.1 ⚠ THE THREE-WAY RULE — SEAN'S, AND IT DECIDES THE WHOLE PIPELINE
-
-```
-STEP 1.  Is there INDEPENDENT CUSTOMER EVIDENCE for this business?
-         B2C -> Google reviews (proven path), plus any category review site
-         B2B -> G2 / Capterra / Clutch / tender records / corroborated client list
-
-  NO  ->  NEW OR UNOBSERVED: no mind yet.
-          ***Evaluate the CLAIM against COMPETITORS' CLAIMS only*** (§4.6.3's map).
-          ⚠ Report the limit explicitly: "no independent customer evidence found, so the
-            claim could not be tested against what customers actually think."
-            A limit is stated, never smoothed over -- and never reported as an absence of customers.
-
-  YES ->  Compare the customers' OWN WORDS against the brand's published claim.
-          AGREE     -> the position is real and supported.
-          DISAGREE  -> ⚠⚠ FLAG IT: the brand claims X; its customers describe Y.
-```
-
-**⚠ THE FLAG IS THE PRODUCT.** **A claim/mind divergence is a finding worth raising on its own** — *it is the difference
-between "we say we are artisan" and "our customers say we are the cheap option", and the second is the truth the owner is
-paying to hear.* **It must render in plain English, as a consequence, not as a metric.**
-
-### 4.6.4.2 B2C — THE PROVEN PATH, AND ITS EXACT BLOCKER *MEASURED TODAY*
-
-**The machinery exists and is validated** *(web-search-scraping-protocol; `client-competitive-analysis/scripts/gmaps_reviews_scraper.py`,
-"VALIDATED 2026-09-11 … 69–140 verbatim reviews per place")*. **The SaladShop 12,523-text corpus on disk is the same path.**
-
-**⚠⚠⚠ AND IT IS BLOCKED RIGHT NOW ON ONE THING: THE GOOGLE SESSION IS STALE.** *A probe was run today against two bakery
-brands (`probe_b2c_reviews.py`, then `diag_b2c_mind.py`).* **Result, and it is unambiguous:**
-
-| reading | value |
-|---|---|
-| place cards found | **11** *(enumeration works)* |
-| **signed-out limited-view banner** | **True — ON BOTH BRANDS** |
-| review-tab button present | **False** |
-| **review cards captured** | **0** |
-
-***The profile was seeded from the Firefox login on 25 Aug; the Google session has since expired, so Maps serves the
-signed-out "limited view" that carries NO review feed.*** **This is a stated limit with a named cause, not an absence of
-reviews** — *and the distinction is the whole point of §4.6.2's rule.*
-
-**⚠ THE REMEDY IS SEAN'S, AND IT IS SMALL:** *re-login to Google in **Firefox**, quit Firefox (which flushes cookies to
-disk), and the profile can be re-seeded with `cookies.sqlite` + `key4.db` + `cert9.db` only.* **⚠ Copy ONLY those three —
-`compatibility.ini` is an FF-version lock that makes Camoufox refuse to open the profile (validated bug, 2026-09-15).**
-
-**⚠ AND TWO DEFECTS THE PROBE FOUND IN MY OWN CODE, BOTH FIXED:**
-1. **`links[0]` was taken blindly.** *For "Tiong Bahru Bakery Singapore" the **first** place card is **`Kopi & Tarts @ City
-   Square Mall`** — a different business — and for BreadTalk it is the same. The probe scraped the wrong business and would
-   have reported its reviews as the brand's.* ***Same "commit to the first guess" class as §3.7.24 and §4.6.3.6.*** **Fixed by
-   matching the card's name against the brand** *(verified: now picks `BreadTalk` at index 1 and `Tiong Bahru Bakery` at index 2).*
-2. **A zero was reported without a reason.** *"0 reviews" is exactly the silent failure §4.6.2 forbids.* **The diagnostic now
-   pairs every count with a verdict** — *`SESSION STALE` vs `FLOW DEFECT`* — *which is how the stale login was identified
-   rather than guessed at.*
-
-### 4.6.4.3 B2B — THE PART THAT HAD TO BE DESIGNED, AND THE LADDER
-
-***B2C review sites index PLACES. B2B review sites index VENDORS. So the source depends on how the thing is bought — and
-there is no single equivalent of Google Maps.*** *The ladder, most-corroborated first:*
-
-| # | where B2B customers actually speak | covers | ⚠ caveat |
-|---|---|---|---|
-| **1** | **G2, Capterra, TrustRadius, Gartner Peer Insights, Product Hunt** | *software / SaaS* | *Cloudflare-walled — needs the protocol's Camoufox tier; many SMEs absent entirely* |
-| **2** | **Clutch, GoodFirms, DesignRush** | *agencies, professional services* | *verified-client reviews; thin for small firms* |
-| **3** | **Marketplace reviews** — AppExchange, AWS Marketplace, Shopify App Store | *marketplace-sold* | ***strongest of all**: tied to a real purchase* |
-| **4** | **Tender / procurement award records** *(GeBIZ in SG)* | *government, regulated suppliers* | ***not opinion — a recorded buyer DECISION.*** *A repeat winner has a demonstrated mind position* |
-| **5** | **Analyst peer-review sections + Magic Quadrant / Forrester Wave** | *enterprise* | *professional-buyer consensus, not verbatim voice* |
-| **6** | **⚠ THIRD-PARTY CORROBORATION OF THE CLIENT LIST** | *everything else* | *see below — the substitution that makes B2B tractable* |
-| **7** | LinkedIn recommendations, case studies, Reddit/HN threads | *anything* | *⚠ WEAKEST: self-selected or anecdotal. Never the sole basis* |
-
-**⚠⚠ #6 IS THE ONE THAT MAKES B2B WORK, AND IT IS A GENUINE SUBSTITUTION RATHER THAN A COMPROMISE.**
-*A B2B firm's own case-study page is **self-published — that is claim, not mind**, and it must never be counted as customer
-evidence.* **But it becomes evidence when the named customer's OWN site names the vendor back.** ***The client's own site is a
-third party saying "we chose them" — which is precisely the sentence the mind test needs.*** **So the rule: a client logo
-counts as mind evidence ONLY when the client's own domain independently mentions the vendor.** *Everything else stays claim.*
-
-**⚠ AND THE HONEST FLOOR, WHICH WILL BE THE COMMON CASE:** *most B2B SMEs — and certainly the home-based and personal-service
-businesses in D3's segment — will have **no reviews, no analyst coverage and no corroborated client list**.* ***For them the
-answer is STEP-1-NO: no mind exists to test, and the claim is assessed against competitors' claims alone, with the limit
-stated.*** **⚠ Do NOT manufacture a mind from testimonials.** *A self-selected quote is the same failure as an invented claim.*
-
-### 4.6.4.4 ⚠ HOW "AGREE" AND "DISAGREE" ARE ACTUALLY DECIDED — NOT BY IMPRESSION
-
-**Two tests, in order. The second is the one that matters.**
-
-**Test 1 — vocabulary overlap.** *Do the reviewers' distinctive terms for the brand match the claim's distinctive terms?*
-*Cheap, mechanical, and necessary but **not sufficient**.*
-
-**⚠ TEST 2 — ATTRIBUTION: DO THE CUSTOMERS CREDIT *THIS BRAND* WITH THE CLAIM, OR TREAT IT AS TRUE OF THE WHOLE CATEGORY?**
-***This is the sets-the-reference test, and it is the discriminator.*** *If reviewers say "their bread is fresh" alongside "all
-these bakeries are fresh", the claim is a **category convention** and the brand owns nothing — **even though the words
-match.*** *The claim is real only when reviewers attribute it to this brand **against** the alternatives.*
-**⚠ Operationalised:** *does a review name the rival as the comparison?* ***"I go here instead of X because…" is the sentence
-that proves a position exists.*** *A review with no competitor in it is category talk, and category talk corroborates nobody.*
-
-**⚠ AND THE FAILURE DIRECTIONS TO STATE, BOTH REAL:** *too few reviews to test at all* (report the count and refuse the
-verdict), and *reviews that are about the visit rather than the brand* **— a bakery's reviews are mostly about whether the
-bun was warm.** *A corpus of service impressions cannot settle a positioning question, and must say so rather than being
-pressed into service.*
-
-**⚠ REPRODUCE:** *`/tmp/mind_diag.json` holds the per-brand diagnosis (`limited_view: true`, `cards: 0`); the scraper is
-`client-competitive-analysis/scripts/gmaps_reviews_scraper.py`; the diagnostic is
-`profiles/accelerator/cache/scratch/diag_b2c_mind.py`; re-seed by re-logging into Google in Firefox and copying
-`cookies.sqlite` + `key4.db` + `cert9.db` into the Camoufox profile.*
-
-### 4.6.4.5 ⚠⚠ THE MIND CAPTURE NOW RUNS END-TO-END — AND ITS FIRST HONEST RESULT IS *INCONCLUSIVE*, NOT A FLAG
-
-**✅ SEAN RE-LOGGED INTO GOOGLE IN FIREFOX AND THE WHOLE CHAIN NOW WORKS.** *Three bakery brands captured
-(50/30/30 verbatim reviews). Four defects were found and fixed to get there — **three in the pipeline, one in my own
-metric** — and the result is more useful than a clean pass would have been.*
-
-| # | defect | evidence it was real |
-|---|---|---|
-| **1** | **The cookie seed omitted the WAL.** *`cookies.sqlite-wal` was **557KB** and 26 seconds old when the login was fresh — the new session was in the WAL, not yet checkpointed. The project scraper's `SEED_FILES` copies only `cookies.sqlite`.* | *Before: **`limited_view: True`, 0 cards**. After seeding **`cookies.sqlite` + `-wal` + `-shm`**: `limited_view: False`* |
-| **2** | **The place ID was thrown away.** *`href.split("data=")[0]` is the scraper's **DEDUPE KEY**, and I used it as the destination — which strips the `data=!4m…!3m…` that identifies the place, so the page loaded as a shell.* | *Before: **review tab absent, 0 cards**. Navigating the FULL href: **tab=True, 100 cards**.* |
-| **3** | **The review TEXT was taken from the whole card.** *`inner_text()` on the card container returned **Google's UI chrome and the owner's replies**: the top "words" across 100 BreadTalk reviews came back as `share/photos/reviews/guide/owner/response`.* | *Sampling `.wiI7pd` (the review body) instead: the text becomes real customer voice — "the old aunty on duty… is very rude".* |
-| **4** | **⚠ MY OWN METRIC SELF-MATCHED.** *My rival detector reported **9 rival mentions for Tiong Bahru Bakery** — and **all nine were the brand naming ITSELF**, because `"tiong bahru"` is a substring of `"Tiong Bahru Bakery"` and my exclusion tested `r != b.lower()` against the full name.* | *Reading the flagged reviews: **not one of them names an alternative.** After the fix: **zero rival comparisons.*** |
-| | | ***⚠ Defect 4 is `"independence means who is SPEAKING"` and `"a subdomain split quietly doubles a single voice"` — the protocol's own documented failure, and I reproduced it as a substring match.*** |
-
-**⚠⚠⚠ THE RESULT — AND IT IS NOT THE ONE SEAN'S RULE ANTICIPATED. THE CORPUS CANNOT SETTLE THE QUESTION.**
-
-| brand | n | language of the reviews | rival named *(after fixing self-match)* | claim language present |
-|---|---|---|---|---|
-| **BreadTalk** | 50 | **service-dominated** *(staff 15, service 12, **rude 10**, cashier 7)* | **0** | **none** |
-| **Paris Baguette** | 30 | **service-dominated** *(32 service vs 15 product)* | **0** | **none** |
-| **Tiong Bahru Bakery** | 30 | **product/experience** *(croissant, seating, air-con, prices)* | **0** | **none** |
-
-***No review of any of the three brands compares it against a named alternative, and none uses the brand's own positioning
-language.*** **By §4.6.4.4's Test 2 — "a review with no competitor in it is category talk, and category talk corroborates
-nobody" — this corpus corroborates nobody.**
-
-**⚠ SO THE HONEST VERDICT IS `INCONCLUSIVE`, NOT "CLAIM/MIND DIVERGENCE FLAGGED".** *The reason is the one §4.6.4.4
-predicted before the data existed: **"a bakery's reviews are mostly about whether the bun was warm… such a corpus cannot
-settle a positioning question, and must say so rather than being pressed into service."*** *That is exactly what these are —
-service and product impressions.* **⚠ Reporting these as "the market disagrees with your positioning" would be the
-confident-garbage failure this whole protocol exists to prevent.**
-
-**⚠⚠ AND THE PRECONDITION SEAN'S RULE NEEDS, NOW MEASURED: BEFORE TESTING CLAIM AGAINST MIND, CHECK THE CORPUS IS ABOUT THE
-BRAND AND NOT ABOUT THE VISIT.** *A corpus dominated by service/product impressions **cannot** return a divergence finding,
-however large it grows.* **So the mind test needs a gate on corpus TYPE, and baked-goods retail fails it.** *⚠ This does not
-weaken the rule — it says where the rule can be applied.*
-
-**⚠ ONE GENUINE SIGNAL, AND IT POINTS AT THE EARLIER FINDING.** *A TBB reviewer writes **"Tiong Bahru Bakery has been an
-iconic café in the area"**.* **⚠ "Iconic" is BreadTalk's analyst-assigned claim, not TBB's** — *whose analyst label is
-"artisan".* **So the claim vocabulary does surface in the mind, but attached to the wrong brand** — *consistent with
-§4.6.3.2, where the `tier_3` labels were measured to sit on the wrong brands.*
-
-**⚠⚠ THREE LIMITS ON THIS RESULT, ALL OF WHICH BOUND IT HARD.**
-1. **n is 30–50 reviews per brand.** *That is thin for a positioning claim and thinner after the corpus turns out to be
-   service impressions.* **It is enough to establish the corpus TYPE, not to measure a mind.**
-2. **Keyword counting is a weak test.** *"craft" not appearing as a word does not mean customers do not experience craft —
-   they may write "the croissant is way better than X".* ***So "claim language: none" is a weak-evidence result and must NOT
-   be read as "the claim is unperceived".***
-3. **Bakery is one category, and it is the least likely to bear a positioning corpus at all.** *⚠ The method is not
-   discredited by this — **the category was badly chosen for a first test, and that is now measured rather than assumed.***
-
-**⚠ REPRODUCE:** *`capture_b2c_mind.py <brand…>` (writes `/tmp/mind_capture.json`); the run needed
-`cookies.sqlite` + `-wal` + `-shm` + `key4.db` + `cert9.db` seeded from the Firefox login **while Firefox was running**;
-full place hrefs are in the enumeration, never the `data=`-stripped form; review bodies come from `.wiI7pd`.*
-
-### 4.6.4.6 ⚠⚠⚠ SECOND CORPUS, SAME VERDICT — AND NOW THE CAUSE IS ESTABLISHED. GOOGLE MAPS REVIEWS ARE THE WRONG INSTRUMENT FOR POSITIONING
-
-*Sean's instruction was to run the same process on the category he named — the CaiCa / SaladShop corpora.*
-**The SaladShop corpus was already on disk: 142 entries, 28 chains, 12,523 verbatim reviews.** *The result is a
-measured negative, and a structural one.*
-
-**⚠⚠ THE FINDING: THE UNIT OF A GOOGLE MAPS REVIEW IS THE OUTLET, NOT THE BRAND.**
-***142 entries resolve to 28 chains*** — *"Stuff'D" alone appears as 30+ separate places, each with ~200 reviews.*
-**A Google Maps review is attached to a PLACE — the branch the customer walked into.** *Positioning is a
-**brand-level** property.* **So a mind built from Maps reviews is a mind about *that outlet*, and no amount of volume
-turns outlet experience into brand position.** *This is why no positioning signal appeared in either corpus, and it is
-a property of the instrument, not of the categories tested.*
-
-**⚠ AND THE CORPUS IS ABOUT THE VISIT, IN BOTH CATEGORIES, MEASURED.**
-*Per 200-review sample of the salad corpus: **Stuff'D carries ~113–146 service-impression mentions** (staff, rude,
-queue, cashier) against 33–100 product mentions.* **The bakery corpus measured the same thing (§4.6.4.5).** *Two
-categories, 12,633 reviews, one conclusion: **food-retail reviews describe the visit.***
-
-**⚠⚠ AND THE ATTRIBUTION TEST NEEDS A CORRECTION I FOUND IN MY OWN ANALYSIS — TWICE.**
-*Measuring cross-brand comparison required identifying when a review names a rival, and **three successive versions
-were wrong**:*
-1. **Substring matching self-matched.** *9 "rival mentions" for Tiong Bahru Bakery were the brand inside its own name
-   (§4.6.4.5).*
-2. **Word-boundary matching on raw brand names matched English words.** *`crunch` inside "lacks crunch",
-   `corner` inside "bottom left corner", `grains` inside "grain bowl".* ***The protocol's own rule — "navigation
-   labels and currency codes appear on every site in every category, so they are the MOST-corroborated strings" —
-   applies to BRAND NAMES made of common words.***
-3. **A frequency filter (drop keys in >3% of ALL reviews) removed `daily`, `salad`, `stuff`, `super` — and still left
-   the decisive case: `Salad Shop`, a brand **literally named after the generic phrase**, collected **168 of the 449
-   hits**. Every one is a false positive.*
-
-**⚠ SO THE CLEANED NUMBER IS NOT DEFENSIBLE EITHER.** *3.59% cross-brand mentions became, on inspection, a fraction of
-that — and the residue is quality-and-value comparison ("generous with the dressing"), **not positioning-claim
-comparison.*** **⚠ An automated "who owns which claim" test cannot be built on this corpus, and I stopped refining
-because each fix exposed the next class of junk — the protocol's stated signal that the MECHANISM is wrong.**
-
-**⚠⚠ WHAT THIS MEANS FOR SEAN'S RULE, STATED PLAINLY.**
-***Google Maps reviews answer "what do customers care about" — which is what the CaiCa and SaladShop theme analyses
-actually measured, and it is genuinely useful. They do NOT answer "which brand owns which claim."*** **The claim/mind
-test needs an instrument whose reviews are *about the vendor's differentiation and name the alternative* — and food
-retail, reviewed by the visit, is the opposite of that.**
-
-**✅ AND THE INVERSION THIS PRODUCES: THE B2B DESIGN OF §4.6.4.3 IS THE BETTER INSTRUMENT, NOT THE FALLBACK.**
-*G2 / Capterra / Clutch reviews are **inherently comparative and vendor-level**: a reviewer states what they evaluated,
-what they switched from, and why. That is the attribution sentence §4.6.4.4 needs* — ***"I go here instead of X because…"
-is the NORM on a B2B review site and the exception on Google Maps.*** **So the mind test should be attempted on a B2B
-category FIRST, where the instrument matches the question.**
-
-**⚠ AND THE B2C BRANCH STILL HAS A HOME, NARROWLY DEFINED:** *a category where the buyer **researches and compares**
-rather than transacting* — *high-ticket, considered purchase, switching intent voiced.* **⚠ That is a hypothesis, not a
-finding, and must be tested before it is relied on.**
-
-**⚠ REPRODUCE:** *`google_reviews_full.json` — 142 entries / 28 chains / 12,523 reviews; aggregate by CHAIN before any
-brand-level statement; the generic-key test is key-frequency across ALL reviews (`>3%` dropped `daily`, `salad`,
-`stuff`, `super`); `Salad Shop` is the case that defeats frequency filtering.*
-
-### 4.6.4.7 ⚠⚠⚠ THE B2B TEST — AND THE RULE IT EXPOSES: IT IS NOT B2C-vs-B2B, IT IS WHETHER THE REVIEW FORM ASKS THE COMPARISON QUESTION
-
-*Option 1: test the B2B mind instrument on a real B2B category.* **Case: `C9-b2b-it-services`** — *a Singapore
-managed-IT and cybersecurity firm for SMEs; claim **"one accountable team for every layer of your IT, instead of
-juggling eight vendors"**, differentiator **"we publish our rates"**.*
-
-**⚠ FIRST PROBLEM, AND IT IS STRUCTURAL TO B2B INTAKE: THE OWNER NAMED ARCHETYPES, NOT COMPANIES.**
-*His `competitors_named` is: "One in-house IT hire (the alternative to buying)", "Separate single-service vendors
-(the status quo we replace)", "The larger established MSPs with longer client relationships", "Cheaper per-ticket IT
-support shops".* **The analyst's own diagnostic: "The owner did NOT name any of the six competitors found… the
-blindspot is structural."** ***You cannot look up "the larger established MSPs" on G2.*** **So for B2B the named set
-must be derived before any mind work can begin — the same conclusion as §4.6.3, one step earlier in the pipeline.**
-
-**⚠ SECOND PROBLEM, AND IT IS A DEAD END: THE B2B DIRECTORIES ARE BOT-WALLED, AND THEY FAIL *SILENTLY*.**
-*Clutch / DesignRush / TechBehemoths were all attempted through the static ladder **and** through a real stealth
-browser (the same Camoufox profile that had just worked on Google Maps).* **Clutch returned an 813-character shell.**
-*DesignRush returned 1,465 chars and TechBehemoths 1,590 — **and both were NAVIGATION MENUS** ("AGENCIES / Web Design
-Companies / PPC Agencies / Branding Agencies").* **A naive extractor rendered those menus as VENDOR NAMES.**
-***That is the protocol's worst documented failure — a block page returning as ordinary text — and it produced a
-plausible-looking garbage vendor list that only reading the output caught.*** **Recorded as a NEGATIVE; not patched
-again (the protocol's own stop rule).**
-
-**✅ THE ROUTE THAT WORKED: GOOGLE MAPS FOR THE SET, BECAUSE A MANAGED-IT FIRM IS A LOCAL B2B SERVICE.**
-*29 named MSPs derived from three category searches* — **and the capture ran clean** *(tab opened, `limited_view:
-False`, verbatim text)*. **⚠ The derivation needed noise-stripping: the same search returned a fibre-products
-distributor and, memorably, **"WINZ CREDIT PTE LTD — Best Money Lender in Clementi"**. A category query returns
-lookalikes.* **⚠ AND REVIEW VOLUME IS AN ORDER OF MAGNITUDE LOWER THAN B2C: 40 / 11 / 7 / 1 reviews** *on the sample
-captured.* ***B2B firms simply have far fewer reviews, which caps what any mind test can do here.***
-
-**⚠⚠⚠ THE RESULT — AND IT REFUTES THE HYPOTHESIS I GAVE SEAN, WHILE EXPLAINING WHY.**
-| finding | measured |
-|---|---|
-| **B2B reviews ARE about the vendor relationship, not the visit** | **✅ CONFIRMED** — *IT Block **relationship 27 vs service 11**; iXiZ **9 vs 4*** ("partnering with Ixiz since 2007", "under the good hands of Roy Chan… for many years"). *Contrast food retail's "rude staff" / "the bun was warm".* |
-| **B2B reviews name an alternative** | **❌ ZERO of 59.** *No `switched`, no `compared`, no `alternative`, no `instead of`, no `previously` — on any brand.* |
-| **B2B reviews use the vendor's positioning language** | **❌ ZERO.** *The claim is "one team instead of juggling eight vendors" / "we publish our rates"; the reviews say "professional, knowledgeable, quick to respond". Generic service-praise, not the claim.* |
-
-***So the attribution sentence — "I chose X over Y because…" — is absent from B2B Google reviews too.*** **My
-hypothesis was that B2B is the better instrument. It is not, and the reason matters more than the refutation.**
-
-**⚠⚠⚠ WHY — AND THIS IS THE RULE. GOOGLE REVIEWS ARE POST-PURCHASE.** *Their author has already chosen, and is
-describing their own experience with the vendor they picked.* ***A satisfied customer does not narrate the
-alternative they rejected.*** **The comparison happens in the BUYING DECISION, which is exactly what a Google review
-is not.** *B2B's improvement — reviews about the relationship rather than the visit — does not change that, because
-relationship depth and competitive comparison are different things.*
-
-**✅ SO THE DISCRIMINATOR IS NOT B2C-vs-B2B. IT IS WHETHER THE REVIEW FORM ASKS THE COMPARISON QUESTION.**
-*Google's form asks "how was your experience".* ***G2, Capterra, TrustRadius, Clutch and Gartner Peer Insights ask
-"what alternatives did you consider", "what do you dislike", "what problems does it solve" — the comparison is
-SOLICITED, so it appears in the text.*** **That is why those platforms are the right instrument — the platform's
-form, not the buyer's nature.**
-
-**⚠ AND IT GIVES THE MIND TEST A CLEAN PRECONDITION, WHICH REPLACES THE ONE IN §4.6.4.5:**
-```
-CAN THIS CATEGORY BE MIND-TESTED AT ALL?
-  A review corpus whose FORM asks about alternatives -> YES, test attribution.
-  A post-purchase corpus (Google Maps, Trustpilot, Yelp) -> NO. Attribution is absent BY CONSTRUCTION,
-      not by scarcity, and more volume will not produce it.
-      -> fall to the claim-vs-claims branch (§4.6.3), limit stated.
-```
-***That single test replaces the corpus-type check, and it is measurable before any capture: read the review form.***
-
-### 4.6.4.8 ✅ THE FORM HYPOTHESIS, MEASURED — AND THE INSTRUMENT IT ACTUALLY IDENTIFIES
-
-*Option 1, run to completion: read the review FORMS and test whether a comparative corpus is reachable.*
-**Verdict: the hypothesis is SUPPORTED in mechanism, and the measurement identifies a sharper instrument than
-the one I proposed.** *Five platforms measured; the two largest are walled.*
-
-**✅ THE FORM IS THE DISCRIMINATOR — 4 OF 5 SOLICIT THE COMPARISON, QUOTED VERBATIM.**
-| platform | form asks about alternatives? | verbatim wording | corpus reachable? |
-|---|---|---|---|
-| **G2** | **YES** | *"Did your company switch to {product} from another software?"* → *"What did you switch from?"* → *"Why did you switch? How does {product} compare to your previous system?"* | ❌ **DataDome** |
-| **TrustRadius** | **YES** | *"Alternatives Evaluated: Which other similar products have you used or evaluated? Explain how this product stacks up against them and why you selected it."* | ✅ 6,396 chars |
-| **Clutch** | **YES (partial)** | *"Why did you select {vendor} over others?"* / *"How did you select this vendor and what were the deciding factors?"* | ✅ **13,010 chars, 110 review bodies (independently re-verified)** |
-| **Gartner Peer Insights** | **YES** | *"Which other vendors did you consider in your evaluation?"* — answers are **named vendors** | ❌ **403 `cf-mitigated: challenge`** |
-| **Capterra** | **❌ NO** | *"Pros: What did you like most…"* / *"Cons: What did you like least…"* / *"Describe your overall experience"* — **no alternatives field** | ✅ 3,121 chars |
-
-**⚠ AND CAPTERRA IS A NATURAL CONTROL.** *It shares G2's corporate group and engineering, and it is the **one**
-platform that asks nothing about alternatives.* ***Same company, same stack, different question — and the
-comparison field is absent.*** **That is the cleanest available evidence that the QUESTION, not the customer or the
-platform's ownership, determines whether an alternative gets named** — *and it corroborates §4.6.4.7's finding that
-the post-purchase state of the Google reviewer is not the cause.*
-
-**⚠⚠ BUT THE MEASUREMENT REFUTES THE INSTRUMENT I PROPOSED, AND THAT IS THE USEFUL PART.**
-*Every alternatives question asks **which vendors were weighed and why this one was chosen** — a
-**purchase-decision comparison**, not "does what you claim match what we think".* **So the corpus yields a
-consideration set and a choice rationale — which is NOT the claim-vs-vocabulary test of §4.6.4.4.**
-
-**✅ THE INSTRUMENT IT ACTUALLY IDENTIFIES — AND IT IS BETTER THAN MINE.**
-***"Why did you select {vendor} over others?" is the mind-test instrument.*** **It does not measure whether customers
-repeat the claim's words; it measures whether the claim is what WINS THE BUSINESS.**
-```
-claim: "we publish our rates"    buyer says "we chose them because they publish rates"  -> claim CORROBORATED
-claim: "one team instead of eight vendors"  buyer says "we chose them because they were cheapest"
-                                                           -> ⚠ claim CONTRADICTED: price wins, not the claim
-```
-***That is a stronger test than vocabulary overlap, because a buyer stating their own selection reason cannot be
-coached, and it is exactly the "why did you choose X over Y" sentence §4.6.4.4 concluded was absent from Google
-reviews.*** **It is absent from Google because Google does not ask it — and present on TrustRadius, Clutch, G2 and
-Gartner because they do.**
-
-**⚠ SO THE MIND TEST HAS A MEASURED SCOPE, AND IT IS NARROW: TRUSTRADIUS AND CLUTCH.**
-*Only these two combine a form that solicits the comparison **with a corpus that can actually be read**.*
-**G2 and Gartner Peer Insights ask the right question and are the two largest sources — and both are bot-walled.**
-***"The form asks it" ≠ "the answers can be read."***
-**⚠ AND CLUTCH'S VERSION IS WEAKER THAN IT LOOKS:** *its selection question offers **factor chips** ("Good value for
-cost", "UX expertise", "High ratings") rather than a free-text list of named alternatives — **so Clutch yields
-selection CRITERIA, which is what matters for the claim test, but not a named consideration set.***
-
-**✅ PRACTICAL CONSEQUENCE — AND IT PUTS OUR OWN CATEGORY IN SCOPE.** *TrustRadius and Clutch serve **software and
-agencies**.* **So the mind test applies to SaaS and agency/services categories, and everything else falls to the
-claim-vs-claims branch (§4.6.3) with the limit stated.** ***Clutch covers agency firms — and ObserveCo is itself a
-consulting firm — so the mind test is applicable to our own category, which is the one we can validate it against.***
-
-### 4.6.4.10 ✅ CONSULTING-AGENCY VALIDATION — THE RAW-REVIEW ROUTE FAILS, THE SYNTHESIS ROUTE WORKS, AND IT FOUND A SYSTEMATIC GAP
-
-*Ran on our own category — Singapore consulting/agency firms on Clutch — because §4.6.4.8 put it in scope and it
-is the one category we can also check by hand.*
-
-**⚠⚠ FIRST, §4.6.4.8 IS PARTLY REFUTED, AND THE CORRECTION MATTERS. THE SELECTION QUESTION IS ON THE FORM BUT NOT ON
-THE PUBLISHED PAGE.**
-*Step 2 read the live Clutch profile structure: it renders `BACKGROUND / OPPORTUNITY / CHALLENGE / SOLUTION /
-RESULTS & FEEDBACK / RATINGS` — **there is NO "Why did you select {vendor} over others?" section, and no
-"Alternatives" section, on the public profile.*** **The form asks the question and the published corpus does not show
-the answer.** *Then 8 Singapore consulting profiles were read in full — **68,081 characters** — and searched for
-selection-reason language (`we chose`, `selected because`, `compared`, `over other`, `switch from`, `evaluated`,
-`previous vendor`…):*
-```
-profiles rendering a selection/alternatives SECTION: 0 of 8
-selection-reason language hits across 68,081 chars: 0
-```
-***⚠ AND THE ZERO WAS VERIFIED BEFORE IT WAS BELIEVED.*** **A regex returning an absolute zero is more likely a broken
-harness than a finding, so control words were counted first: `project` 10–15, `team` 15–18, `client` 16–18, `review`
-14, `company` 17–23.** ***The harness works; the zero is real.*** **So §4.6.4.8's practical conclusion — "the mind test
-has a home on Clutch" — is WRONG as stated, and the reason is that a form's question does not survive into the
-published corpus.**
-
-**✅ BUT THE VALIDATION FOUND SOMETHING BETTER, AND IT IS USABLE. CLUTCH PUBLISHES A THIRD-PARTY SYNTHESIS OF WHAT
-CLIENTS ACTUALLY VALUED.** *The readable profile carries exactly two things, and neither is raw reviewer prose:*
-1. **the AGENCY'S OWN BLURB** — *"Make your brand easy to find and hard to forget. We are a Strategic Branding and
-   Design Agency."* → **that IS the published CLAIM (§4.6.3's object).**
-2. **a CLUTCH EDITORIAL SYNTHESIS of the verified reviews** — *"Clients appreciate their value for cost, noting
-   efficient communication and tailored services… **This summary is based on verified Clutch reviews.**"*
-   → **that IS a MIND signal: a third party's reading of what customers actually valued.**
-*Plus structured themes Clutch extracts (`Top Mentions`: "High-Quality Work (4)", "Timely (3)", "Knowledgeable (2)").*
-
-**✅ AND RUN ON SIX AGENCIES IT PRODUCED A SYSTEMATIC GAP — THE FLAG THE PRODUCT EXISTS TO RAISE.**
-| agency | CLAIM (their own words) | MIND (Clutch's synthesis of verified clients) | verdict |
-|---|---|---|---|
-| **Gohan Strategy** | *"Make your brand easy to find and **hard to forget**… transforming your brand's vision into revenue"* | *"offers **competitive pricing**… Clients appreciate their **value for cost**… efficient communication"* | **⚠ DIVERGES** — claim is transformation; the mind is cost |
-| **KeyHole Insights** | *"the intersection of **data analytics, market research, strategy and storytelling**"* | *"offers **competitive pricing**… clients **liken their services to major firms at lower costs**"* | **⚠ DIVERGES** — clients position them as a **cheap substitute for the big firms**, not as an insight specialist |
-| **TDCX** | *"**Award-Winning** Digital Economy Enabler… innovation and operational precision"* | *"High-Quality Work (4), Proactive (3), Results-Oriented (3), Timely (3)"* | **⚠ DIVERGES** — distinctive scale/innovation claims flatten into **generic quality themes** |
-| **STUDIO DAM** | *"**ESG Certified** design consultancy… efficient and **timeless** design"* | *"offers **competitive pricing** with high value… understanding client needs"* | **⚠ DIVERGES** — ESG and timelessness absent |
-| **Creative For More** | *"strategy must come **before execution**… tailored, **data-driven** marketing systems"* | *"**fair pricing**… clients report significant **ROI, +250% lead generation, +45% revenue**"* | **PARTIAL** — the **outcome** claim is corroborated; the **mechanism** claim is absent |
-| **Margin Wheeler** | *"**leading** corporate service provider… **chartered accountants** and certified corporate secretaries"* | *"good **value for cost**… **transparent pricing**… Knowledgeable (2)"* | **PARTIAL** — expertise is perceived, but weakly; price and timeliness dominate |
-
-***⚠⚠ THE PATTERN: EVERY CLAIM IS ABOUT DISTINCTIVE EXPERTISE. EVERY MIND IS ABOUT PRICE AND GENERIC SERVICE
-QUALITIES.*** *"Value for cost" leads the synthesis for 5 of the 6.* **That is precisely the claim/mind divergence
-§4.6.4.1 exists to flag — measured on real data, in our own category.**
-
-**⚠⚠ BUT ONE CONFOUND MUST BE CARRIED WITH THIS RESULT, AND IT IS SERIOUS.** ***Clutch is a marketplace whose
-editorial summary is built to support PRICING COMPARISON — its profile leads with a "Pricing Snapshot" and "Rating
-for cost".*** **So "the mind is about price" may be partly CLUTCH'S FRAMING rather than the customers'.** *The honest
-statement is: **the synthesis route yields a usable claim/mind comparison, with a known systematic bias toward price
-that must be discounted when reading it.*** **⚠ It is NOT a neutral instrument.**
-
-**✅ AND THE ATTRIBUTION TEST SURVIVES HERE, INSIDE THE SYNTHESIS.** *KeyHole's synthesis contains **"clients liken
-their services to major firms at lower costs"** — a genuine comparison sentence, the thing that was **absent in 59
-Google reviews**.* **⚠ §4.6.4.4's Test 1/Test 2 were written for raw review text; on Clutch they must run against the
-SYNTHESIS, which paraphrases** — *a literal keyword test misses it (that is how the 0 above occurred).*
-
-**⚠ SO THE CORRECTED DESIGN, REPLACING §4.6.4.8's CONCLUSION:**
-```
-CLAIM  = the vendor's own published blurb (already sourced, §4.6.3)
-MIND   = Clutch's editorial synthesis + extracted Top Mentions   [third-party, price-biased]
-        NOT the raw reviews (not published; 0/8 sections, 0 selection language)
-RUN ON = consulting / agency / SaaS firms with a Clutch profile  -> our own category qualifies
-LIMIT  = state that the synthesis is Clutch's aggregate and leads with pricing by construction
-```
-### 4.6.4.11 ⚠⚠ §4.6.4.10's HEADLINE IS REFUTED — THE PRICE DOMINANCE IS CLUTCH'S EDITORIAL FRAME, NOT THE CUSTOMERS'
-
-*The confound flagged in §4.6.4.10 was tested rather than carried, and the test is decisive.* **Clutch publishes
-TWO aggregates on the same profile:**
-- **SURFACE A — "What Clients Have Said":** *the editorial synthesis, price-led by construction (the profile leads
-  with a "Pricing Snapshot" and "Rating for cost").*
-- **SURFACE B — "Review Highlights":** *titled paraphrases of what individual clients said — a different block,
-  derived from client statements rather than the marketplace's pricing frame.*
-
-**Both surfaces were read from the same six agencies and classified identically:**
-```
-PRICE share — SURFACE A (summary):    100%   (6 of 6 agencies say "competitive pricing / value for cost")
-PRICE share — SURFACE B (highlights):   3%   (2 of 71 client-derived statements)
-
-SURFACE B composition: OTHER 36 | EXPERTISE 15 | DELIVERY 11 | OUTCOME 7 | PRICE 2
-```
-
-**⚠⚠ SO §4.6.4.10's HEADLINE FINDING — "every claim is about distinctive expertise, every mind is about price" — IS
-WRONG, AND I AM DOWNGRADING IT.** ***The price dominance is an artefact of reading the editorial summary.*** *On the
-client-derived surface, price is almost absent (2 of 71).* **The §4.6.4.10 table's "⚠ DIVERGES" verdicts are
-therefore NOT supported — they were produced by comparing a vendor's claim against Clutch's pricing frame.**
-
-**✅ THE CORRECTED READING — AND IT REVERSES THE CONCLUSION.** *On SURFACE B, **expertise appears in 15 of 71
-statements (21%)** — "praised for its strong branding and design expertise, successfully helping various companies
-… realign, launch, or rebrand their identities" (Gohan); "successfully executed branding and rebranding projects …
-enhancing brand propositions" (STUDIO DAM); "effective brand and marketing strategies" (KeyHole).*
-***So claims about distinctive expertise are broadly CORROBORATED by the client-derived surface, not contradicted.***
-**The mind test on Clutch, read correctly, returns AGREEMENT for most of these agencies.**
-
-**⚠⚠ AND THIS IS THE PRODUCT-RELEVANT FINDING, WHICH IS WHY THE TEST WAS WORTH RUNNING.**
-***Reading the wrong surface MANUFACTURES false divergences.*** **Had Clutch's editorial summary been fed to the
-scorer, the tool would have flagged six consulting firms as "claim/mind divergent" when the client-derived evidence
-says their expertise claims hold.** *A false divergence flag is worse than no flag: it tells a paying customer their
-positioning is broken when it is not, in the one report whose whole value is that its flags can be trusted.*
-**⇒ HARD RULE: the mind instrument must read CLIENT-DERIVED aggregates only; a marketplace's PRICING SUMMARY and any
-"rating for cost" surface are INELIGIBLE INPUTS.**
-
-**⚠ LIMITS, STATED — THIS CORRECTED READING IS WEAKER THAN IT LOOKS:**
-1. **BOTH surfaces are Clutch-authored.** *"Review Highlights" is paraphrase, not raw customer voice.* **⚠ Neither
-   surface is a verbatim reviewer quote, so no Clutch-derived reading is a primary-source mind measure.**
-2. **The classifier is keyword-based and 36 of 71 statements fell into OTHER** — *mostly operational detail ("they use
-   Slack, Zoom and email effectively", "developed a transparent performance monitoring system").* ***A 51% unclassified
-   bucket means the category shares are indicative, not precise.***
-3. **Six agencies.** *One category, one marketplace.*
-
-**⚠ SO THE MIND TEST'S STATUS AFTER THIS: it is runnable on Clutch, it must read CLIENT-DERIVED aggregates only, and
-its output on six consulting agencies is AGREEMENT — not divergence.** *The claim/mind FLAG has not yet been observed
-on real data.* **⚠ Which means §4.6.4.1's flag remains a designed capability that is UNPROVEN, and the honest thing to
-say about it is exactly that.**
-
-**⚠ REPRODUCE:** *`confound_test.py` (both surfaces, same six agencies, identical classifier;
-`/tmp/confound_test.json`); SURFACE A extraction is the `What Clients Have Said` … `This summary is based on` region;
-SURFACE B is the `Review Highlights` … `Reviews` region split into statements ≥40 chars.*
-**⚠ REPRODUCE:** *`consulting_set.py` (directory reads fine via Camoufox — 28,228 chars, 200 links; the earlier
-813-char shell was the `/sg/it-services/...` path, a different wall); `consulting_decide.py` (0/8 sections,
-0 hits in 68,081 chars); `verify_zero.py` (control-word proof the zero is real); `claim_vs_mind.py` (the six
-side-by-side pairs); artifacts `/tmp/consulting_*.json`, `/tmp/claim_vs_mind.json`.*
-
-**⚠ REPRODUCE:** *the five forms are quoted with source URLs in `/tmp/ws_a_forms.md` (24.9 KB, with a raw appendix);
-Clutch reachability re-verified independently by `verify_clutch.py` (13,010 chars, 110 bodies); the implementation of
-this section's verdict rules is `specs/calibration/mind_test.py` (§4.6.4.9).*
-
-### 4.6.4.9 THE PRECONDITION GATE, AS CODE — `specs/calibration/mind_test.py`
-
-**⚠ THE §4.6.4.7 RULE IS NOW ENFORCED BY A FUNCTION THAT CANNOT GUESS.** *`can_mind_test(platform, registry)`
-returns YES / NO / **UNKNOWN**, and **YES only when the caller's registry says the form solicits comparisons**.*
-**There is no built-in fallback and no default: an absent key, an empty or `None` registry, or an uninterpretable
-value all return UNKNOWN.** *UNKNOWN is deliberately **not** collapsed into NOT_APPLICABLE — asserting a corpus is
-non-comparative when that is unknown would be the same class of error as guessing YES.*
-
-**✅ THE THREE EXCLUSIONS THAT BIT US ARE ALL ENFORCED:** *(a) the brand's own name is masked out of its own reviews,
-**and** a rival that is a token-subset of the brand name is dropped, both recorded in `excluded.brand_self_alias`;
-(b) a rival whose every token is in the caller's `generic` set is dropped into `excluded.generic_common_word` —
-**whole-word matching alone provably does not fix "corner" in "bottom left corner"**, so the caller's set is the
-load-bearing input; (c) whole-word, case-insensitive, hyphen/apostrophe tolerant.* **Evidence: the self-test's
-`SELF_MATCH_BRAND_REPEATED`, `SELF_MATCH_MASKED_ACROSS_BRAND_NAME`, `GENERIC_WORD_RIVAL_EXCLUDED`.**
-
-**⚠ VERDICTS NEVER SMOOTH A LIMIT:** *attribution found **and** claim-term overlap → AGREES; attribution without
-overlap → DISAGREES with `divergence_flag=True` **and `weak_evidence=True`**; no attribution → **INCONCLUSIVE with
-`divergence_flag=False`** and the §4.6.4.4 wording that category talk corroborates nobody; post-purchase platform →
-**NOT_APPLICABLE, `branch="claim_vs_claims"`**; unusable corpus → **REFUSED, same fallback branch**.*
-
-**✅ VERIFIED INDEPENDENTLY, NOT TAKEN ON REPORT:** *the self-test runs **21 checks, 21 passed, exit 0** under
-`/Users/seanfzc/.hermes/hermes-agent/venv/bin/python` (958 lines, 17 functions; the size is docstrings and 36
-synthetic fixtures, not bloat).* **Determinism holds ACROSS processes, not just within one.** *Refusals are
-exercised for bot-wall, navigation chrome, empty, too-thin and `None` corpora — **the failure mode that produced a
-fake vendor list in §4.6.4.7 is now a tested refusal.***
-
-**⚠ LIMITS, STATED:** *the refusal thresholds (`MIN_REVIEWS=5`, `MIN_TOKENS=100`, `CHROME_SHARE=0.6`) are in-code
-constants and **uncalibrated** — labelled as such and overridable per call. **⚠ And brand aliases remain the
-caller's job:** *only the single `brand` string is masked — **"TBB" for "Tiong Bahru Bakery" must be supplied, and
-the module will not guess an abbreviation.***
-
-**⚠ REPRODUCE:** *`b2b_mind.py` (enumerate `managed IT services Singapore` → 29 named MSPs → capture;
-`/tmp/b2b_enum.json`, `/tmp/b2b_reviews.json`); `derive_b2b_set.py` shows the three directories failing
-(813/1465/1590 chars, menus only); §4.6.4.4's Test 2 is the attribution test that returns zero here; the case is
-`inputs-v4/C9-b2b-it-services.json`.*
-
-**⚠⚠⚠ 3.7.25 C2 RESOLVED — `market_headroom` IS INERT BY DELIBERATE DESIGN, NOT BY DEFECT. AND ITS REAL
-CONSEQUENCE IS THE LITE TIER, NOT THE FULL REPORT (8 Oct).**
-
-**⚠ WHAT THIS CORRECTS IN §3.7.22 — TWO FACTS, NOT A JUDGEMENT.** *§3.7.22 was careful and fair: it called
-the inertness "not broken", "a capability question, not a bug", and it noted both sides are silent on the
-same 113 cases so there is no disagreement to fix. That reasoning stands.* **But two of its statements are
-factually wrong, and both matter:**
-**(i) "it carries 10% of the composite weight regardless" — IT DOES NOT.** ***The dimension is EXCLUDED from
-the weighted average and the remaining weights are renormalised.*** *Verified on BK01-breadtalk:
-`weights_used_renormalised` = MA 20→**30.77**, DEF 20→**30.77**, CR 15→**23.08**, DR 10→**15.38**, summing to
-100. The 10% is redistributed, not carried.*
-**(ii) It treats the drop as still-open — IT IS ALREADY A SETTLED, DOCUMENTED DECISION.** *The rubric's own
-version history records it as **decision A3**, with its rationale and its measurement:*
-
-> ***"In an elastic-capacity market, unmet demand cannot accumulate: any shortfall is absorbed by rivals
-> opening capacity, so the crowding/unmet axis is a constant and scoring it multiplies a near-constant by
-> its weight. Verified: 12 of 17 cases span raw 1.78–1.98, a 0.10 band narrower than the 0.08 noise floor.
-> In an inelastic market the shortfall has nowhere to go and shows up as an order book, which is
-> measurable."***
-
-***So the inertness is the thing working as designed.*** *§3.7.22 re-derived a deliberate decision from the
-outside and filed it as a fault.* **And the 10% is not lost: `weights_used_renormalised` redistributes it
-proportionally across the dimensions actually assessed** — *verified on BK01-breadtalk: MA 20→30.77, DEF
-20→30.77, CR 15→23.08, DR 10→15.38, summing to 100.*
-
-**✅ AND THE READER GETS A SUBSTANTIVE FINDING, NOT A HOLE.** *The client-facing dict renders the
-not-applicable dimension as a **sentence**:* *"Demand in your market is served and contested. Buyers can
-already get what you sell, so there is no pool of unmet demand to step into — growth means taking share
-from an existing player."* **That meets the value-unit standard — an empty state carries an actionable
-sentence, never a bare "N/A".**
-
-**⚠⚠ THE SIDE EFFECT, AND WHAT CAN BE DONE ABOUT IT.** *Renormalising **promotes `mental_advantage`**, and
-when `position_strength` is also missing it reaches **30.77% — the heaviest dimension in the report,
-against a nominal 20%.** *Because `mental_advantage` is the **worst-measured** dimension in the corpus
-(−0.46), that is the composite leaning hardest on its least reliable input.*
-
-**✅ WHY IT IS BOUNDED, AND CHEAPER TO FIX THAN IT LOOKS.**
-**(a) The band EDGES stay valid.** *The bands are anchored to the scale's own arithmetic — all-dims-at-3 =
-57.50 — and that property is **invariant under renormalisation**: whether or not `market_headroom` is
-included, all-assessed-dims-at-X still yields X.* **Verified numerically at levels 2, 3 and 4: identical to
-1e-9.** *So a promoted weight changes **which dimension drives** the composite, not **what the number
-means**.* **The band words do not move.**
-**(b) The exposure is already measured.** *The rubric records that changing the weight denominator moved
-the composite by **mean 2.4 pts, max 8**, and that **3 band words depended on which dimensions were
-counted** — which is exactly why the evidence floor was moved to 0.0 so that **all cases share one
-dimension set, `market_headroom` excepted**.* **The mitigation is already in place.**
-**(c) It varies in exactly two ways:** *`market_headroom` (structural, 95%) and `position_strength`
-(**4 of 120**, 3.3%).* **Nothing else moves.**
-
-**⚠ THE OPTIONS, WITH MY RECOMMENDATION.**
-| # | option | verdict |
-|---|---|---|
-| **1** | **Disclose the dimension set with the composite** — *"based on 4 of 6 dimensions (position strength and market headroom not assessed)"* | ✅ **RECOMMENDED.** *The renormalisation is currently **invisible to the reader**. The number is honest; the **basis** is hidden. One sentence fixes it, with no measurement risk and no rubric change* |
-| **2** | Leave it entirely | *Defensible — (a) and (b) show the band is safe — but the reader cannot tell a 6-dimension composite from a 4-dimension one* |
-| **3** | Score a missing dimension at 3 (neutral) instead of renormalising | ❌ **REJECTED.** *It **fabricates a score for a dimension we did not assess** — the null-not-faked principle, and precisely what §5.10.2 forbids on the lite tier* |
-| **4** | Suppress the band whenever a heavy dimension is missing | *Over-reacts to 4 of 120 cases; the band edges are already valid per (a)* |
-
-**⚠⚠⚠ AND THE FINDING THAT ACTUALLY MATTERS — C2'S CONSEQUENCE LANDS ON THE LITE TIER.**
-*Lite assesses exactly three dimensions: `mental_advantage` (20%), `market_headroom` (10%), `demand_reach`
-(10%) — chosen because they need no competitor sweep.* **But `market_headroom` returns "not applicable"
-in 114 of 120 cases.** ***So in ~95% of lite reports one of the three free dimensions is inert, and the
-lite read effectively rests on `mental_advantage` and `demand_reach` alone.*** **⚠ Those are the two
-worst-measured dimensions in the six-dimension audit (−0.46 and −0.22).** *The free tier's evidence base is
-**one live dimension plus one that is unavailable nine times in ten**, and both are the least
-reproducible in the corpus.* **⚠ This is a live problem for §5.10 and it is a DESIGN question, not a bug:
-the cheap dimensions were chosen for cost, and cost turns out to correlate with weak measurement.**
-
-**⚠ A HAZARD FOUND WHILE MEASURING THIS, WORTH KNOWING.** *`dimensions_display_1to5` **carries placeholder
-values for dimensions that are declared unscored** — BK01 shows `position_strength: 4` and
-`market_headroom: 3` in that dict while both are in `dimensions_unscored` and excluded from the weights.*
-**The client path is NOT affected: the renderer consumes `display_for_client`, which correctly renders
-`market_headroom` as the sentence and `position_strength` as "insufficient evidence to score".**
-*⚠ But **every analysis script reads the raw dict**, and any that fails to filter `dimensions_unscored`
-will compute findings over fabricated scores.* *⚠ §3.7.22's audit DID filter (which is why it reports n=116
-for position_strength and n=5 for market_headroom, not 120), and §3.7.23's compression test filtered too —
-but this is a standing trap for the next analysis.*
-
-**⚠ BLAST RADIUS.** *§3.7.22's framing of `market_headroom` as a defect is **superseded** by this section —
-the inertness is deliberate; the live issue is the lite tier's evidence base. §5.10's "assess three"
-should cite this: **one of its three is inert 95% of the time.***
-
-**⚠ REPRODUCE:** *`market_headroom_qualifier.disposition` gives 114 `not_applicable` / 6 `scored`;
-`weights_used_renormalised` shows the redistribution (BK01: MA 30.77); `display_for_client` shows the
-reader gets the sentence; the anchor invariance is checked by computing the composite with and without
-`market_headroom` at levels 2/3/4; the missing-dimension counts are `dimensions_unscored` tallied per
-dimension.*
-
-
----
 
 ## 5.10 ⚠⚠ THE LITE TIER — WHAT THE FREE REPORT OPENS UP, AND THE COST CUT THAT CANNOT BE TAKEN (Sean's design, measured)
 
