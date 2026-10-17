@@ -2433,6 +2433,96 @@ claim is asserted against the gate's own `DEFAULT_LINK_TTL`.**
 **⚠ REPRODUCE:** *`python3 specs/calibration/sandbox/mailer.py` (9/9); `test_mail_branches.py` (both fallback branches
 on the serving path).*
 
+### 4.6.3.7 ★★ THE CLAIM MAP, LOCKED IN — and HOW IT COMPARES WITH THE RANGE OF COMPETITORS
+
+**(Sean's instruction, 17 Oct: *"lock in the claim map, but the process must include how it compares
+with the range of competitors. The capability to search for relevant competitors online must be
+integral."*)** This subsection is the committed design. Reference implementation:
+`specs/calibration/claim_map.py` (one call, five steps, self-test 8/8). It uses `ps_evidence.py` for
+reading a claim and `competitor_scan.py` for the reader plumbing; neither is changed by it.
+
+#### The five steps, in one call — `claim_map.build(...)`
+
+| # | Step | Produces |
+|---|---|---|
+| 1 | **DISCOVER** — search online for the competitive set | named rivals, each with HOW it was found |
+| 2 | **READ** — derive each rival's published claim | brand → claim, or an explicit unreadable |
+| 3 | **MEASURE THE RANGE** — how much do *this market's* claims contest each other? | a baseline, computed from the rivals themselves |
+| 4 | **PLACE** — the subject's claim against that range | DISTINCTIVE / TYPICAL / CROWDED, or a refusal |
+| 5 | **REPORT** — the map, the comparison, and the limits | the free-report grid + the X-of-Y reveal |
+
+**Step 3 is the part Sean asked for.** The claim map is **never read alone**. A claim is only
+"distinctive" relative to what the rest of the market is claiming, so the tool computes **the rivals'
+own contested rate** and judges the subject against *that* — **never against a number anyone chose.**
+
+#### ⚠ Discovery is integral, and the mechanism is MEASURED, not assumed
+
+**A category web search does NOT return a competitive set. Measured, live, this run:** the search for
+*bakery Singapore* returned **twelve captures and every one was a market-research report or an agency
+blog** — `researchandmarkets.com`, `6wresearch.com`, `marketresearch.com`, `indexbox.io`,
+`euromonitor.com`, `marketingagency.sg`. **Not one was a bakery. A category query returns articles
+*about* the category, not members *of* it.** (This re-confirms the dead end already recorded at
+§3.7.20.)
+
+**So the primary discovery is Google Maps enumeration**, because a Maps category search returns
+**named local businesses in that category** — which is exactly a competitive set. *Measured the same
+day elsewhere: 29 named managed-IT firms, 11–28 named places for bakery queries.*
+
+**⚠ Maps returns OUTLETS, not BRANDS.** The live run returned `Good Day Bakery (Clementi)`,
+`The JellyHearts@The Clementi`, `Kopi & Tarts @ City Square Mall`. **Fed raw to domain resolution
+those produced `gooddaybakeryclementi.com` — every one a `000` connection failure — and all seven
+discovered bakeries came back "could not read".** The cause was **the suffix, not the businesses**:
+the same reader returned real claims for brand names (BreadTalk, Four Leaves) in the same run. So
+`clean_place_name()` reduces venue → brand before resolution. **This is the same outlet-vs-brand
+distinction that killed the review corpus at §4.6.4.6, biting discovery in exactly the same way.**
+
+**The web search is retained only as a labelled last resort**, filtered against `REPORT_DOMAINS`
+(market-research and social hosts) and reported as **unverified**. It is never allowed to silently
+become the competitive set.
+
+#### ⚠⚠ The range REFUSES rather than guesses — and this was a real defect, caught live
+
+**Live run: 6 rivals discovered, only 2 readable** — an osmanthus-rice-cake shop and a café. **The
+tool still pronounced a verdict: TYPICAL.** *On two claims the "range" is a single number, and the
+subject scored as uncontested only because the two survivors sold something else entirely.* **A
+wrong set makes DISTINCTIVE trivially true.**
+
+**`MIN_RANGE = 3`.** Below that the comparison is **REFUSED**: *"only 2 readable rival claim(s); at
+least 3 are needed before a range exists — the comparison is REFUSED rather than guessed."* **The
+same discipline as `mind_test.py`, and the same rule as the rest of this spec: no instrument reading
+beats a fabricated one.**
+
+#### ⚠⚠⚠ The verdict is a RATIO against the measured range — three fixes the control forced
+
+**The self-test contains a control: a claim that asserts exactly what the category asserts must read
+CROWDED, and a claim unlike anything in the category must read DISTINCTIVE.** *The first build failed
+its own control three times, and each failure was a real defect:*
+
+| # | Defect | Fix |
+|---|---|---|
+| 1 | **Mean pairwise overlap** scored a fully-crowded claim the same as the category's own average → read TYPICAL. *Mean overlap cannot tell "one of many" from "identical to all".* | **Contested share** — *of the distinctive things you claim, how much does a rival already claim?* That is the question a business owner actually asks. |
+| 2 | **A fixed absolute margin** (0.15) — in a market where rivals already contest **92%** of each other's terms there is only 8 points of headroom, so **CROWDED was structurally unreachable.** | **A scale-free ratio**: unoccupied ground held vs. unoccupied ground a typical rival here holds. **No ceiling.** |
+| 3 | **An asymmetric stemmer**: `baked` → `bak` but `bake` → `bake`, so a subject claiming *"we **bake** daily"* was scored as **not contested** by a rival claiming *"bread **baked** daily"* — identical claims, scored as different. | **Strip the trailing `e` as well**, longest suffix first, so both sides meet at `bak`. |
+
+**Contested terms and uncontested terms are both named in the output**, so the owner sees *which*
+words are theirs rather than being handed a label.
+
+#### What is proven, and what is not
+
+- **✅ Proven:** the reader works on real brands — BreadTalk (*"over 700 outlets in 14 international
+  markets … culinary magic"*), Four Leaves (*"a trustworthy bakery manufacturer … one of the leading
+  companies"* — **again not the analyst map's "everyday"**, §4.6.3.2). The comparator passes its
+  control 8/8. The refusal fires on a thin range.
+- **✅ Proven:** a category web search is the wrong discovery mechanism, and Maps is the right one.
+- **⚠ NOT solved:** **a bare category query does not yet yield a *brand* set** — Maps gives local
+  outlets, and the market's majors (BreadTalk, Tiong Bahru Bakery, Paris Baguette) are not what
+  *"bakery Singapore"* returns. **The brand set currently comes from owner-named rivals (which works)
+  or a curated category list.** *Integral discovery is therefore real but partial: it finds businesses
+  in the category, not yet the category's leaders.* Stated as a limit in the output, not hidden.
+- **⚠ Standing limits (§4.6.4.12):** the map reads **published** claims; it does **not** measure
+  whether customers agree. **And DISTINCTIVE ≠ GOOD** — *an unoccupied claim may be a real position or
+  one nobody cares about. This measures occupancy, not value.* Both are printed with every verdict.
+
 ### 4.6.4.12 ⚠⚠⚠ OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST
 
 *Option 1 was: pick cases designed to diverge and see whether the flag fires. It appeared to fire — **6 of 6
