@@ -2433,6 +2433,57 @@ claim is asserted against the gate's own `DEFAULT_LINK_TTL`.**
 **⚠ REPRODUCE:** *`python3 specs/calibration/sandbox/mailer.py` (9/9); `test_mail_branches.py` (both fallback branches
 on the serving path).*
 
+### 4.6.4.12 ⚠⚠⚠ OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST
+
+*Option 1 was: pick cases designed to diverge and see whether the flag fires. It appeared to fire — **6 of 6
+agencies, 83% of distinctive claim terms absent** — and that result is an ARTEFACT.*
+
+**⚠ TWO DEFECTS WERE VISIBLE IN THE OUTPUT, AND I DID NOT BELIEVE THE FIRING.**
+1. **THE CLAIM TEXT WAS CONTAMINATED.** *The "distinctive terms" included `hourly`, `rate`, `employees`,
+   `locations`, `founded`, `2017`, `size`, `undisclosed` — **Clutch's SIDEBAR FIELDS**, not the agency's claim.*
+   *The extraction had swallowed the profile metadata that follows the blurb.*
+2. **AND THE TEST IS LENGTH-DEPENDENT.** *A claim is 40+ terms; the client surface is a handful of short
+   paraphrases.* ***Any long text compared with any short text yields a high absence share.***
+
+**⚠⚠ SO THE DECISIVE CONTROL WAS RUN: EACH AGENCY'S CLAIM AGAINST ANOTHER AGENCY'S CLIENT SURFACE.**
+```
+MEAN absent, MATCHED     (own claim vs own mind)       : 80.5%
+MEAN absent, MISMATCHED  (own claim vs ANOTHER's mind) : 90.2%
+gap                                                    : -9.7 points
+   Creative For More   matched 87.1%     Gohan Strategy  matched 61.5%
+   Margin Wheeler      matched 87.1%     STUDIO DAM      matched 85.7%
+   KEYHOLE INSIGHTS    matched 69.0%     TDCX            matched 92.3%
+```
+***A claim compared to its OWN customers' words is 80% term-absent. A claim compared to a DIFFERENT company's
+customers' words is 90% term-absent.*** **The threshold I had set (≥60% absent) fires on both.** **⚠ It is not a flag —
+it is a constant, and it would have flagged every vendor in the category, correctly and incorrectly alike.**
+***So Option 1's answer is: THE FLAG DOES NOT FIRE USEFULLY, and the 6/6 result was the test measuring TEXT LENGTH,
+not divergence.***
+
+**⚠ ONE REAL NUANCE, RECORDED HONESTLY: THE TEST RANKS.** *The 9.7-point gap is not zero — matched pairs ARE
+closer than mismatched ones, and the RANKING is plausible: **Gohan Strategy (61.5%) is the best fit**, whose claim
+terms literally appear in its client surface; **TDCX (92.3%) is the worst**, whose claim is corporate boilerplate
+("Award-Winning Digital Economy Enabler") that appears nowhere.* ***So the measurement carries RELATIVE signal.***
+**But a flag needs an ABSOLUTE threshold, and at 80% absent-for-your-own-mind no threshold separates divergence from
+sameness. A score that ranks correctly but cannot say "this one is broken" is not the product's promise.**
+
+**⚠⚠ AND THE ROOT CAUSE IS THE INSTRUMENT, NOT THE DATA: AN ASYMMETRIC COMPARISON.**
+*A long self-description against a short third-party paraphrase is a length contest.* **§4.6.4.11 already established
+that the mind surface is Clutch's paraphrase — but this run shows the consequence: the two sides differ in LENGTH by
+an order of magnitude, so term-presence cannot be read as meaning-presence.**
+***⚠ Therefore the claim/mind FLAG REMAINS UNDEMONSTRATED. It has now failed on: bakery reviews (§4.6.4.5), salad
+reviews (§4.6.4.6), B2B Google reviews (§4.6.4.7), the raw review corpus (§4.6.4.10), the editorial synthesis
+(§4.6.4.11, a false divergence), and term-presence against the client surface (here, a false positive).*** **Six
+attempts, no demonstrated flag.** ***The honest status is that the capability does not work as specified, and the
+product must not ship a claim/mind warning.***
+
+**✅ WHAT SURVIVES AND IS USABLE:** *the **claim map** of §4.6.3 (`ps_evidence.py`, **5/6 claims recovered, never
+invents**) — which is what actually feeds PS — and the **Clutch synthesis as a described third-party observation**,
+clearly labelled as Clutch's aggregate and NOT as a claim/mind verdict.*
+
+**⚠ REPRODUCE:** *`fire_the_flag.py` (the 6/6 false firing); `flag_control.py` (the matched-vs-mismatched control that
+kills it; the claim is cut at Clutch's sidebar fields before term extraction).*
+
 ---
 
 **✅ 3.7.7 THE PRIVACY REWRITE IS DRAFTED — AND §3.4 ALREADY NAMED THE FIVE FALSE STATEMENTS (6 Oct).**
