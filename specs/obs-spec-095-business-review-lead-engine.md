@@ -4138,6 +4138,59 @@ MIND   = Clutch's editorial synthesis + extracted Top Mentions   [third-party, p
 RUN ON = consulting / agency / SaaS firms with a Clutch profile  -> our own category qualifies
 LIMIT  = state that the synthesis is Clutch's aggregate and leads with pricing by construction
 ```
+### 4.6.4.11 ⚠⚠ §4.6.4.10's HEADLINE IS REFUTED — THE PRICE DOMINANCE IS CLUTCH'S EDITORIAL FRAME, NOT THE CUSTOMERS'
+
+*The confound flagged in §4.6.4.10 was tested rather than carried, and the test is decisive.* **Clutch publishes
+TWO aggregates on the same profile:**
+- **SURFACE A — "What Clients Have Said":** *the editorial synthesis, price-led by construction (the profile leads
+  with a "Pricing Snapshot" and "Rating for cost").*
+- **SURFACE B — "Review Highlights":** *titled paraphrases of what individual clients said — a different block,
+  derived from client statements rather than the marketplace's pricing frame.*
+
+**Both surfaces were read from the same six agencies and classified identically:**
+```
+PRICE share — SURFACE A (summary):    100%   (6 of 6 agencies say "competitive pricing / value for cost")
+PRICE share — SURFACE B (highlights):   3%   (2 of 71 client-derived statements)
+
+SURFACE B composition: OTHER 36 | EXPERTISE 15 | DELIVERY 11 | OUTCOME 7 | PRICE 2
+```
+
+**⚠⚠ SO §4.6.4.10's HEADLINE FINDING — "every claim is about distinctive expertise, every mind is about price" — IS
+WRONG, AND I AM DOWNGRADING IT.** ***The price dominance is an artefact of reading the editorial summary.*** *On the
+client-derived surface, price is almost absent (2 of 71).* **The §4.6.4.10 table's "⚠ DIVERGES" verdicts are
+therefore NOT supported — they were produced by comparing a vendor's claim against Clutch's pricing frame.**
+
+**✅ THE CORRECTED READING — AND IT REVERSES THE CONCLUSION.** *On SURFACE B, **expertise appears in 15 of 71
+statements (21%)** — "praised for its strong branding and design expertise, successfully helping various companies
+… realign, launch, or rebrand their identities" (Gohan); "successfully executed branding and rebranding projects …
+enhancing brand propositions" (STUDIO DAM); "effective brand and marketing strategies" (KeyHole).*
+***So claims about distinctive expertise are broadly CORROBORATED by the client-derived surface, not contradicted.***
+**The mind test on Clutch, read correctly, returns AGREEMENT for most of these agencies.**
+
+**⚠⚠ AND THIS IS THE PRODUCT-RELEVANT FINDING, WHICH IS WHY THE TEST WAS WORTH RUNNING.**
+***Reading the wrong surface MANUFACTURES false divergences.*** **Had Clutch's editorial summary been fed to the
+scorer, the tool would have flagged six consulting firms as "claim/mind divergent" when the client-derived evidence
+says their expertise claims hold.** *A false divergence flag is worse than no flag: it tells a paying customer their
+positioning is broken when it is not, in the one report whose whole value is that its flags can be trusted.*
+**⇒ HARD RULE: the mind instrument must read CLIENT-DERIVED aggregates only; a marketplace's PRICING SUMMARY and any
+"rating for cost" surface are INELIGIBLE INPUTS.**
+
+**⚠ LIMITS, STATED — THIS CORRECTED READING IS WEAKER THAN IT LOOKS:**
+1. **BOTH surfaces are Clutch-authored.** *"Review Highlights" is paraphrase, not raw customer voice.* **⚠ Neither
+   surface is a verbatim reviewer quote, so no Clutch-derived reading is a primary-source mind measure.**
+2. **The classifier is keyword-based and 36 of 71 statements fell into OTHER** — *mostly operational detail ("they use
+   Slack, Zoom and email effectively", "developed a transparent performance monitoring system").* ***A 51% unclassified
+   bucket means the category shares are indicative, not precise.***
+3. **Six agencies.** *One category, one marketplace.*
+
+**⚠ SO THE MIND TEST'S STATUS AFTER THIS: it is runnable on Clutch, it must read CLIENT-DERIVED aggregates only, and
+its output on six consulting agencies is AGREEMENT — not divergence.** *The claim/mind FLAG has not yet been observed
+on real data.* **⚠ Which means §4.6.4.1's flag remains a designed capability that is UNPROVEN, and the honest thing to
+say about it is exactly that.**
+
+**⚠ REPRODUCE:** *`confound_test.py` (both surfaces, same six agencies, identical classifier;
+`/tmp/confound_test.json`); SURFACE A extraction is the `What Clients Have Said` … `This summary is based on` region;
+SURFACE B is the `Review Highlights` … `Reviews` region split into statements ≥40 chars.*
 **⚠ REPRODUCE:** *`consulting_set.py` (directory reads fine via Camoufox — 28,228 chars, 200 links; the earlier
 813-char shell was the `/sg/it-services/...` path, a different wall); `consulting_decide.py` (0/8 sections,
 0 hits in 68,081 chars); `verify_zero.py` (control-word proof the zero is real); `claim_vs_mind.py` (the six
