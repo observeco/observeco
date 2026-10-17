@@ -2410,6 +2410,29 @@ recorded … this is a compliance failure and must be fixed before launch").*
 **⚠ REPRODUCE:** *`python3 specs/calibration/sandbox/consent_record.py` (12/12); `test_consent_e2e.py` (the serving
 path); `grep -rn 'consent' sandbox/*.py` — this module is the only writer.*
 
+**✅ AND THE MAIL SENDER IS NOW BUILT — `specs/calibration/sandbox/mailer.py` — WHICH CLOSES (e) AS FAR AS IT CAN BE
+CLOSED FROM HERE.** *The gate had no way to SEND the proof: the sandbox said "there is no mail client here", which
+is correct for a loopback sandbox and impossible in production, because a DISPLAYED link is not a spend control —
+anyone can submit and continue.* **The module returns exactly three outcomes and none of them is silence:**
+```
+emailed  -- configured and sent
+display  -- NOT configured; the caller MUST show the link (sandbox only, loopback-safe)
+failed   -- configured but the send failed. THE SUBMISSION MUST NOT PROCEED AS IF THE MAIL ARRIVED
+```
+**⚠ THE DANGEROUS STATE IS NOT "unconfigured", IT IS "configured and broken"** — *an unconfigured mailer visibly
+falls back to showing the link; a misconfigured one would look like it worked.* **The module therefore reuses the
+SMTP variable names already used by `src/observeco/feedback_delivery.py` so the project has ONE convention**, and
+`smtplib` is called inside a `try` that converts **any** failure into `mode="failed"` with the reason.
+**⚠ IT IS NOT PROVABLE FROM HERE AND IS NOT CLAIMED AS WORKING: no credentials exist in this repository, so the
+`emailed` path is UNVERIFIED.** *What IS proved: the contract. `mailer.py` self-test 9/9 — including half-configured
+is not configured, and configured-but-unreachable returns `failed`; and all three branches were exercised against the
+**serving path** (display shows the link and does not claim "emailed"; failed shows the error and does not claim
+"emailed").* **The confirmation body is transactional only — no marketing line, no unsubscribe link, and its 24-hour
+claim is asserted against the gate's own `DEFAULT_LINK_TTL`.**
+
+**⚠ REPRODUCE:** *`python3 specs/calibration/sandbox/mailer.py` (9/9); `test_mail_branches.py` (both fallback branches
+on the serving path).*
+
 ---
 
 **✅ 3.7.7 THE PRIVACY REWRITE IS DRAFTED — AND §3.4 ALREADY NAMED THE FIVE FALSE STATEMENTS (6 Oct).**

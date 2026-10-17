@@ -951,18 +951,36 @@ before any research or scoring.</div>
     # displays the link and says so -- showing it silently would make the gate look like
     # theatre when it is the load-bearing control.
     link = f"/confirm?token={pending['token']}"
+    # SPEC 3.7.1: SEND the link. Three outcomes and none of them is silent --
+    # emailed / display (unconfigured, sandbox only) / failed (must never look like success).
+    try:
+        import mailer as _mailer
+        _mail = _mailer.send_confirmation(email, link, business_name)
+    except Exception as _e:  # noqa: BLE001
+        _mail = {"ok": False, "mode": "failed",
+                 "reason": "%s: %s" % (type(_e).__name__, str(_e)[:120])}
+    if _mail.get("mode") == "emailed":
+        _mail_html = ("<div class=note>We have emailed a confirmation link to <b>%s</b>. "
+                      "It works for 24 hours.</div>" % (email or "your address"))
+    elif _mail.get("mode") == "display":
+        _mail_html = ('<div class=note style="border-left-color:#2f6fed"><a href="%s">%s</a></div>'
+                      '<div class=warn><b>&#9888; Sandbox:</b> no mail provider is configured, so the '
+                      'link is shown instead of emailed. In production this link is emailed and '
+                      'never displayed.</div>' % (link, link))
+    else:
+        _mail_html = ('<div class=err><b>&#9888; The confirmation email could NOT be sent.</b> '
+                      'Nothing was run and nothing was charged. Reason: %s</div>'
+                      % (_mail.get("reason") or "unknown"))
     return HTMLResponse(shell("Confirm your email", f"""
 <h1>Check your email to confirm</h1>
 <div class=sub>{business_name} · submission #{pending["id"]}</div>
 <div class=note><b>Nothing has been run yet.</b> No research, no scoring, no cost — the
-submission is stored and waiting. We would now email
-<b>{email or "(no address given)"}</b> a link that looks like this:</div>
-<div class=note style="border-left-color:#2f6fed"><a href="{link}">{link}</a></div>
+submission is stored and waiting.</div>
+{_mail_html}
 {'' if _consent.get('ok') else '<div class=err><b>⚠ Consent was NOT recorded:</b> ' +
   (_consent.get('reason') or 'unknown reason') + ' — this is a compliance failure and must be fixed before launch.</div>'}
-<div class=warn><b>⚠ Sandbox:</b> there is no mail client here, so the link is shown instead
-of emailed. <b>In production this link is emailed and never displayed</b> — that is what stops
-a stranger's submission from spending our model budget (spec 3.7).</div>
+<div class=note><b>In production this link is emailed and never displayed</b> — that is what
+stops a stranger's submission from spending our model budget (spec 3.7).</div>
 <p><a href=/>← back</a> &nbsp; <a href=/crm>CRM →</a></p>"""))
     if r["outcome"] == "MODEL_UNAVAILABLE":
         save(email=email, business_name=business_name, category=category,
