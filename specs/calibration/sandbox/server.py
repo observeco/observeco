@@ -778,6 +778,20 @@ of us who buy lunch on weekdays, and families on weekend mornings."></textarea>
      style="width:auto"> <span style="color:#8b97a8;font-size:12px">Also search the web
      for competitors (takes longer, and doesn't always find them)</span></label>
 
+  <h2>Stay in touch</h2>
+  <div class=note>We'll produce your report and email it to you. Two optional extras below —
+  <b>both unticked</b>. Tick only what you want.</div>
+  <label style="margin-top:14px"><input type=checkbox name=consent_followup value=1
+     style="width:auto"> <span style="color:#8b97a8;font-size:13px"><b>Keep me posted</b> —
+     occasional emails about ObserveCo's services, and what we're learning from these reviews.</span></label>
+  <label><input type=checkbox name=consent_research value=1
+     style="width:auto"> <span style="color:#8b97a8;font-size:13px"><b>Show me how I compare.</b>
+     My answers — with no business name, no email address and no personal names — can go into
+     Singapore industry benchmarks, and I get the comparison back <b>on a best-endeavours
+     basis</b>.</span></label>
+  <div class=note><i>The report itself is what you asked for. It is never conditional on the
+  boxes above.</i></div>
+
   <div class=note style="margin-top:18px">We'll email you a link to confirm.
   <b>Nothing is run until you click it.</b> That's how we make sure nobody can use this
   form to send a report about a business to someone who never asked for it.</div>
@@ -869,6 +883,7 @@ def submit(request: Request, business_name: str = Form(""), email: str = Form(""
            competitor_urls: str = Form(""),
            website: str = Form(""),
            case_key: str = Form(""), do_scan: str = Form(""),
+           consent_followup: str = Form(""), consent_research: str = Form(""),
            cf_turnstile_response: str = Form("")):
     """⚠ SPEC 3.7: THIS HANDLER MUST NOT REACH THE MODEL.
 
@@ -919,6 +934,19 @@ before any research or scoring.</div>
     payload["_do_scan"] = bool(do_scan)
     pending = gate.submit_pending(DB, email, business_name, payload, captcha_ok=True)
 
+    # ⚠ SPEC 3.2 / 7.7: RECORD THE CONSENT. Until this line the consent schema had NO WRITER --
+    # a schema with no writer looks like compliance and produces no evidence. Per purpose, never
+    # bundled; unticked writes a REFUSAL, never a default-on; the notice version and a hash of the
+    # exact words shown are stored beside it. Purpose 1 is the acknowledgement (they asked for the
+    # report), not a checkbox. A failure here is reported on the page, never swallowed.
+    try:
+        import consent_record as _cr
+        _c = sqlite3.connect(DB)
+        _consent = _cr.record(_c, email, bool(consent_followup), bool(consent_research))
+        _c.close()
+    except Exception as _e:  # noqa: BLE001
+        _consent = {"ok": False, "reason": "%s: %s" % (type(_e).__name__, str(_e)[:120])}
+
     # In production this link is EMAILED and never shown. The sandbox has no mail client, so it
     # displays the link and says so -- showing it silently would make the gate look like
     # theatre when it is the load-bearing control.
@@ -930,6 +958,8 @@ before any research or scoring.</div>
 submission is stored and waiting. We would now email
 <b>{email or "(no address given)"}</b> a link that looks like this:</div>
 <div class=note style="border-left-color:#2f6fed"><a href="{link}">{link}</a></div>
+{'' if _consent.get('ok') else '<div class=err><b>⚠ Consent was NOT recorded:</b> ' +
+  (_consent.get('reason') or 'unknown reason') + ' — this is a compliance failure and must be fixed before launch.</div>'}
 <div class=warn><b>⚠ Sandbox:</b> there is no mail client here, so the link is shown instead
 of emailed. <b>In production this link is emailed and never displayed</b> — that is what stops
 a stranger's submission from spending our model budget (spec 3.7).</div>

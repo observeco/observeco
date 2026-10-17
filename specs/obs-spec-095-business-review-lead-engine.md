@@ -2354,6 +2354,62 @@ inert in 95% of cases.***
 `probe_turnstile_click2.py` (no token from an automated click — expected); Part E of the draft for the
 labels.*
 
+#### ✅ 3.7.26 THE LAUNCH-BLOCKER AUDIT, MEASURED — AND THE CONSENT GAP IS NOW CLOSED
+
+***Nothing here was taken from the record. Every line was re-measured this session, because the earlier
+launch-readiness audit was cancelled and the built-vs-documented state had never been verified.***
+
+| blocker | state | evidence |
+|---|---|---|
+| **(a) Turnstile** | **✅ BUILT** | *`confirmation_gate.py:51` `VERIFY_URL`; `turnstile_configured()`; **fails closed** on an unreachable verifier; `server.py:902` bypass allowed ONLY on loopback AND refuses on a public bind; `test_turnstile_live.py` checks the real keys* |
+| **(b) Confirmation gate + `/confirm`** | **✅ BUILT** | *`server.py:594`; the handler "does NOT run the pipeline here"; submit writes `pending` at **ZERO model cost**; the ordering is the design* |
+| **(c) Spend ceiling** | **❌ NOT BUILT** | *no `spend_ceiling` / `max_spend` / `cost_cap` anywhere in `sandbox/` or `src/`* |
+| **(d) Consent recording** | **❌ → ✅ NOW BUILT** | *schema existed, **NO WRITER**; see below* |
+| **(e) Mail provider** | **⚠ PARTIAL, WRONG PATH** | *`src/observeco/feedback_delivery.py` has SMTP, but that is the **feedback** path; the sandbox says outright "there is no mail client here" and displays the link* |
+
+**⚠⚠ AND TWO ERRORS IN THE EXISTING RECORD WERE FOUND BY THE AUDIT.**
+1. **THE CONSENT TABLE IS POSTGRES AND THE SANDBOX IS SQLITE.** *`migrations/004_consent_records.sql` uses
+   `bigserial` / `timestamptz` / a partial unique index; the sandbox is `sqlite3.connect(DB)`.* **And no Postgres or
+   Supabase client is wired anywhere in the repo** — *the Supabase references belong to the licensing migrations and
+   the telemetry plan, not this tool.* **So the production consent path does not yet exist; the sandbox equivalent
+   is what now writes.** *⚠ Stated as a limit, not glossed.*
+2. **§7.7's OWN NOTE THAT "the free path never runs the scan at all (`server.py:261`, off by default)" IS WRONG.**
+   *The actual line is:* **`do_research = do_scan or bool((payload.get("form") or {}).get("website")) or bool(_named)`**
+   — ***so the free path DOES run the competitor scan whenever the applicant supplies a website OR names
+   competitors.*** *The scan is off only when they supply neither.* **⚠ This matters to §7.7's X/Y competitor-reveal
+   (§3.7.20), which was reasoned from the false premise.** *Corrected here.*
+
+**✅ THE CONSENT WRITER — `specs/calibration/sandbox/consent_record.py`, AND IT IS THE ONLY WRITER.**
+*A consent schema with no writer is worse than none: it looks like compliance in a review and produces no evidence
+when a regulator asks what this person agreed to, when, and on the basis of which words.* **The module enforces the
+four rules the schema already encodes:** *(1) **per purpose, never bundled** — each purpose its own row, withdrawing
+one does not revoke the other; (2) **re-consent UPDATEs the live row**, never duplicates it; (3) **no default-on** —
+a caller that forgets a purpose records a refusal, which is the safe direction; (4) **the notice version and a hash
+of the exact words shown** are stored beside every row.* **Purpose 1 gets no checkbox** *— it is the act they asked
+for, recorded as an **acknowledgement** — and the report is never conditional on the two boxes.*
+
+**✅ THE COPY IS NOT INVENTED.** *The two labels and the purpose-1 line are taken **verbatim from PART E** of
+`privacy_rewrite_draft.md` — **"Keep me posted"** and **"Show me how I compare"**, the latter carrying Sean's
+**"on a best-endeavours basis"** where the decision is made.* **⚠ The k-anonymity FLOOR is still not a number, so the
+label states the promise ("no business name, no email address, no personal names") without inventing a threshold** —
+*that remains Sean's call (E2).*
+
+**✅ PROVED ON THE SERVING PATH, NOT IN A UNIT TEST.** *`test_consent_e2e.py` starts the server on loopback, POSTs a
+real submission with **purpose 3 ticked and purpose 2 unticked**, and reads `sandbox.db` directly:*
+```
+rows written: 3
+   purpose 1  granted=True   notice=partE-2026-10-07  hash=b4321fbfbdf1…
+   purpose 2  granted=False  notice=partE-2026-10-07  hash=b4321fbfbdf1…   <- UNTICKED = refusal, NOT default-on
+   purpose 3  granted=True   notice=partE-2026-10-07  hash=b4321fbfbdf1…   <- TICKED
+PASS: consent IS recorded on the serving path
+```
+**⚠ The module's own self-test passes 12/12** *and proves per-purpose withdrawal, the update-not-duplicate rule,
+and the refusal case.* **⚠ A failure to write is surfaced ON THE PAGE, never swallowed** *("Consent was NOT
+recorded … this is a compliance failure and must be fixed before launch").*
+
+**⚠ REPRODUCE:** *`python3 specs/calibration/sandbox/consent_record.py` (12/12); `test_consent_e2e.py` (the serving
+path); `grep -rn 'consent' sandbox/*.py` — this module is the only writer.*
+
 ---
 
 **✅ 3.7.7 THE PRIVACY REWRITE IS DRAFTED — AND §3.4 ALREADY NAMED THE FIVE FALSE STATEMENTS (6 Oct).**
