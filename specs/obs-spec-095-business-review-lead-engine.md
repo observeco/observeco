@@ -2769,6 +2769,26 @@ identical call made from Python returned 113.* **Two bugs, and the second is the
 businesses in 94 s** — including **`Happy Oven Bakery` appearing once rather than twice**, which is
 the entity de-duplication working end to end.*
 
+#### ★ STABILITY, MEASURED — is the set the same twice?
+
+**The risk worth fearing: a lead magnet that reports a different number of competitors each time it
+is opened.** *Measured by running discovery twice against the same market, same parameters:*
+
+| | Runs |
+|---|---|
+| Candidates discovered | **132** vs **117** — **113 shared, 15 in run 1 only, 0 in run 2 only** |
+| **Jaccard stability** | **0.88** |
+| **Majors present in the pool** | **5 of 5 in BOTH runs** |
+
+**⇒ The instability is confined to the junk tail** — *15 transient extractions in one run* — **and the
+load-bearing part is stable: every major appeared in the pool both times.** *Verification discards the
+tail anyway.*
+
+**⚠ What is NOT tested:** *the stability of the **vetted set** under verification TIMING. The cache
+makes a warm market deterministic by construction, but a cold market runs under a time budget, so
+which candidates get checked — and therefore which survive — can vary with network speed.* **That is
+the remaining number-drift risk, and it is in the budget, not in discovery.**
+
 **⚠ Still open: a cold market is slow.** *`warm_market` is unbounded by design; wiring it to a cron
 entry is the remaining step, and the cache makes every market a one-time cost per 30 days.*
 
