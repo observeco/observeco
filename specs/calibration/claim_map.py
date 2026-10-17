@@ -55,6 +55,16 @@ import sys
 import time
 from pathlib import Path
 
+# ⚠⚠ THE SCRIPT PATH NEEDS THE HERMES PACKAGE DIR ON sys.path. Measured: `claim_map.py warm bakery
+# Singapore` launched as a SCRIPT returned zero candidates in zero seconds, while the identical call
+# made from Python returned 113. `from hermes_tools import web_search` lives inside
+# discover_brand_source, so when the module is run as a file rather than imported the import fails --
+# and the failure was swallowed (see below), producing the exact shape this spec forbids: "we could
+# not search" rendering as "there are no competitors".
+_HERMES_ROOT = os.environ.get("HERMES_AGENT_ROOT", "/Users/seanfzc/.hermes/hermes-agent")
+if _HERMES_ROOT not in sys.path:
+    sys.path.insert(0, _HERMES_ROOT)
+
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
@@ -621,7 +631,13 @@ def discover_brand_source(category: str, market: str, limit: int = 12) -> dict:
                     # sources name you is the signal; how often one page repeats a word is noise.
                     page_of.setdefault(c, set()).add(page_url)
     except Exception as exc:  # noqa: BLE001
-        return {"ok": False, "names": [], "error": "%s: %s" % (type(exc).__name__, str(exc)[:140]),
+        # ⚠⚠ AN EMPTY SET IS NOT AN ANSWER TO "COULD YOU SEARCH?". This used to return ok=False with
+        # an empty list, which downstream reads as "the category has no competitors". A discovery
+        # failure and an empty market are DIFFERENT OUTCOMES and must not share a representation.
+        return {"ok": False, "names": [], "error": "%s: %s" % (type(exc).__name__, str(exc)[:200]),
+                "failed_loud": True,
+                "why": "DISCOVERY FAILED -- this is a tool failure, NOT evidence that the category "
+                       "has no competitors",
                 "source": "brand_source"}
 
     # keep only brand-SHAPED candidates, then rank by how many sources name them
@@ -715,9 +731,18 @@ def warm_market(category: str, market: str, max_candidates: int = 150, workers: 
     d = discover_brand_source(category, market, limit=max_candidates)
     names = [clean_candidate_name(n) for n in d.get("names", [])]
     names = [n for i, n in enumerate(names) if n and n not in names[:i]]
+    if not names:
+        return {"category": category, "market": market, "candidates": 0, "checked": 0,
+                "vetted_real": 0, "elapsed_s": 0.0, "vetted": [], "ok": False,
+                "failed_loud": True,
+                "why": "DISCOVERY RETURNED NOTHING. This is NOT the same as 'this category has no "
+                       "competitors' -- the report must say the search failed, not that the market "
+                       "is empty.",
+                "discovery_error": d.get("error") or d.get("why"),
+                "discovery_pages": d.get("pages")}
     v = verify_candidates(names, workers=workers, budget_s=budget_s, timeout=timeout,
                           category=category)
-    return {"category": category, "market": market, "candidates": len(names),
+    return {"category": category, "market": market, "candidates": len(names), "ok": True,
             "checked": v["checked"], "vetted_real": v["n_real"], "elapsed_s": v["elapsed_s"],
             "vetted": sorted(x["name"] for x in v["real"])}
 

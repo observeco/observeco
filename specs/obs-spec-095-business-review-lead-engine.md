@@ -2750,6 +2750,25 @@ resolution as-is, could not resolve, and then looked exactly like a brand with n
 cleaned before vetting, and de-duplicated before vetting, so the pool no longer spends budget on names
 that cannot resolve.**
 
+#### ⚠⚠ AND THE CLI FAILED SILENTLY — the exact failure shape this spec forbids
+
+**`python3 claim_map.py warm bakery Singapore` returned ZERO candidates in ZERO seconds.** *The
+identical call made from Python returned 113.* **Two bugs, and the second is the serious one:**
+
+1. **The script path had no `hermes_tools` on `sys.path`.** *`from hermes_tools import web_search`
+   lives inside `discover_brand_source`; run as a file rather than imported, that import fails.*
+   **Fixed with an explicit `_HERMES_ROOT` bootstrap.**
+2. **⚠⚠ THE FAILURE WAS SWALLOWED AND RETURNED AS AN EMPTY SET.** *The `except` returned
+   `ok=False, names=[]` — which reads downstream as **"this category has no competitors"**.*
+   ***"We could not search" and "the market is empty" are different outcomes and must never share a
+   representation.*** **Now discovery failures carry `failed_loud: True` and an explicit
+   `why`, `warm_market` refuses to report a bare zero, and the report says the SEARCH FAILED rather
+   than that the market is empty.**
+
+**Verified after the fix:** *the CLI discovers 100 candidates, checks all 100, and vets **10 real
+businesses in 94 s** — including **`Happy Oven Bakery` appearing once rather than twice**, which is
+the entity de-duplication working end to end.*
+
 **⚠ Still open: a cold market is slow.** *`warm_market` is unbounded by design; wiring it to a cron
 entry is the remaining step, and the cache makes every market a one-time cost per 30 days.*
 

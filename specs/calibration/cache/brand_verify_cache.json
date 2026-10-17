@@ -9,5 +9,1107 @@
    "claim": "Today, with over 700 outlets in 14 international markets, BreadTalk Group produces culinary magic for everyday recipes that you savour, uniting people with good taste around the world.",
    "evidence": "Today, with over 700 outlets in 14 international markets, BreadTalk Group produces culinary magic for everyday recipes that you savour, uniting people with good taste around the world."
   }
+ },
+ "four leaves": {
+  "ts": 1792220420.7222831,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://fourleaves.com.sg/about-us",
+   "claim": "From the very beginning, we started our first outlet at Nutmeg Road, over the years and have since launched our Central Factory and retail outlets in Singapore.",
+   "evidence": "From the very beginning, we started our first outlet at Nutmeg Road, over the years and have since launched our Central Factory and retail outlets in Singapore."
+  }
+ },
+ "and artisanal pastry": {
+  "ts": 1792249571.319531,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://andartisanalpastry.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "locals favourites ranked": {
+  "ts": 1792249571.426589,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://localsfavouritesranked.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "hung huat cakes": {
+  "ts": 1792249571.4278111,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://hunghuatcakes.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "og plain pretzel": {
+  "ts": 1792249571.43712,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://plainpretzel.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "pie tuesdays": {
+  "ts": 1792249571.53818,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://pietuesdays.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "and artisanal cafes": {
+  "ts": 1792249572.363491,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://andartisanalcafes.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "konditori artisan bakes": {
+  "ts": 1792249572.4797719,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://konditoriartisanbakes.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "cp-meiji high protein": {
+  "ts": 1792249572.570733,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://cp-meijihighprotein.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "chicken bolognese": {
+  "ts": 1792249573.505075,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://chickenbolognese.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "cp-meiji better breakfast": {
+  "ts": 1792249573.547094,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://cp-meijibetterbreakfast.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "misslobang": {
+  "ts": 1792249574.254454,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "claim_found",
+   "url": "https://misslobang.com/about",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "chicken mushroom": {
+  "ts": 1792249574.379162,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://chickenmushroom.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "cheese pretzel": {
+  "ts": 1792249574.978928,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://cheesepretzel.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "extravagant breakfast": {
+  "ts": 1792249575.434804,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://extravagantbreakfast.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "tanjong pagar": {
+  "ts": 1792249576.325259,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://tanjongpagar.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "chicken curry": {
+  "ts": 1792249577.451305,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://chickencurry.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "loong fatt tau": {
+  "ts": 1792249578.364348,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://loongfatttau.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "joo chiat": {
+  "ts": 1792249578.6349041,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://joochiat.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "muis halalsg": {
+  "ts": 1792249578.8345861,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://muishalalsg.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "primadeli peach": {
+  "ts": 1792249580.056421,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://primadelipeach.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "all-day breakfast": {
+  "ts": 1792249581.438412,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://all-daybreakfast.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "sar piah": {
+  "ts": 1792249582.452995,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://sarpiah.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "raffles city": {
+  "ts": 1792249582.563324,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://rafflescity.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "frequently asked questions": {
+  "ts": 1792249583.3583858,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://frequentlyaskedquestions.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "chip bee gardens": {
+  "ts": 1792249583.425031,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://chipbeegardens.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "fort canning": {
+  "ts": 1792249583.518323,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://fortcanning.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "savoury pies every": {
+  "ts": 1792249583.518368,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://savourypiesevery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "cluny court": {
+  "ts": 1792249584.029253,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "claim_found",
+   "url": "https://clunycourt.com/",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "timings hide": {
+  "ts": 1792249584.6018481,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://timingshide.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "tuna mushroom": {
+  "ts": 1792249584.9266,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://tunamushroom.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "updated july": {
+  "ts": 1792249585.625356,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://updatedjuly.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "ah tas muffins": {
+  "ts": 1792249586.06782,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://tasmuffins.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "balmoral bakery": {
+  "ts": 1792249587.157034,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://balmoralbakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "swee heng": {
+  "ts": 1792249588.949574,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://sweeheng.com/",
+   "claim": "Why Us Experience the perfect blend of tradition, quality, and innovation at one of the most beloved cake shops in Singapore.",
+   "evidence": "Why Us Experience the perfect blend of tradition, quality, and innovation at one of the most beloved cake shops in Singapore."
+  }
+ },
+ "duke bakery": {
+  "ts": 1792249591.381736,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://dukebakery.sg/about-us",
+   "claim": "Combining Japanese and European baking techniques, we craft soft, healthy breads that suit the Singaporean palate.",
+   "evidence": "Combining Japanese and European baking techniques, we craft soft, healthy breads that suit the Singaporean palate."
+  }
+ },
+ "paris baguette": {
+  "ts": 1792249591.726437,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://parisbaguette.com/about",
+   "claim": "And why our bakers, cakers and baristas go further every day to perfect their own craft, serving up freshly-baked breads, delicious coffee and cakes more than worthy of their pedestals.",
+   "evidence": "And why our bakers, cakers and baristas go further every day to perfect their own craft, serving up freshly-baked breads, delicious coffee and cakes more than worthy of their pedestals."
+  }
+ },
+ "brotherbird bakehouse": {
+  "ts": 1792249592.437081,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://brotherbirdbakehouse.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "big bakery": {
+  "ts": 1792249596.363209,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://bigbakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "champion bolo bun": {
+  "ts": 1792249598.857236,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://championbolobun.com/",
+   "claim": "This journey led our founder to Hong Kong, where she trained under a master baker\u2014learning the discipline, technique, and precision behind authentic bolo buns.",
+   "evidence": "This journey led our founder to Hong Kong, where she trained under a master baker\u2014learning the discipline, technique, and precision behind authentic bolo buns."
+  }
+ },
+ "tasty tuesdays": {
+  "ts": 1792249608.385859,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://tastytuesdays.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "divine bites": {
+  "ts": 1792249609.963954,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://divinebites.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "elijah pies": {
+  "ts": 1792249619.967075,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://elijahpies.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "frosted by fang": {
+  "ts": 1792249625.817086,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://frostedfang.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "alice boulangerie": {
+  "ts": 1792249629.5891142,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://aliceboulangerie.com.sg/about-us",
+   "claim": "Inspired by the curious spirit of our Alice squirrel, we\u2019re always exploring new flavours while staying true to the craft of good baking and thoughtful cooking.",
+   "evidence": "Inspired by the curious spirit of our Alice squirrel, we\u2019re always exploring new flavours while staying true to the craft of good baking and thoughtful cooking."
+  }
+ },
+ "eat rich": {
+  "ts": 1792249630.371895,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://eatrich.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "garden pastry": {
+  "ts": 1792249630.9529002,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://gardenpastry.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "hone bakes": {
+  "ts": 1792249632.7550678,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://honebakes.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "jia mei bakery": {
+  "ts": 1792249634.938896,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://jiameibakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "keong saik bakery": {
+  "ts": 1792249639.614689,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://keongsaikbakery.com/about",
+   "claim": "Passionate about blending traditional and modern flavours, the bakery pays homage to the vibrant history of Singapore, and the legacy of people that lived at Keong Saik Road.",
+   "evidence": "Passionate about blending traditional and modern flavours, the bakery pays homage to the vibrant history of Singapore, and the legacy of people that lived at Keong Saik Road."
+  }
+ },
+ "lau chong kee": {
+  "ts": 1792249640.558409,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://lauchongkee.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "june bakery": {
+  "ts": 1792249641.758653,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://junebakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "gopeng st": {
+  "ts": 1792249641.7909691,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://gopeng.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "love confectionery": {
+  "ts": 1792249642.207814,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://loveconfectionery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "mei kee bakery": {
+  "ts": 1792249642.6755571,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://meikeebakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "marymount bakehouse": {
+  "ts": 1792249642.762851,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://marymountbakehouse.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "my aunty bakery": {
+  "ts": 1792249643.8876429,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://auntybakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "mini toast house": {
+  "ts": 1792249644.2439501,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://minitoasthouse.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "petit krumbs": {
+  "ts": 1792249645.723541,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://petitkrumbs.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "pawa bakery": {
+  "ts": 1792249650.193616,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://pawabakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "petit pain": {
+  "ts": 1792249650.995937,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://petitpain.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "poh guan cake": {
+  "ts": 1792249651.004637,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://pohguancake.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "happy oven": {
+  "ts": 1792249651.179531,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://happyoven.com.sg/about-us",
+   "claim": "The question is: &#8220;Do you really want to eat artificial cakes?&#8221; Mothership Video At Happy Oven, we believe in baking the traditional way\u2014using natural ingredients such as flour, fresh eggs, and high-quality butter.",
+   "evidence": "The question is: &#8220;Do you really want to eat artificial cakes?&#8221; Mothership Video At Happy Oven, we believe in baking the traditional way\u2014using natural ingredients such as flour, fresh eggs, and high-quality butter."
+  }
+ },
+ "micro bakery kitchen": {
+  "ts": 1792249651.6028318,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "claim_found",
+   "url": "https://microbakerykitchen.com/",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "sembawang confectionery": {
+  "ts": 1792249652.203495,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://sembawangconfectionery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "pretty good muffins": {
+  "ts": 1792249652.2267368,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://prettygoodmuffins.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "serangoon gardens bakery": {
+  "ts": 1792249652.62039,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://serangoongardensbakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "sweetlands confectionery": {
+  "ts": 1792249653.162601,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://sweetlandsconfectionery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "yi jia bakery": {
+  "ts": 1792249654.350724,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://jiabakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "swish rolls": {
+  "ts": 1792249654.8263428,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://swishrolls.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "tous les jours": {
+  "ts": 1792249655.646362,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://touslesjours.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "asia jul": {
+  "ts": 1792249655.959784,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://asiajul.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "puffs and peaks": {
+  "ts": 1792249656.7947369,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://puffsandpeaks.com/",
+   "claim": "Everything made in house, by real people with real passion for the craft.",
+   "evidence": "Everything made in house, by real people with real passion for the craft."
+  }
+ },
+ "bahru bakery": {
+  "ts": 1792249656.860427,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://bahrubakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "cafes url": {
+  "ts": 1792249657.853817,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://cafesurl.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "cafes top in": {
+  "ts": 1792249663.4928489,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://cafestop.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "creme maison bakery": {
+  "ts": 1792249664.431703,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://crememaisonbakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "dona manis cake": {
+  "ts": 1792249665.337643,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://donamaniscake.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "eatbook.sg url": {
+  "ts": 1792249666.2869902,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://eatbookurl.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "contact information": {
+  "ts": 1792249666.822067,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://contactinformation.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "eng hoon st": {
+  "ts": 1792249667.194346,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://enghoon.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "halal-certified": {
+  "ts": 1792249668.1175082,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://halal-certified.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "bengawan solo": {
+  "ts": 1792249670.327932,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://bengawansolo.com.sg/about-us",
+   "claim": "Share the joy of the brand new year with our signature must-have cakes and goodies!",
+   "evidence": "Share the joy of the brand new year with our signature must-have cakes and goodies!"
+  }
+ },
+ "less why they": {
+  "ts": 1792249671.398664,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://lesswhythey.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "mzw bakery": {
+  "ts": 1792249672.4399061,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://mzwbakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "serangoon gardens": {
+  "ts": 1792249672.8813388,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://serangoongardens.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "misslobang url": {
+  "ts": 1792249673.345828,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://misslobangurl.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "tiong bahru": {
+  "ts": 1792249677.570515,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://tiongbahru.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "aj delights": {
+  "ts": 1792249678.515809,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://delights.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "movement buy": {
+  "ts": 1792249678.6841779,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://movementbuy.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "vivocity": {
+  "ts": 1792249679.193693,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://vivocity.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "november two cp-meiji": {
+  "ts": 1792249679.480292,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://novembertwocp-meiji.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "mother dough": {
+  "ts": 1792249679.716681,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://motherdough.com.sg/about-us",
+   "claim": "Our team of dedicated bakers is happy to bake throughout the day, for you to enjoy a fresh crusty sourdough baguette, or a warm buttery croissant.",
+   "evidence": "Our team of dedicated bakers is happy to bake throughout the day, for you to enjoy a fresh crusty sourdough baguette, or a warm buttery croissant."
+  }
+ },
+ "october september": {
+  "ts": 1792249680.194587,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://octoberseptember.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "primadeli breadtalk": {
+  "ts": 1792249680.669203,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://primadelibreadtalk.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "thebestsg tiong bahru": {
+  "ts": 1792249681.499094,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://thebestsgtiongbahru.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "mother dough bakery": {
+  "ts": 1792249681.9364202,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://motherdoughbakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "starter lab": {
+  "ts": 1792249682.731841,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://starterlab.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "two men bagel": {
+  "ts": 1792249682.911216,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://twomenbagel.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "butter bread": {
+  "ts": 1792249685.685071,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://butterbread.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "polar puffs": {
+  "ts": 1792249686.837499,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://polarpuffs.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "sourbombe bakery": {
+  "ts": 1792249687.054664,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://sourbombebakery.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "fluff bakery": {
+  "ts": 1792249693.4918458,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://fluffbakery.com/about",
+   "claim": "Our Mission is to introduce our version of comfort food to the people of Athens, Ohio, and the surrounding region, and to support as many local people, businesses and non-profits in the process.",
+   "evidence": "Our Mission is to introduce our version of comfort food to the people of Athens, Ohio, and the surrounding region, and to support as many local people, businesses and non-profits in the process."
+  }
+ },
+ "jem its": {
+  "ts": 1792249696.433001,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://jemits.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "ben baker": {
+  "ts": 1792249698.028928,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://benbaker.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "oct": {
+  "ts": 1792249780.115295,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://oct.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "tokyo": {
+  "ts": 1792249781.08965,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://tokyo.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "conclusion verified september": {
+  "ts": 1792249797.116891,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://conclusionverifiedseptember.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "morebetter editorial team": {
+  "ts": 1792249797.294581,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://morebettereditorialteam.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "internet with": {
+  "ts": 1792249798.411628,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://internetwith.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "morebetter url": {
+  "ts": 1792249799.4543822,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://morebetterurl.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "nick vina artisan": {
+  "ts": 1792249800.475988,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://nickvinaartisan.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "pastries fact-checked": {
+  "ts": 1792249800.782034,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://pastriesfact-checked.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "bob the baker": {
+  "ts": 1792249801.0903769,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://bobthebaker.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "different types": {
+  "ts": 1792249801.216343,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://differenttypes.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "their uses there": {
+  "ts": 1792249802.0395,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://theirusesthere.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "pulse patisserie": {
+  "ts": 1792249805.1157482,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "claim_found",
+   "url": "https://pulsepatisserie.com/about-us",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "monice bakes": {
+  "ts": 1792249805.3803468,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://monicebakes.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "white bread": {
+  "ts": 1792249808.094274,
+  "v": {
+   "verdict": "inconclusive",
+   "status": "could_not_read",
+   "url": "https://whitebread.com",
+   "why": "every candidate domain and surface failed to read; a tool failure, never a finding about the rival"
+  }
+ },
+ "wheat bread": {
+  "ts": 1792249809.618952,
+  "v": {
+   "verdict": "not_in_category",
+   "status": "read_no_claim",
+   "url": "https://wheatbread.com",
+   "why": "the site resolved but is not about this category -- e.g. a hospital"
+  }
+ },
+ "happy oven bakery": {
+  "ts": 1792249890.194727,
+  "v": {
+   "verdict": "real",
+   "status": "claim_found",
+   "url": "https://happyovenbakery.com/about-us",
+   "claim": "We believe baking is more than just preparing food \u2014 it is about creating happiness, celebrating special occasions, and making every moment a little sweeter.",
+   "evidence": "We believe baking is more than just preparing food \u2014 it is about creating happiness, celebrating special occasions, and making every moment a little sweeter."
+  }
  }
 }
