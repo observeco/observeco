@@ -49,8 +49,10 @@ from __future__ import annotations
 
 import itertools
 import json
+import os
 import re
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -236,6 +238,145 @@ REPORT_DOMAINS = (
 )
 
 
+_CACHE_PATH = "/Users/seanfzc/projects/observeco-main/specs/calibration/cache/brand_verify_cache.json"
+_CACHE_TTL_S = 30 * 24 * 3600     # a brand's site does not change category in a month
+# ⚠⚠ THE CACHE MUST BE VERSIONED, AND THIS WAS A LIVE DEFECT. Fixing the verifier to reject
+# chrome-only pages did NOT take effect, because the verdict for "All-Day Breakfast" had been cached
+# BEFORE the fix and was replayed straight past the new check. A cache that outlives the code that
+# fills it silently pins a known-bad answer forever. Bump this whenever verification logic changes.
+_VERIFIER_VERSION = 3
+_cache_mem = None
+
+
+def _load_cache() -> dict:
+    """⚠ VERIFICATION IS THE EXPENSIVE STEP, SO IT IS CACHED. A brand verified once stays verified for
+    a month. Because the same majors recur across every report in a market, the cache makes repeat
+    runs near-free -- which is what turns a 30-minute batch into a production path."""
+    global _cache_mem
+    if _cache_mem is None:
+        try:
+            with open(_CACHE_PATH) as fh:
+                _cache_mem = json.load(fh)
+        except Exception:  # noqa: BLE001
+            _cache_mem = {}
+        if (_cache_mem or {}).get("__version__") != _VERIFIER_VERSION:
+            _cache_mem = {"__version__": _VERIFIER_VERSION}   # stale logic -> discard, never replay
+    return _cache_mem
+
+
+def _save_cache() -> None:
+    try:
+        os.makedirs(os.path.dirname(_CACHE_PATH), exist_ok=True)
+        tmp = _CACHE_PATH + ".tmp"
+        with open(tmp, "w") as fh:
+            json.dump(_cache_mem or {}, fh, indent=1)
+        os.replace(tmp, _CACHE_PATH)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+CATEGORY_WORDS = {
+    "bakery": ("bakery", "bread", "bake", "baker", "pastr", "cake", "confection", "dough",
+               "viennois", "sourdough", "croissant", "loaf", "bakeshop", "patisserie"),
+}
+
+
+def _in_category(text: str, category: str) -> bool:
+    """⚠⚠ THE CHECK THAT REJECTS A HOSPITAL. The first vetted set accepted "Farrer Park" -- a
+    HOSPITAL -- because farrerpark.com is a live site with text on it. Verification was asking "does
+    this name resolve to something?" when the question is "is this a business IN THIS CATEGORY?".
+    A name is only a competitor if the page it resolves to is about the category."""
+    words = CATEGORY_WORDS.get((category or "").lower(), ((category or "").lower(),))
+    tl = (text or "").lower()
+    return any(w in tl for w in words if w)
+
+
+def verify_candidate(name: str, timeout: int = 12, category: str = "") -> dict:
+    """IS THIS NAME A REAL BUSINESS? Answer by reading its own site. Cached; never invents.
+
+    ⚠ `could_not_read` IS NOT A REJECTION. The spec is explicit that an unreadable page is a tool
+    failure, never a finding about the rival. So a candidate that cannot be read is INCONCLUSIVE, and
+    is excluded from the vetted set while being COUNTED in the report. The three outcomes stay three.
+    """
+    key = re.sub(r"\s+", " ", (name or "").lower()).strip()
+    if not key:
+        return {"name": name, "verdict": "empty"}
+    cache = _load_cache()
+    if cache.get("__version__") != _VERIFIER_VERSION:
+        cache.clear()
+        cache["__version__"] = _VERIFIER_VERSION
+    hit = cache.get(key)
+    if hit and (time.time() - hit.get("ts", 0)) < _CACHE_TTL_S:
+        return dict(hit["v"], name=name, cached=True)
+    try:
+        import ps_evidence as pe
+        r = pe.claim_for(name, timeout=timeout) or {}
+        st = r.get("status")
+    except Exception as exc:  # noqa: BLE001
+        return {"name": name, "verdict": "inconclusive", "why": "%s: %s" % (type(exc).__name__,
+                                                                           str(exc)[:110])}
+    if st in ("claim_found", "read_no_claim"):
+        blob = (r.get("claim") or "") + " " + " ".join(r.get("evidence") or [])
+        # ⚠ A PAGE THAT ONLY REPEATS ITS OWN NAME IS CHROME, NOT A CLAIM. "All-Day Breakfast" was
+        # vetted on the text "All-Day Breakfast All-Day Breakfast the spread - 553 of 555 served",
+        # which is site navigation. A claim says something ABOUT the business; chrome says the name.
+        head = blob[:90].lower()
+        if head.count(name.lower().strip()) + head.count(name.lower().split()[0]) >= 3:
+            return {"name": name, "verdict": "chrome_not_a_claim", "status": st,
+                    "why": "the readable text only repeats the page's own name"};
+        if category and not _in_category(blob, category):
+            v = {"name": name, "verdict": "not_in_category", "status": st, "url": r.get("url"),
+                 "why": "the site resolved but is not about this category -- e.g. a hospital"}
+        else:
+            v = {"name": name, "verdict": "real", "status": st, "url": r.get("url"),
+                 "claim": r.get("claim"), "evidence": (r.get("evidence") or [None])[0]}
+    else:
+        v = {"name": name, "verdict": "inconclusive", "status": st, "url": r.get("url"),
+             "why": r.get("why")}
+    cache[key] = {"ts": time.time(), "v": {k: x for k, x in v.items() if k != "name"}}
+    _save_cache()
+    return v
+
+
+def verify_candidates(names: list, workers: int = 8, budget_s: int = 150, timeout: int = 12,
+                      category: str = "") -> dict:
+    """VET THE POOL, CONCURRENTLY, UNDER A HARD TIME BUDGET. Serial it was ~30 minutes; the budget
+    is what makes this safe to run inside a web request for a free report. Whatever is not reached
+    inside the budget is reported as NOT CHECKED -- never as rejected, and never as accepted."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    t0 = time.time()
+    done, skipped = [], []
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as ex:
+        futs = {ex.submit(verify_candidate, n, timeout, category): n for n in names}
+        for fu in as_completed(futs, timeout=None):
+            if time.time() - t0 > budget_s:
+                for f2 in futs:
+                    if not f2.done():
+                        skipped.append(futs[f2])
+                        f2.cancel()
+                break
+            try:
+                done.append(fu.result())
+            except Exception as exc:  # noqa: BLE001
+                done.append({"name": futs[fu], "verdict": "inconclusive",
+                             "why": type(exc).__name__})
+    real = [d for d in done if d.get("verdict") == "real"]
+    # ⚠ TWO NAMES RESOLVING TO ONE SITE ARE ONE COMPETITOR. "Tiong Bahru" and "Tiong Bahru Bakery"
+    # both resolved to tiongbahru.com -- counting them twice inflates the identified total and makes
+    # the X-of-Y reveal a lie. Keep the longest name (the more specific one).
+    by_url = {}
+    for d in real:
+        u = (d.get("url") or "").lower()
+        if u not in by_url or len(d["name"]) > len(by_url[u]["name"]):
+            by_url[u] = d
+    real = list(by_url.values())
+    # best-first: a rival with a readable published claim is more useful evidence than one without
+    real.sort(key=lambda d: (0 if d.get("status") == "claim_found" else 1, d["name"]))
+    return {"checked": len(done), "not_checked": sorted(skipped), "elapsed_s": round(time.time() - t0, 1),
+            "real": real, "inconclusive": [d["name"] for d in done if d.get("verdict") != "real"],
+            "n_real": len(real)}
+
+
 def clean_place_name(nm: str) -> str:
     """STRIP THE OUTLET SUFFIX SO THE BRAND NAME RESOLVES TO A DOMAIN.
 
@@ -311,6 +452,18 @@ _EN_STOP = ("french german italian japanese korean chinese thai indian western a
             "old new great good house home bakery bread cafe cakes pastry address tuesday").split()
 
 
+# ⚠ PLACE NAMES AND PAGE CHROME, REJECTED BY TOKEN. These are not brands and verifying them wastes
+# the budget AND can produce a false accept -- "Farrer Park" resolved to farrerpark.com, a HOSPITAL,
+# and was vetted as a real competitor. "Nearest MRT", "Eng Hoon Street", "Icon Village", "PM Show
+# More" and "Which Are Halal" are street addresses and page furniture that survived the shape filter.
+_NOT_A_BRAND_TOKEN = (
+    "mrt", "street", "road", "avenue", "lane", "village", "park", "drive", "crescent", "close",
+    "show", "more", "halal", "nearest", "which", "are", "off", "sg", "singapore", "hospital",
+    "street)", "mall", "plaza", "centre", "center", "square", "tower", "building", "hotel",
+    "lim", "tan", "lee", "ng", "ong", "wong", "goh", "chua", "staff", "review", "sarah",
+)
+
+
 def is_brandish(c: str) -> bool:
     """A brand has a SHAPE: a multi-word proper noun, or a CamelCase token. A bare lowercase
     dictionary word is a heading, not a business. This is the filter that lets the majors through."""
@@ -318,6 +471,9 @@ def is_brandish(c: str) -> bool:
     if len(c) < 5 or c.lower() in BRAND_JUNK:
         return False
     words = c.split()
+    low = [w.lower().strip(".,'") for w in words]
+    if any(w in _NOT_A_BRAND_TOKEN for w in low):
+        return False
     if len(words) >= 2:
         # a multi-word phrase is brandish unless its HEAD word is generic boilerplate
         return not all(w.lower() in _EN_STOP or w.lower() in BRAND_JUNK for w in words) \
@@ -340,6 +496,7 @@ def discover_brand_source(category: str, market: str, limit: int = 12) -> dict:
     report must say so.
     """
     names, errs, pages = {}, [], []
+    page_of, listed = {}, {}
     try:
         from hermes_tools import web_extract, web_search
         for q in ("best %s brands in %s" % (category, market),
@@ -362,21 +519,56 @@ def discover_brand_source(category: str, market: str, limit: int = 12) -> dict:
                 body = r.get("content") or ""
                 if any(d in (r.get("url") or "").lower() for d in REPORT_DOMAINS):
                     continue
+                page_url = r.get("url") or ""
                 for m in re.finditer(r"\b([A-Z][a-zA-Z'&.\-]+(?:\s+[A-Z][a-zA-Z'&.\-]+){0,2})\b", body):
                     c = re.sub(r"\s+", " ", m.group(1)).strip()
                     if len(c) < 5 or c.lower() in BRAND_JUNK:
                         continue
                     names[c] = names.get(c, 0) + 1
+                    # ⚠ COUNT DISTINCT PAGES, NOT OCCURRENCES. Raw occurrence count ranks a heading
+                    # repeated six times inside one page above a brand named once per page across
+                    # three pages -- which is exactly how the majors ranked out. How many INDEPENDENT
+                    # sources name you is the signal; how often one page repeats a word is noise.
+                    page_of.setdefault(c, set()).add(page_url)
+
+                # ⚠⚠ AND THE RANKING THAT ACTUALLY FINDS THE MAJORS: LIST CO-OCCURRENCE.
+                # Every frequency variant failed, because the majors are named ONCE, in a comparative
+                # sentence, with the other majors -- "Delifrance, Paris Baguette, Polar Puffs & Cakes,
+                # Swee Heng and PrimaDeli. BreadTalk, Tiong Bahru Bakery, Four Leaves and Duke Bakery."
+                # A heading is repeated; a BRAND IS ENUMERATED. So a candidate that shares a SENTENCE
+                # with other candidates is being listed as a brand, and that is the signal. This is
+                # the one signal that is true of the majors and false of boilerplate.
+                for sent in re.split(r"(?<=[.!?;])\s+|\n+", body):
+                    if len(sent) > 400:
+                        continue
+                    found = {re.sub(r"\s+", " ", m.group(1)).strip()
+                             for m in re.finditer(
+                                 r"\b([A-Z][a-zA-Z'&.\-]+(?:\s+[A-Z][a-zA-Z'&.\-]+){0,2})\b", sent)}
+                    found = {f for f in found if len(f) >= 5 and f.lower() not in BRAND_JUNK}
+                    if len(found) < 2:
+                        continue          # a lone name is not an enumeration
+                    for f in found:
+                        listed[f] = listed.get(f, 0) + 1
+                    # ⚠ COUNT DISTINCT PAGES, NOT OCCURRENCES. Raw occurrence count ranks a heading
+                    # repeated six times inside one page above a brand named once per page across
+                    # three pages -- which is exactly how the majors ranked out. How many INDEPENDENT
+                    # sources name you is the signal; how often one page repeats a word is noise.
+                    page_of.setdefault(c, set()).add(page_url)
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "names": [], "error": "%s: %s" % (type(exc).__name__, str(exc)[:140]),
                 "source": "brand_source"}
 
     # keep only brand-SHAPED candidates, then rank by how many sources name them
     shaped = {k: v for k, v in names.items() if is_brandish(k)}
-    ranked = sorted(shaped.items(), key=lambda kv: (-kv[1], -len(kv[0]), kv[0]))
+    multi = {k: len(v) for k, v in page_of.items()}
+    # listed-in-a-run first (how majors are named), then distinct pages, then shape
+    ranked = sorted(shaped.items(),
+                    key=lambda kv: (-listed.get(kv[0], 0), -multi.get(kv[0], 0), -kv[1], kv[0]))
     return {"ok": bool(ranked), "names": [k for k, _ in ranked[:limit]],
             "n_brand_shaped": len(shaped),
-            "named_by_multiple_sources": [k for k, v in ranked[:limit] if v > 1],
+            "named_by_multiple_sources": [k for k, _ in ranked[:limit] if multi.get(k, 0) > 1],
+            "pages_naming": {k: multi.get(k, 0) for k, _ in ranked[:limit]},
+            "listed_with_other_candidates": {k: listed.get(k, 0) for k, _ in ranked[:limit]},
             "n_raw_candidates": len(names), "pages": sorted(set(pages))[:4], "errors": errs,
             "source": "brand_source (list of %s brands in %s)" % (category, market),
             "note": "candidates ranked by how many sources name them; NOT yet claim-verified"}
@@ -451,7 +643,8 @@ def from_web_scan(category: str, market: str, timeout: int = 15) -> dict:
 
 def build(subject_name: str, subject_claim: str, category: str, market: str = "Singapore",
           owner_named=None, seed_urls=None, discover: bool = True,
-          max_rivals: int = 6, per_url_timeout: int = 18) -> dict:
+          max_rivals: int = 6, per_url_timeout: int = 18,
+          verify: bool = True, verify_workers: int = 8, verify_budget_s: int = 270) -> dict:
     """THE LOCKED-IN PROCESS. One call: discover -> read claims -> range -> place -> report.
 
     Discovery is INTEGRAL (step 1), not a prerequisite.
@@ -472,7 +665,7 @@ def build(subject_name: str, subject_claim: str, category: str, market: str = "S
     disc = {"maps": None, "web": None}
     if discover:
         # PRIMARY (measured winner, 4.6.3.8): the brand-oriented source. Ask who the BRANDS are.
-        b = discover_brand_source(category, market, limit=max_rivals * 3)
+        b = discover_brand_source(category, market, limit=150)
         disc["brand_source"] = {"ok": b["ok"], "n": len(b["names"]),
                                 "n_raw_candidates": b.get("n_raw_candidates"),
                                 "note": b.get("note"), "errors": b.get("errors")}
@@ -499,13 +692,52 @@ def build(subject_name: str, subject_claim: str, category: str, market: str = "S
                     names.append(nm)
                     found_by[nm] = "web-search host (UNVERIFIED -- last resort)"
     out["discovery_sources"] = disc
-    names = names[:max_rivals + 4]
-    out["steps"]["discover"] = {"ok": bool(names), "n": len(names), "names": names, "found_by": found_by}
+    out["steps"]["discover"] = {"ok": bool(names), "n_candidates": len(names),
+                               "candidates": names[:40], "found_by": found_by}
+
+    # ── 1b VET — candidates become a VETTED SET. This is what makes discovery production-ready. ──
+    # ⚠ WITHOUT THIS STEP THE OUTPUT IS A CANDIDATE POOL, and a candidate pool is not a competitive
+    # set: measured, the brand-oriented source surfaced 5 of 5 majors but they ranked 26th and below,
+    # behind a gym and a hotel. Reading each name's own site is the ONLY filter that discriminates,
+    # because it asks the question frequency cannot: does this name resolve to a live business that
+    # publishes a claim? Concurrency + the cache + the budget below are what make that affordable.
+    vet = {"real": [], "inconclusive": [], "not_checked": [], "checked": 0, "n_real": 0,
+           "elapsed_s": 0.0}
+    pool = names[:120]
+    if verify and pool:
+        vet = verify_candidates(pool, workers=verify_workers, budget_s=verify_budget_s,
+                                timeout=min(per_url_timeout, 12), category=category)
+        out["steps"]["verify"] = {
+            "ok": bool(vet["real"]), "candidates_considered": len(pool), "checked": vet["checked"],
+            "vetted_real": vet["n_real"], "inconclusive": len(vet["inconclusive"]),
+            "not_checked": len(vet["not_checked"]), "elapsed_s": vet["elapsed_s"]}
+        out["vetting"] = {
+            "candidates_considered": len(pool), "checked": vet["checked"],
+            "vetted": [v["name"] for v in vet["real"]],
+            "inconclusive": vet["inconclusive"][:12],
+            "not_checked": vet["not_checked"][:12],
+            "note": ("a name that could not be read is INCONCLUSIVE, never rejected -- an unreadable "
+                     "page is a tool failure, not a finding about the rival")}
+        # ⚠ THE VETTED SET IS THE COMPETITIVE SET. Everything else is reported as candidates.
+        names = [v["name"] for v in vet["real"]][:max_rivals + 4]
+        for v in vet["real"]:
+            if v.get("claim"):
+                found_by.setdefault(v["name"], "found online, vetted: its own site publishes a claim")
+    else:
+        names = names[:max_rivals]
 
     # ── 2 CLAIM (read each rival's published claim) ─────────────────────────────────────────
     claims = {}
+    # ⚠ the verifier ALREADY read these sites; re-reading them would double the report's cost for no
+    # new information. Seed from the vetted claims, then read only what is left.
+    for v in vet.get("real") or []:
+        if v.get("status") == "claim_found" and v.get("claim"):
+            claims[v["name"]] = v["claim"]
+            out["competitors"].append({"name": v["name"], "claim": v["claim"],
+                                       "url": v.get("url"),
+                                       "how_found": found_by.get(v["name"], "found online, vetted")})
     for n in names:
-        if n.lower() == subject_name.lower():
+        if n.lower() == subject_name.lower() or n in claims:
             continue
         try:
             r = ps_evidence.claim_for(n, timeout=per_url_timeout)
@@ -526,7 +758,7 @@ def build(subject_name: str, subject_claim: str, category: str, market: str = "S
     out["comparison"] = placed
 
     # ── 5 REPORT (incl. the X/Y reveal Sean specified) ───────────────────────────────────────
-    n_found = len(names)
+    n_found = len(names)          # the VETTED set, not the candidate pool
     n_shown = len(claims)
     out["reveal"] = {
         "identified": n_found, "shown": n_shown,

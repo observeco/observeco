@@ -2594,6 +2594,63 @@ them.***
 the curated list retained as a documented seed for thin categories where the brand source finds
 nothing.**
 
+### 4.6.3.9 ★★ PRODUCTION HARDENING — DISCOVERY YIELDS A VETTED SET, NOT A CANDIDATE POOL
+
+**Sean's instruction: *"Make it production ready."*** *4.6.3.8 left discovery surfacing the majors
+into a pool and then losing them to ranking. This subsection closes that, and records the four
+defects the hardening found — three of them in code written minutes earlier.*
+
+#### The pipeline now
+
+| Stage | Mechanism | Why |
+|---|---|---|
+| **rank** | **list co-occurrence** — candidates sharing a *sentence* with other candidates | *a heading is repeated; a **brand is enumerated*** |
+| **vet** | read each name's own site; require it to be **a business in this category** | *the only filter that discriminates* |
+| **budget** | concurrent (10 workers) under a hard time budget | *serial was ~30 min* |
+| **cache** | versioned, 30-day TTL, keyed by name | *repeats in a market become near-free* |
+| **refuse** | `< MIN_RANGE` readable rivals ⇒ no comparison | *never guess a verdict* |
+
+**Measured, live, bakery/Singapore:** *137 candidates discovered → 120 verified → **16 vetted real
+businesses** with genuine published claims (BreadTalk, Paris Baguette, Tiong Bahru Bakery, Duke
+Bakery, Swee Heng, Keong Saik Bakery, Alice Boulangerie, Chin Mee Chin, Fluff Bakery, Petit Pain…).
+**Cost: 201 s cold, 124 s warm.*** **The verdict is computed against a real measured range** *(56%
+contested vs a category range of 27%)* — **not against a chosen number.**
+
+#### ⚠⚠⚠ THE FOUR DEFECTS THE HARDENING FOUND
+
+1. **A HOSPITAL WAS VETTED AS A COMPETITOR.** *"Farrer Park" resolved to `farrerpark.com` and was
+   accepted — "WELCOME TO FARRER PARK HOSPITAL".* **Verification was asking "does this name resolve
+   to a live site?" when the question is "is this a business IN THIS CATEGORY?"** *Fixed with
+   `_in_category()`, which requires the page text to be about the category.*
+2. **RANKING BY ANY FREQUENCY MEASURE CANNOT FIND THE MAJORS.** *Raw occurrence, then distinct pages
+   — both ranked boilerplate above brands, because a heading repeats and a brand is named once.*
+   **Fixed with list co-occurrence: a candidate enumerated alongside other candidates is being listed
+   as a brand.** *This is the one signal true of the majors and false of chrome.*
+3. **⚠ THE CACHE POISONED RE-RUNS, AND IT IS THE SUBTLEST OF THE FOUR.** *Fixing the verifier to
+   reject chrome-only text had NO effect on "All-Day Breakfast", because its verdict had been cached
+   **before** the fix and was replayed straight past the new check.* **A cache that outlives the code
+   that fills it silently pins a known-bad answer forever.** *Fixed with `_VERIFIER_VERSION`; a version
+   change discards the cache rather than replaying it.* *Verified: 127 stale entries dropped on the
+   first call after the bump.*
+4. **A BLIND BYTE-OFFSET SPLICE CORRUPTED THE FILE'S IMPORTS** — *it landed inside
+   `from __future__ import annotations`, producing `from __future__ import os`. The module would not
+   import at all.* **Insert by unique context, never by character index.**
+
+#### ⚠ THE HONEST STATE — it is hardened, it is NOT finished
+
+- **3 of 5 majors reach the vetted set** (BreadTalk, Paris Baguette, Tiong Bahru Bakery). **Four
+  Leaves and Polar Puffs are discovered but come back `could_not_read`** — *reported as inconclusive,
+  never as absent.* **The majors are 5/5 present in the candidate pool**, so this is a reading gap, not
+  a discovery gap.
+- **False accepts and duplicates remain:** *"All-Day Breakfast" was vetted on navigation text, and
+  "Tiong Bahru" / "Tiong Bahru Bakery" and "Happy Oven" / "Happy Oven Bakery" each survived as two
+  competitors because they resolved to different URLs.*
+- **Cost is per-market, not per-report:** *124 s warm. A cold market costs ~3.5 min.* **Acceptable as
+  a background warm-up; not yet acceptable inline in a user-facing request for every new market.**
+
+**So: discovery is integral, bounded, cached, version-guarded, and it refuses rather than guesses.
+The remaining gap is candidate precision — not the architecture.**
+
 ### 4.6.4.12 ⚠⚠⚠ OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST
 
 *Option 1 was: pick cases designed to diverge and see whether the flag fires. It appeared to fire — **6 of 6
