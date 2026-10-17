@@ -2651,6 +2651,55 @@ contested vs a category range of 27%)* — **not against a chosen number.**
 **So: discovery is integral, bounded, cached, version-guarded, and it refuses rather than guesses.
 The remaining gap is candidate precision — not the architecture.**
 
+### 4.6.3.10 ★★ THE RESOLUTION FIX — AND THE FABRICATED FINDING IT ALMOST CREATED
+
+**The 3-of-5 gap in 4.6.3.9 was a resolution gap, not a discovery gap.** *Four Leaves was in the
+candidate pool as a clean string and read `could_not_read` in the pipeline while reading perfectly by
+hand.* **The cause, measured:** `_domain_candidates("Four Leaves")` puts `fourleaves.com` first and the
+real site is `fourleaves.com.sg`. **The surface ladder walked all seven surfaces on the dead domain
+before moving on** — at a short timeout the correct domain was never reached. *The function's own
+docstring already recorded this defect; what it did not do was stop paying for it.*
+
+#### The fix: resolve the root once, then walk the ladder
+
+**One probe per candidate root.** *A domain that does not resolve is skipped; live roots are tried
+first.* **Measured effect: Four Leaves went from unreachable to `claim_found` in 16 s**, reading
+`fourleaves.com.sg/about-us`. BreadTalk reads in 71 s.
+
+#### ⚠⚠⚠ AND THE GUARD THAT HAD TO GO IN WITH IT, BECAUSE WITHOUT IT THE FIX FABRICATED A FINDING
+
+**Reordering live roots FIRST is only safe if "live" means "is this rival".** *Polar Puffs' correct
+domain `polarpuffs.com.sg` is **blocked** from this fetcher (`000`), so the reordering promoted
+`polarpuffs.co` — **a different site** — which answered `200`, and the function then reported
+`read_no_claim`: **"this rival's page was read and states no claim."***
+
+**That is a fabricated finding about a rival whose site was never seen — the exact failure this
+module exists to prevent, and it was introduced by a performance fix written minutes earlier.**
+
+**`_names_the_brand()` now gates every 200**: *a reading only counts if the page mentions the brand.*
+*Deliberately strict — every distinctive token must appear, so a stranger's page cannot supply the
+text.* **Verified after the guard: the `.co` reads are rejected as `NOT-THIS-BRAND`, and Polar Puffs
+returns `read_no_claim` from `polarpuffs.com` itself** — *whose pages do name the brand and genuinely
+state no claim on the surfaces read.* **That matches what 4.6.3.2 already recorded, so it is a real
+finding, not an artefact — and the two outcomes are now distinguishable.**
+
+#### Where the majors stand
+
+| Brand | Status | Read in |
+|---|---|---|
+| **BreadTalk** | `claim_found` | 71 s |
+| **Paris Baguette** | `claim_found` (vetted set) | — |
+| **Tiong Bahru Bakery** | `claim_found` (vetted set) | — |
+| **Four Leaves** | **`claim_found` — FIXED by this change** | 16 s |
+| **Polar Puffs** | `read_no_claim` — *its readable pages state no claim* | 154 s |
+
+**⇒ 4 of 5 majors now read.** *The fifth is a genuine "states no claim on the surfaces read", not an
+error — the same conclusion 4.6.3.2 reached by hand.*
+
+**⚠ Cost is now the open issue, not correctness:** *5 root probes per name at 5 s each.* **The verdict
+cache makes this a once-per-market-per-30-days cost, but a cold market is slower than 4.6.3.9
+measured.** *Moving verification to a background warm-up is the next fix, not a code rewrite.*
+
 ### 4.6.4.12 ⚠⚠⚠ OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST
 
 *Option 1 was: pick cases designed to diverge and see whether the flag fires. It appeared to fire — **6 of 6

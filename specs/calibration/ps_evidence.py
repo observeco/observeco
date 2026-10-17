@@ -126,6 +126,26 @@ def ladder(domain_url: str) -> list[str]:
     return about[:3] + [root + "/"] + about[3:] + press
 
 
+def _names_the_brand(text: str, name: str) -> bool:
+    """⚠⚠ DOES THIS PAGE ACTUALLY BELONG TO THE RIVAL? This guard exists because its absence
+    manufactured a finding about a rival that was not about the rival at all.
+
+    Measured: "Polar Puffs" resolves to polarpuffs.com.sg, which is BLOCKED from this fetcher (000).
+    The live-root ordering therefore promoted polarpuffs.co -- a DIFFERENT SITE -- which answered 200,
+    and the function reported `read_no_claim`, i.e. "this rival's page was read and states no claim".
+    That is a fabricated finding about a rival, and it is precisely what this module exists to
+    prevent. A reading only counts if the page mentions the brand. Requiring every distinctive token
+    is deliberately strict: a stranger's site will not say "polar".
+    """
+    toks = [w for w in re.split(r"[^a-z0-9]+", (name or "").lower()) if len(w) > 3]
+    if not toks:
+        return True
+    tl = (text or "").lower()
+    if len(toks) >= 2:
+        return all(w in tl for w in toks)
+    return tl.count(toks[0]) >= 2      # a lone token must appear more than incidentally
+
+
 def claim_for(name: str, timeout: int = 20, max_domains: int = 3, max_surfaces: int = 7) -> dict:
     """Derive one rival's published claim. Never invents; distinguishes failure from absence.
 
@@ -155,13 +175,33 @@ def claim_for(name: str, timeout: int = 20, max_domains: int = 3, max_surfaces: 
                 "why": "no candidate domain could be built from the name"}
 
     tried: list[str] = []
+    # ⚠⚠ RESOLVE THE DOMAIN FIRST -- NEVER WALK THE SURFACE LADDER ON A DOMAIN THAT DOES NOT EXIST.
+    # Measured, and this is why a real rival read as could_not_read: _domain_candidates("Four Leaves")
+    # puts fourleaves.com FIRST and the real site is fourleaves.com.sg. The ladder walked ALL SEVEN
+    # surfaces on the dead domain before moving on, so under a short timeout the correct domain was
+    # never reached. One cheap probe per root fixes it: a domain that does not resolve is skipped and
+    # live roots are tried FIRST. ⚠ An HTTP error code still walks the ladder -- a 403 or a 404 root
+    # says nothing about its /about page, so only genuine connection failures are treated as dead.
+    live_roots, dead_roots = [], []
+    for root in cands[: max_domains + 2]:
+        rstatus, _ = _fetch(root, min(timeout, 5))
+        tried.append("%s (root probe):%s" % (root, rstatus))
+        (dead_roots if rstatus in ("ERR", "000", "") else live_roots).append(root)
+    ordered = live_roots + dead_roots if live_roots else list(cands)
+
     read_ok = False
-    for root in cands[:max_domains]:
+    for root in ordered[:max_domains]:
         claims, hits = [], []
         for url in ladder(root)[:max_surfaces]:
             status, text = _fetch(url, timeout)
             tried.append("%s:%s" % (url, status))
             if status != "200":
+                continue
+            # ⚠ A 200 FROM THE WRONG DOMAIN IS NOT A READING OF THIS RIVAL. Without this guard a
+            # blocked-but-correct domain let a stranger's live domain supply the text, and the
+            # function asserted "read, states no claim" about a business whose site it never saw.
+            if not _names_the_brand(text, name):
+                tried.append("%s:200-BUT-NOT-THIS-BRAND (rejected)" % url)
                 continue
             read_ok = True
             found = extract_claims(text)
