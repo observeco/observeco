@@ -291,7 +291,66 @@ def _in_category(text: str, category: str) -> bool:
     return any(w in tl for w in words if w)
 
 
-def verify_candidate(name: str, timeout: int = 12, category: str = "") -> dict:
+_TRAILING_FILLER = ("it", "the", "and", "by", "pm", "am", "admin", "web", "show", "more", "ltd",
+                    "pte", "inc", "llp", "sg", "our", "we")
+
+
+def clean_candidate_name(c: str) -> str:
+    """TURN A MINED STRING INTO A NAME. Measured junk this removes, all seen in the vetted set:
+    "BreadTalk. It" (sentence fragment), "BreadTalk's" and "PrimaDeli's" (possessive), "PrimaDeli's"
+    again. These went to domain resolution as-is and could not resolve -- and a malformed name that
+    fails to resolve looks exactly like a brand with no site."""
+    s = re.sub(r"['\u2019]s\b", "", c or "")          # possessive
+    s = re.sub(r"[^\w\s&.\-']+", " ", s)              # stray punctuation
+    s = re.sub(r"\s+", " ", s).strip(" .,\-&'")
+    # ⚠ STRIP PUNCTUATION PER WORD. Stripping only the ends of the whole string left the dot in
+    # "BreadTalk." -- measured failure: "BreadTalk. It" cleaned to "BreadTalk." and still would not
+    # resolve. The filler word popped, its punctuation did not.
+    words = [w.strip(".,\-&'") for w in s.split()]
+    words = [w for w in words if w]
+    while len(words) > 1 and words[-1].lower() in _TRAILING_FILLER:
+        words.pop()                                      # "BreadTalk. It" -> "BreadTalk"
+    return " ".join(words)[:60]
+
+
+def _tokens(nm: str) -> list:
+    return [w for w in re.split(r"[^a-z0-9]+", (nm or "").lower()) if w]
+
+
+def dedupe_entities(items: list) -> list:
+    """⚠⚠ DE-DUPLICATE BY ENTITY, NOT BY URL. The URL rule was not enough: "Tiong Bahru" and
+    "Tiong Bahru Bakery" resolve to DIFFERENT urls and both survived as separate competitors --
+    inflating the identified count and making the X-of-Y reveal untrue. Same for "Happy Oven" and
+    "Happy Oven Bakery".
+
+    The rule: if one name's tokens are a PREFIX of another's, they are one entity, and the MORE
+    SPECIFIC name wins. "Tiong Bahru" is a district; "Tiong Bahru Bakery" is the brand. Keeping the
+    longer name is right in every observed case. Exact normalised duplicates collapse too.
+    ⚠ The risk is a genuine business whose name is a prefix of another's; no such case has been seen
+    here, and the output names the set so a human can check it.
+    """
+    # ⚠⚠ DEDUPE BY INDEX, NOT BY NAME. The first version added the LOSER'S NAME to a drop set and
+    # then filtered by name -- so an exact duplicate dropped EVERY copy, both of them, and the set
+    # came back with nothing at all. Measured: dedupe_entities([{BreadTalk},{BreadTalk}]) returned
+    # ZERO items. A dedupe that can delete the whole set is worse than no dedupe.
+    keys = [tuple(_tokens(i.get("name"))) for i in items]
+    drop = set()
+    for i in range(len(items)):
+        for j in range(i + 1, len(items)):
+            a, b = keys[i], keys[j]
+            if not a or not b:
+                continue
+            if a == b:
+                drop.add(j)                                  # exact duplicate: keep the FIRST
+                continue
+            shorter, longer = (a, b) if len(a) <= len(b) else (b, a)
+            if longer[:len(shorter)] == shorter:             # "Tiong Bahru" vs "Tiong Bahru Bakery"
+                drop.add(i if len(a) <= len(b) else j)       # drop the LESS SPECIFIC one
+    return [it for idx, it in enumerate(items) if idx not in drop]
+
+
+def verify_candidate(name: str, timeout: int = 12, category: str = "",
+                     cache_only: bool = False) -> dict:
     """IS THIS NAME A REAL BUSINESS? Answer by reading its own site. Cached; never invents.
 
     ⚠ `could_not_read` IS NOT A REJECTION. The spec is explicit that an unreadable page is a tool
@@ -308,6 +367,13 @@ def verify_candidate(name: str, timeout: int = 12, category: str = "") -> dict:
     hit = cache.get(key)
     if hit and (time.time() - hit.get("ts", 0)) < _CACHE_TTL_S:
         return dict(hit["v"], name=name, cached=True)
+    # ⚠ THE INLINE PATH MUST NOT PAY FOR AN UNCACHED NAME. Splitting "warm the market" (unbounded,
+    # background, cached) from "build the report" (bounded, inline, cache-only) is what makes this
+    # safe to sit inside a free-report request: the request never waits on a 5-domain root probe.
+    if cache_only:
+        return {"name": name, "verdict": "not_cached",
+                "why": "not yet verified -- run warm_market(); reported as not-yet-verified, never as "
+                       "a rejection and never as a competitor"}
     try:
         import ps_evidence as pe
         r = pe.claim_for(name, timeout=timeout) or {}
@@ -339,7 +405,7 @@ def verify_candidate(name: str, timeout: int = 12, category: str = "") -> dict:
 
 
 def verify_candidates(names: list, workers: int = 8, budget_s: int = 150, timeout: int = 12,
-                      category: str = "") -> dict:
+                      category: str = "", cache_only: bool = False) -> dict:
     """VET THE POOL, CONCURRENTLY, UNDER A HARD TIME BUDGET. Serial it was ~30 minutes; the budget
     is what makes this safe to run inside a web request for a free report. Whatever is not reached
     inside the budget is reported as NOT CHECKED -- never as rejected, and never as accepted."""
@@ -347,7 +413,7 @@ def verify_candidates(names: list, workers: int = 8, budget_s: int = 150, timeou
     t0 = time.time()
     done, skipped = [], []
     with ThreadPoolExecutor(max_workers=max(1, workers)) as ex:
-        futs = {ex.submit(verify_candidate, n, timeout, category): n for n in names}
+        futs = {ex.submit(verify_candidate, n, timeout, category, cache_only): n for n in names}
         for fu in as_completed(futs, timeout=None):
             if time.time() - t0 > budget_s:
                 for f2 in futs:
@@ -369,7 +435,7 @@ def verify_candidates(names: list, workers: int = 8, budget_s: int = 150, timeou
         u = (d.get("url") or "").lower()
         if u not in by_url or len(d["name"]) > len(by_url[u]["name"]):
             by_url[u] = d
-    real = list(by_url.values())
+    real = dedupe_entities(list(by_url.values()))   # then collapse name-prefix twins
     # best-first: a rival with a readable published claim is more useful evidence than one without
     real.sort(key=lambda d: (0 if d.get("status") == "claim_found" else 1, d["name"]))
     return {"checked": len(done), "not_checked": sorted(skipped), "elapsed_s": round(time.time() - t0, 1),
@@ -641,10 +707,26 @@ def from_web_scan(category: str, market: str, timeout: int = 15) -> dict:
             "note": "a category web search returns articles ABOUT the category; this is not a vetted set"}
 
 
+def warm_market(category: str, market: str, max_candidates: int = 150, workers: int = 10,
+                budget_s: int = 900, timeout: int = 12) -> dict:
+    """WARM THE VERDICT CACHE FOR A MARKET. Unbounded, run OUT OF BAND (cron, or a backgrounded
+    process); never call this inline on a user request. Everything it verifies is cached for 30 days,
+    so the inline build() then costs only discovery."""
+    d = discover_brand_source(category, market, limit=max_candidates)
+    names = [clean_candidate_name(n) for n in d.get("names", [])]
+    names = [n for i, n in enumerate(names) if n and n not in names[:i]]
+    v = verify_candidates(names, workers=workers, budget_s=budget_s, timeout=timeout,
+                          category=category)
+    return {"category": category, "market": market, "candidates": len(names),
+            "checked": v["checked"], "vetted_real": v["n_real"], "elapsed_s": v["elapsed_s"],
+            "vetted": sorted(x["name"] for x in v["real"])}
+
+
 def build(subject_name: str, subject_claim: str, category: str, market: str = "Singapore",
           owner_named=None, seed_urls=None, discover: bool = True,
           max_rivals: int = 6, per_url_timeout: int = 18,
-          verify: bool = True, verify_workers: int = 8, verify_budget_s: int = 270) -> dict:
+          verify: bool = True, verify_workers: int = 8, verify_budget_s: int = 270,
+          cache_only: bool = False) -> dict:
     """THE LOCKED-IN PROCESS. One call: discover -> read claims -> range -> place -> report.
 
     Discovery is INTEGRAL (step 1), not a prerequisite.
@@ -703,10 +785,16 @@ def build(subject_name: str, subject_claim: str, category: str, market: str = "S
     # publishes a claim? Concurrency + the cache + the budget below are what make that affordable.
     vet = {"real": [], "inconclusive": [], "not_checked": [], "checked": 0, "n_real": 0,
            "elapsed_s": 0.0}
+    # ⚠ CLEAN BEFORE VETTING. A malformed name cannot resolve, so it looks like a brand with no
+    # site -- the same false shape as an unreadable page. Clean names first, then verify.
+    names = [clean_candidate_name(n) for n in names]
+    seen_n = set()
+    names = [n for n in names if n and not (n.lower() in seen_n or seen_n.add(n.lower()))]
     pool = names[:120]
     if verify and pool:
         vet = verify_candidates(pool, workers=verify_workers, budget_s=verify_budget_s,
-                                timeout=min(per_url_timeout, 12), category=category)
+                                timeout=min(per_url_timeout, 12), category=category,
+                                cache_only=cache_only)
         out["steps"]["verify"] = {
             "ok": bool(vet["real"]), "candidates_considered": len(pool), "checked": vet["checked"],
             "vetted_real": vet["n_real"], "inconclusive": len(vet["inconclusive"]),
@@ -830,9 +918,47 @@ def _selftest() -> int:
     print("\n8. the X/Y reveal sentence exists and never states a total it cannot measure")
     check("reveal sentence is generated in build()", hasattr(build, "__call__"), True)
 
+    # ⚠⚠ THE CHECKS BELOW WERE WRITTEN BECAUSE THE CODE THEY COVER WAS WRONG TWICE. Both defects
+    # were found by testing these functions directly, and both are recorded rather than quietly
+    # fixed: a cleaning bug that left "BreadTalk." unable to resolve, and a dedupe that could delete
+    # the ENTIRE set on an exact duplicate. A permanent check is the only thing that stops either
+    # coming back.
+    print("\n-- name cleaning (mined strings -> names) --")
+    check('"BreadTalk. It" cleans', clean_candidate_name("BreadTalk. It"), "BreadTalk")
+    check('possessive cleans', clean_candidate_name("PrimaDeli's"), "PrimaDeli")
+    check("a real name is untouched", clean_candidate_name("Tiong Bahru Bakery"),
+          "Tiong Bahru Bakery")
+
+    print("\n-- entity de-duplication (by ENTITY, not URL) --")
+    check("exact duplicate keeps ONE, never zero",
+          len(dedupe_entities([{"name": "BreadTalk"}, {"name": "BreadTalk"}])), 1)
+    check("name-prefix twins collapse to the specific name",
+          [x["name"] for x in dedupe_entities([{"name": "Happy Oven"},
+                                               {"name": "Happy Oven Bakery"}])],
+          ["Happy Oven Bakery"])
+    check("distinct businesses both survive",
+          len(dedupe_entities([{"name": "Polar Puffs"}, {"name": "Paris Baguette"}])), 2)
+    check("an empty set stays empty", len(dedupe_entities([])), 0)
+
+    print("\n-- the inline path never pays for an uncached lookup --")
+    check("cache_only refuses an uncached name",
+          verify_candidate("Zzz Unverified Qqq Never Seen", cache_only=True).get("verdict"),
+          "not_cached")
+
     print("\nSELF-TEST: %d failed" % len(fails))
     return 1 if fails else 0
 
 
+def _cli() -> None:
+    """python3 claim_map.py warm <category> <market>   -- background warm-up, out of band."""
+    if len(sys.argv) > 3 and sys.argv[1] == "warm":
+        print(json.dumps(warm_market(sys.argv[2], sys.argv[3]), indent=1)[:4000])
+        return
+    self_test()
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "warm":
+        _cli()
+        sys.exit(0)
     raise SystemExit(_selftest())

@@ -2700,6 +2700,59 @@ error — the same conclusion 4.6.3.2 reached by hand.*
 cache makes this a once-per-market-per-30-days cost, but a cold market is slower than 4.6.3.9
 measured.** *Moving verification to a background warm-up is the next fix, not a code rewrite.*
 
+### 4.6.3.11 ★★ THE INLINE / BACKGROUND SPLIT — and de-duplication by ENTITY
+
+**Two fixes, both required before discovery could sit inside a free report.**
+
+#### 1. "Warm the market" is now separate from "build the report"
+
+**The cost problem was architectural, not algorithmic.** *Verification of ~120 candidates takes minutes;
+a free-report request cannot wait on that.* **So the two paths are now separate:**
+
+| Path | Bounded? | When |
+|---|---|---|
+| **`warm_market(category, market)`** — discover + verify everything, populate the cache | **no** | **out of band**: `python3 claim_map.py warm <category> <market>`, cron, or a backgrounded process |
+| **`build(..., cache_only=True)`** — the inline report path | **yes** — never pays for an uncached name | inside the user request |
+
+**`warm_market()` is a CLI entry point and returns a summary** (*candidates, checked, vetted, vetted
+names*). **The inline path returns `not_cached` for anything unverified** — *which is reported as
+**not yet verified**, and never as a rejection and never as a competitor.* **That distinction is the
+whole point: the report degrades honestly instead of waiting, and instead of guessing.**
+
+#### 2. ⚠ De-duplication must be by ENTITY, and the first version could delete the entire set
+
+**The URL rule was not enough.** *"Tiong Bahru" and "Tiong Bahru Bakery" resolve to **different** URLs
+and both survived as separate competitors, and so did "Happy Oven" and "Happy Oven Bakery" — inflating
+the identified count and making the X-of-Y reveal untrue.*
+
+**The rule now: if one name's tokens are a PREFIX of another's, they are one entity, and the MORE
+SPECIFIC name wins.** *"Tiong Bahru" is a district; "Tiong Bahru Bakery" is the brand.*
+
+**⚠⚠ AND TESTING THE NEW CODE FOUND TWO REAL DEFECTS IN IT, WHICH IS WHY IT WAS TESTED:**
+
+1. **`clean_candidate_name` left the dot.** *"BreadTalk. It" cleaned to **"BreadTalk."** — punctuation
+   was stripped from the ends of the whole string but not per word, so the popped filler word took its
+   dot with it and the name still would not resolve.*
+2. **⚠⚠ THE DE-DUPLICATOR COULD DELETE THE ENTIRE SET.** *The first version added the **loser's name**
+   to a drop set and then filtered **by name** — so an exact duplicate dropped **every** copy, and
+   `dedupe_entities([{BreadTalk}, {BreadTalk}])` returned **zero items**. A dedupe that can annihilate
+   the set is worse than no dedupe. **Fixed by working on indices**, keeping the first of an exact
+   duplicate and the more specific of a prefix pair.*
+
+**Both checks are now permanent members of the self-test**, which stands at **17 checks, 0 failed** —
+*including `dedupe_entities([])` and "exact duplicate keeps ONE, never zero", because the failure mode
+was deletion.*
+
+#### Also fixed here: malformed names never reached verification
+
+*Mined strings like "BreadTalk. It", "BreadTalk's" and "PrimaDeli's" were being sent to domain
+resolution as-is, could not resolve, and then looked exactly like a brand with no site.* **Names are
+cleaned before vetting, and de-duplicated before vetting, so the pool no longer spends budget on names
+that cannot resolve.**
+
+**⚠ Still open: a cold market is slow.** *`warm_market` is unbounded by design; wiring it to a cron
+entry is the remaining step, and the cache makes every market a one-time cost per 30 days.*
+
 ### 4.6.4.12 ⚠⚠⚠ OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST
 
 *Option 1 was: pick cases designed to diverge and see whether the flag fires. It appeared to fire — **6 of 6
