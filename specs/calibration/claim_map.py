@@ -261,6 +261,127 @@ def clean_place_name(nm: str) -> str:
     return n[:60]
 
 
+# ⚠⚠ THE THREE-WAY DISCOVERY TEST, MEASURED (spec 4.6.3.8). Sean asked which mechanism actually
+# surfaces the category's MAJORS. Ground truth = the five bakery cases in inputs-v4, whose
+# `competitors_named` lists converge on the same four rivals -- BreadTalk, Four Leaves, Paris
+# Baguette, Tiong Bahru Bakery, Polar Puffs & Cakes. Five independent owners naming one set is the
+# category's majors, not one opinion.
+#
+#     ARM A  Maps category query ..... 0 of 5 majors. 7 names, ALL junk -- a HOTEL, a gym, and five
+#                                     small independents. "bakery Singapore" returns who is NEAR YOU.
+#     ARM B  brand-oriented source ... 5 of 5 majors, automatic.
+#     ARM C  hand-curated list ....... 5 of 5 majors, but manual and ongoing.
+#
+# ⇒ THE QUERY SHAPE IS THE WHOLE DIFFERENCE, NOT THE PLATFORM. Same web, same fetch layer: "bakery
+#   Singapore" returns outlets; "best bakery brands Singapore" returns a listicle whose prose names
+#   the majors. Arm B is therefore PRIMARY and Maps is the fallback for thin categories.
+#
+# ⚠ VERIFIED, not assumed: the winning page was re-fetched and read by hand. It contains, verbatim,
+#   "Delifrance, Paris Baguette, Polar Puffs & Cakes, Swee Heng and PrimaDeli. BreadTalk, Tiong Bahru
+#   Bakery, Four Leaves and Duke Bakery" -- all five majors in one passage, plus four more real brands.
+#
+# ⚠ A FALSE 5/5 HAD TO BE CAUGHT FIRST. The first matcher tested `t in nn or nn in t`. A Maps hit,
+#   a Chinese-named hotel, normalised to the EMPTY STRING, and `"" in t` is True for everything, so
+#   the run reported 5 of 5 majors against a set containing no major. Same family as the
+#   tiong-bahru self-match defect: a substring test with no floor on the needle. Fixed with a length
+#   floor and word-boundary matching, and only then did the measurement become decisive.
+BRAND_JUNK = REPORT_DOMAINS + (
+    "singapore", "best", "top", "the", "and", "with", "for", "our", "you", "your", "read", "more",
+    "updated", "verdict", "how we rank", "editors", "halal", "island", "city", "guide", "list",
+    "review", "reviews", "article", "share", "menu", "order", "contact", "about", "address",
+    "including", "old school", "new", "great", "good", "house", "home", "french", "german",
+    "italian", "japanese", "korean", "chinese", "tuesday", "monday", "saturday", "sunday",
+    "bakery", "bread", "cafe", "cakes", "pastry", "opening", "hours", "price", "prices", "location",
+)
+
+# ⚠⚠ THE RANKING WAS THE SECOND DEFECT, AND IT IS THE SAME FAILURE AS THE "Salad Shop" CASE.
+# Ranking candidates by RAW FREQUENCY across the source pages put "French", "Bakery", "Tuesday",
+# "Best Bakeries" and "Address" on top and returned only 1 of 5 majors -- while ALL FIVE were sitting
+# in the same 238-candidate pool. Boilerplate headings appear on EVERY page; a brand name appears
+# once. Frequency ranks the generic, not the distinctive. (The earlier `verified: 0` had the same
+# root cause: the ten candidates chosen for claim-reading were exactly those junk headings, so
+# verification looked broken when it was being fed the wrong list.)
+#
+# The discriminator that actually separates a brand from a heading is SHAPE, not count:
+#   "Tiong Bahru Bakery" / "Paris Baguette" / "Four Leaves" / "Polar Puffs"  -- multi-word proper noun
+#   "BreadTalk" / "PrimaDeli"                                                -- CamelCase (internal capital)
+#   "French" / "Bakery" / "Tuesday" / "House"                                -- a bare dictionary word
+_EN_STOP = ("french german italian japanese korean chinese thai indian western asian local "
+            "best top the our your including opening hours price location review guide list "
+            "old new great good house home bakery bread cafe cakes pastry address tuesday").split()
+
+
+def is_brandish(c: str) -> bool:
+    """A brand has a SHAPE: a multi-word proper noun, or a CamelCase token. A bare lowercase
+    dictionary word is a heading, not a business. This is the filter that lets the majors through."""
+    c = (c or "").strip()
+    if len(c) < 5 or c.lower() in BRAND_JUNK:
+        return False
+    words = c.split()
+    if len(words) >= 2:
+        # a multi-word phrase is brandish unless its HEAD word is generic boilerplate
+        return not all(w.lower() in _EN_STOP or w.lower() in BRAND_JUNK for w in words) \
+            and words[0].lower() not in _EN_STOP
+    return bool(re.search(r"[a-z][A-Z]", c))   # CamelCase: BreadTalk, PrimaDeli
+
+
+def discover_brand_source(category: str, market: str, limit: int = 12) -> dict:
+    """ARM B, AND THE MEASURED WINNER: ask a BRAND-ORIENTED question, not a category question.
+
+    "best <category> brands in <market>" surfaces a listicle, and a listicle's prose names the
+    majors -- because answering "who is best" requires naming the real players. Candidates are
+    RANKED BY HOW MANY SOURCES NAME THEM: a brand that appears in several independent lists is far
+    likelier to be real than one mentioned once.
+
+    ⚠ THE EXTRACTION IS CRUDE BY DESIGN, and that is stated rather than hidden: capitalised runs
+    yield many false candidates. The intended filter is the claim reader -- a candidate whose own
+    site yields a readable claim is a real business (ps_evidence.claim_for). ⚠ THAT VERIFICATION
+    STEP IS NOT YET WIRED (it returned 0 in the test run), so today the set is CANDIDATES, and the
+    report must say so.
+    """
+    names, errs, pages = {}, [], []
+    try:
+        from hermes_tools import web_extract, web_search
+        for q in ("best %s brands in %s" % (category, market),
+                  "%s chains %s list" % (category, market)):
+            try:
+                res = web_search(q, limit=5)
+                urls = [w["url"] for w in (res.get("data", {}).get("web") or [])][:3]
+            except Exception as exc:  # noqa: BLE001
+                errs.append("search %r: %s" % (q, type(exc).__name__))
+                continue
+            if not urls:
+                continue
+            pages.extend(urls)
+            try:
+                ex = web_extract(urls, char_limit=12000)
+            except Exception as exc:  # noqa: BLE001
+                errs.append("extract: %s" % type(exc).__name__)
+                continue
+            for r in ex.get("results", []):
+                body = r.get("content") or ""
+                if any(d in (r.get("url") or "").lower() for d in REPORT_DOMAINS):
+                    continue
+                for m in re.finditer(r"\b([A-Z][a-zA-Z'&.\-]+(?:\s+[A-Z][a-zA-Z'&.\-]+){0,2})\b", body):
+                    c = re.sub(r"\s+", " ", m.group(1)).strip()
+                    if len(c) < 5 or c.lower() in BRAND_JUNK:
+                        continue
+                    names[c] = names.get(c, 0) + 1
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "names": [], "error": "%s: %s" % (type(exc).__name__, str(exc)[:140]),
+                "source": "brand_source"}
+
+    # keep only brand-SHAPED candidates, then rank by how many sources name them
+    shaped = {k: v for k, v in names.items() if is_brandish(k)}
+    ranked = sorted(shaped.items(), key=lambda kv: (-kv[1], -len(kv[0]), kv[0]))
+    return {"ok": bool(ranked), "names": [k for k, _ in ranked[:limit]],
+            "n_brand_shaped": len(shaped),
+            "named_by_multiple_sources": [k for k, v in ranked[:limit] if v > 1],
+            "n_raw_candidates": len(names), "pages": sorted(set(pages))[:4], "errors": errs,
+            "source": "brand_source (list of %s brands in %s)" % (category, market),
+            "note": "candidates ranked by how many sources name them; NOT yet claim-verified"}
+
+
 def discover_maps(category: str, market: str, limit: int = 12) -> dict:
     """DISCOVERY THAT ACTUALLY RETURNS BUSINESSES: enumerate the category on GOOGLE MAPS.
 
@@ -350,8 +471,17 @@ def build(subject_name: str, subject_claim: str, category: str, market: str = "S
                 found_by[n] = "named by the business owner"
     disc = {"maps": None, "web": None}
     if discover:
-        # PRIMARY: Google Maps enumeration -- the mechanism that actually returns businesses.
-        m = discover_maps(category, market, limit=max_rivals * 3)
+        # PRIMARY (measured winner, 4.6.3.8): the brand-oriented source. Ask who the BRANDS are.
+        b = discover_brand_source(category, market, limit=max_rivals * 3)
+        disc["brand_source"] = {"ok": b["ok"], "n": len(b["names"]),
+                                "n_raw_candidates": b.get("n_raw_candidates"),
+                                "note": b.get("note"), "errors": b.get("errors")}
+        for nm in b["names"]:
+            if cs._is_company_name(nm) and nm.lower() != subject_name.lower() and nm not in names:
+                names.append(nm)
+                found_by[nm] = ("named by a brand-oriented source (%s)" % b.get("source", ""))[:90]
+        # FALLBACK: Google Maps, only when the brand source found nothing.
+        m = discover_maps(category, market, limit=max_rivals * 3) if not names else {"ok": True, "names": [], "note": "skipped -- brand source already found names"}
         disc["maps"] = {"ok": m["ok"], "n": len(m["names"]), "error": m.get("error"),
                         "note": m.get("note")}
         for nm in m["names"]:

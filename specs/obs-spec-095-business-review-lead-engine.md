@@ -2523,6 +2523,77 @@ words are theirs rather than being handed a label.
   whether customers agree. **And DISTINCTIVE ≠ GOOD** — *an unoccupied claim may be a real position or
   one nobody cares about. This measures occupancy, not value.* Both are printed with every verdict.
 
+### 4.6.3.8 ★★ THE THREE-WAY DISCOVERY TEST — WHICH MECHANISM ACTUALLY SURFACES THE MAJORS
+
+**Sean's decision: *"Try all three and measure which actually surfaces the majors."*** Run, measured,
+and reported with its own false positive attached.
+
+#### The ground truth, and why it is trustworthy
+
+**The five bakery cases in `inputs-v4` each carry `competitors_named`, and ALL FIVE name the same four
+rivals** (minus themselves): **BreadTalk, Four Leaves, Paris Baguette, Tiong Bahru Bakery, Polar
+Puffs & Cakes**. *Five independent owners converging on one set is not one opinion — it is the
+category's majors.* Taken from the corpus, not from memory.
+
+#### The result
+
+| Arm | Mechanism | Majors found | Human effort |
+|---|---|---|---|
+| **A** | Maps category query (*"bakery Singapore"*) | **0 of 5** | none — automatic |
+| **B** | brand-oriented source (*"best bakery brands Singapore"*) | **5 of 5** | none — automatic |
+| **C** | hand-curated list | 5 of 5 | **manual, per vertical, ongoing** |
+
+**Arm A returned seven names and all seven were junk** — *five small independents, **a gym**, and
+**a Chinese-named hotel***. *A category query answers "who is near you", not "who are the players".*
+
+**Arm B returned a listicle whose prose names the majors.** Verified by hand rather than trusted: the
+winning page contains, verbatim, *"Délifrance, Paris Baguette, Polar Puffs & Cakes, Swee Heng and
+PrimaDeli. BreadTalk, Tiong Bahru Bakery, Four Leaves and Duke Bakery"* — **all five majors in one
+passage, plus four further real brands.**
+
+#### ⚠⚠ A FALSE 5/5 HAD TO BE CAUGHT BEFORE ANY OF THAT MEANT ANYTHING
+
+**The first run reported Arm A at 5 of 5 majors from a set containing no major.** *The matcher tested
+`t in nn or nn in t`; one Maps hit was the Chinese-named hotel, which normalised to the **empty
+string**, and `"" in t` is **True for everything**.* **This is the same defect family as the
+`tiong bahru` self-match (§4.6.4.5) and the `Salad Shop` frequency defeat (§4.6.4.6): a substring test
+with no floor on the needle.** *Fixed with a length floor and word-boundary matching — only then did
+the measurement become decisive, and only then did Arm A read 0 of 5.*
+
+#### ⚠⚠⚠ AND THE RANKING DEFECT — THE SAME FAILURE AGAIN, ONE LAYER DEEPER
+
+**Ranking candidates by raw frequency put `French`, `Bakery`, `Tuesday`, `Best Bakeries`, `Address`
+on top and returned 1 of 5 majors — while all five were sitting in the same 178-candidate pool.**
+*Boilerplate headings appear on EVERY page; a brand is named **once**.* **Frequency ranks the
+generic, not the distinctive** — *precisely the `Salad Shop` failure.*
+
+**A brand-shape filter (multi-word proper noun, or CamelCase like `BreadTalk`) improved candidate
+quality sharply** — real bakeries now appear (`Park Backerei`, `Brotherbird Bakehouse`, `Konditori
+Artisan Bakes`) — **but the majors STILL ranked out of the top 14.** *They are named once, in a
+comparative aside; listicle entries recur and outrank them.* ***No frequency ranking can surface
+them.***
+
+#### ⇒ THE CONCLUSION, AND WHAT IT COSTS
+
+1. **Query shape is the decisive variable, not the platform.** *Same web, same fetcher: the category
+   query scores 0 of 5, the brand-oriented query puts all five in the pool.* **Discovery asks who the
+   BRANDS are, never what is nearby.** — *implemented as `discover_brand_source()`, now PRIMARY.*
+2. **But discovery from a text source is NOT production-ready, because FILTERING is unsolved.**
+   *Frequency (any variant) cannot separate a brand named once from boilerplate repeated on every
+   page.* **The only filter that discriminates is the claim reader — verify a candidate by reading a
+   readable published claim from its own site.** *The majors all pass this (BreadTalk and Four Leaves
+   both returned real claims in this very run); the junk does not.*
+3. **⚠ That verification is not free, and it is not yet wired.** *111 brand-shaped candidates ×
+   ~15 s ≈ 30 minutes as a bounded batch.* **Until it is wired, the pool is reported as CANDIDATES,
+   never as a vetted competitive set** — *and the output says so (`"NOT yet claim-verified"`).*
+4. **Therefore C is NOT beaten on cost — it is beaten on maintenance.** *B reaches the majors
+   automatically but needs a verification pass to become a set. C is instant but needs a human,
+   forever, per vertical.*
+
+**Recommendation: the brand-oriented query, with claim-verification as a bounded batch filter, and
+the curated list retained as a documented seed for thin categories where the brand source finds
+nothing.**
+
 ### 4.6.4.12 ⚠⚠⚠ OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST
 
 *Option 1 was: pick cases designed to diverge and see whether the flag fires. It appeared to fire — **6 of 6
