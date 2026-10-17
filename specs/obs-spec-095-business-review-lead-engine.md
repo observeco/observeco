@@ -4021,6 +4021,93 @@ CAN THIS CATEGORY BE MIND-TESTED AT ALL?
 ```
 ***That single test replaces the corpus-type check, and it is measurable before any capture: read the review form.***
 
+### 4.6.4.8 ✅ THE FORM HYPOTHESIS, MEASURED — AND THE INSTRUMENT IT ACTUALLY IDENTIFIES
+
+*Option 1, run to completion: read the review FORMS and test whether a comparative corpus is reachable.*
+**Verdict: the hypothesis is SUPPORTED in mechanism, and the measurement identifies a sharper instrument than
+the one I proposed.** *Five platforms measured; the two largest are walled.*
+
+**✅ THE FORM IS THE DISCRIMINATOR — 4 OF 5 SOLICIT THE COMPARISON, QUOTED VERBATIM.**
+| platform | form asks about alternatives? | verbatim wording | corpus reachable? |
+|---|---|---|---|
+| **G2** | **YES** | *"Did your company switch to {product} from another software?"* → *"What did you switch from?"* → *"Why did you switch? How does {product} compare to your previous system?"* | ❌ **DataDome** |
+| **TrustRadius** | **YES** | *"Alternatives Evaluated: Which other similar products have you used or evaluated? Explain how this product stacks up against them and why you selected it."* | ✅ 6,396 chars |
+| **Clutch** | **YES (partial)** | *"Why did you select {vendor} over others?"* / *"How did you select this vendor and what were the deciding factors?"* | ✅ **13,010 chars, 110 review bodies (independently re-verified)** |
+| **Gartner Peer Insights** | **YES** | *"Which other vendors did you consider in your evaluation?"* — answers are **named vendors** | ❌ **403 `cf-mitigated: challenge`** |
+| **Capterra** | **❌ NO** | *"Pros: What did you like most…"* / *"Cons: What did you like least…"* / *"Describe your overall experience"* — **no alternatives field** | ✅ 3,121 chars |
+
+**⚠ AND CAPTERRA IS A NATURAL CONTROL.** *It shares G2's corporate group and engineering, and it is the **one**
+platform that asks nothing about alternatives.* ***Same company, same stack, different question — and the
+comparison field is absent.*** **That is the cleanest available evidence that the QUESTION, not the customer or the
+platform's ownership, determines whether an alternative gets named** — *and it corroborates §4.6.4.7's finding that
+the post-purchase state of the Google reviewer is not the cause.*
+
+**⚠⚠ BUT THE MEASUREMENT REFUTES THE INSTRUMENT I PROPOSED, AND THAT IS THE USEFUL PART.**
+*Every alternatives question asks **which vendors were weighed and why this one was chosen** — a
+**purchase-decision comparison**, not "does what you claim match what we think".* **So the corpus yields a
+consideration set and a choice rationale — which is NOT the claim-vs-vocabulary test of §4.6.4.4.**
+
+**✅ THE INSTRUMENT IT ACTUALLY IDENTIFIES — AND IT IS BETTER THAN MINE.**
+***"Why did you select {vendor} over others?" is the mind-test instrument.*** **It does not measure whether customers
+repeat the claim's words; it measures whether the claim is what WINS THE BUSINESS.**
+```
+claim: "we publish our rates"    buyer says "we chose them because they publish rates"  -> claim CORROBORATED
+claim: "one team instead of eight vendors"  buyer says "we chose them because they were cheapest"
+                                                           -> ⚠ claim CONTRADICTED: price wins, not the claim
+```
+***That is a stronger test than vocabulary overlap, because a buyer stating their own selection reason cannot be
+coached, and it is exactly the "why did you choose X over Y" sentence §4.6.4.4 concluded was absent from Google
+reviews.*** **It is absent from Google because Google does not ask it — and present on TrustRadius, Clutch, G2 and
+Gartner because they do.**
+
+**⚠ SO THE MIND TEST HAS A MEASURED SCOPE, AND IT IS NARROW: TRUSTRADIUS AND CLUTCH.**
+*Only these two combine a form that solicits the comparison **with a corpus that can actually be read**.*
+**G2 and Gartner Peer Insights ask the right question and are the two largest sources — and both are bot-walled.**
+***"The form asks it" ≠ "the answers can be read."***
+**⚠ AND CLUTCH'S VERSION IS WEAKER THAN IT LOOKS:** *its selection question offers **factor chips** ("Good value for
+cost", "UX expertise", "High ratings") rather than a free-text list of named alternatives — **so Clutch yields
+selection CRITERIA, which is what matters for the claim test, but not a named consideration set.***
+
+**✅ PRACTICAL CONSEQUENCE — AND IT PUTS OUR OWN CATEGORY IN SCOPE.** *TrustRadius and Clutch serve **software and
+agencies**.* **So the mind test applies to SaaS and agency/services categories, and everything else falls to the
+claim-vs-claims branch (§4.6.3) with the limit stated.** ***Clutch covers agency firms — and ObserveCo is itself a
+consulting firm — so the mind test is applicable to our own category, which is the one we can validate it against.***
+
+**⚠ REPRODUCE:** *the five forms are quoted with source URLs in `/tmp/ws_a_forms.md` (24.9 KB, with a raw appendix);
+Clutch reachability re-verified independently by `verify_clutch.py` (13,010 chars, 110 bodies); the implementation of
+this section's verdict rules is `specs/calibration/mind_test.py` (§4.6.4.9).*
+
+### 4.6.4.9 THE PRECONDITION GATE, AS CODE — `specs/calibration/mind_test.py`
+
+**⚠ THE §4.6.4.7 RULE IS NOW ENFORCED BY A FUNCTION THAT CANNOT GUESS.** *`can_mind_test(platform, registry)`
+returns YES / NO / **UNKNOWN**, and **YES only when the caller's registry says the form solicits comparisons**.*
+**There is no built-in fallback and no default: an absent key, an empty or `None` registry, or an uninterpretable
+value all return UNKNOWN.** *UNKNOWN is deliberately **not** collapsed into NOT_APPLICABLE — asserting a corpus is
+non-comparative when that is unknown would be the same class of error as guessing YES.*
+
+**✅ THE THREE EXCLUSIONS THAT BIT US ARE ALL ENFORCED:** *(a) the brand's own name is masked out of its own reviews,
+**and** a rival that is a token-subset of the brand name is dropped, both recorded in `excluded.brand_self_alias`;
+(b) a rival whose every token is in the caller's `generic` set is dropped into `excluded.generic_common_word` —
+**whole-word matching alone provably does not fix "corner" in "bottom left corner"**, so the caller's set is the
+load-bearing input; (c) whole-word, case-insensitive, hyphen/apostrophe tolerant.* **Evidence: the self-test's
+`SELF_MATCH_BRAND_REPEATED`, `SELF_MATCH_MASKED_ACROSS_BRAND_NAME`, `GENERIC_WORD_RIVAL_EXCLUDED`.**
+
+**⚠ VERDICTS NEVER SMOOTH A LIMIT:** *attribution found **and** claim-term overlap → AGREES; attribution without
+overlap → DISAGREES with `divergence_flag=True` **and `weak_evidence=True`**; no attribution → **INCONCLUSIVE with
+`divergence_flag=False`** and the §4.6.4.4 wording that category talk corroborates nobody; post-purchase platform →
+**NOT_APPLICABLE, `branch="claim_vs_claims"`**; unusable corpus → **REFUSED, same fallback branch**.*
+
+**✅ VERIFIED INDEPENDENTLY, NOT TAKEN ON REPORT:** *the self-test runs **21 checks, 21 passed, exit 0** under
+`/Users/seanfzc/.hermes/hermes-agent/venv/bin/python` (958 lines, 17 functions; the size is docstrings and 36
+synthetic fixtures, not bloat).* **Determinism holds ACROSS processes, not just within one.** *Refusals are
+exercised for bot-wall, navigation chrome, empty, too-thin and `None` corpora — **the failure mode that produced a
+fake vendor list in §4.6.4.7 is now a tested refusal.***
+
+**⚠ LIMITS, STATED:** *the refusal thresholds (`MIN_REVIEWS=5`, `MIN_TOKENS=100`, `CHROME_SHARE=0.6`) are in-code
+constants and **uncalibrated** — labelled as such and overridable per call. **⚠ And brand aliases remain the
+caller's job:** *only the single `brand` string is masked — **"TBB" for "Tiong Bahru Bakery" must be supplied, and
+the module will not guess an abbreviation.***
+
 **⚠ REPRODUCE:** *`b2b_mind.py` (enumerate `managed IT services Singapore` → 29 named MSPs → capture;
 `/tmp/b2b_enum.json`, `/tmp/b2b_reviews.json`); `derive_b2b_set.py` shows the three directories failing
 (813/1465/1590 chars, menus only); §4.6.4.4's Test 2 is the attribution test that returns zero here; the case is
