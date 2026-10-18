@@ -3323,11 +3323,34 @@ does not confirm the map the corpus was scored against — it contradicts it on 
 
 ### 4.6.3.7 ★★ THE CLAIM MAP, LOCKED IN — and HOW IT COMPARES WITH THE RANGE OF COMPETITORS
 
+> ## ⚠⚠⚠ READ THIS FIRST. §4.6.3.7–§4.6.3.11 IS A **BUILD LOG**, NOT THE DESIGN.
+> **It is a faithful record of what was built, tested and refuted, in the order it happened — and
+> each section's "not solved" and "next step" lines were written BEFORE the next section solved them.
+> Read it as history, never as the current state.** The current state is this table:
+>
+> | | **CURRENT STATE (17 Oct 2026, latest word)** |
+> |---|---|
+> | **Discovery** | **`discover_brand_source()` is PRIMARY** — a **brand-oriented** query (*"best <category> brands in <market>"*). **Google Maps is the FALLBACK for thin categories.** |
+> | **Why** | **A category query scores 0 of 5 majors; the brand-oriented query puts 5 of 5 in the pool** (§4.6.3.8, measured). |
+> | **Filtering** | **SOLVED** — candidates are **vetted by reading each name's own site** and requiring it to be a business *in this category* (§4.6.3.9). *Ranking is by list co-occurrence; no frequency measure works.* |
+> | **Majors readable** | **4 of 5** — BreadTalk, Paris Baguette, Tiong Bahru Bakery, **Four Leaves**. *Polar Puffs is `read_no_claim`: a genuine finding, not an error* (§4.6.3.10). |
+> | **Dedup** | **by ENTITY**, name-prefix rule, not by URL (§4.6.3.11). |
+> | **Inline vs background** | **SPLIT.** `warm_market()` warms the cache out of band; `build(cache_only=True)` never pays for an uncached lookup (§4.6.3.11). |
+> | **Cache** | versioned (`_VERIFIER_VERSION`), 30-day TTL. *An unversioned cache replays a known-bad verdict forever.* |
+> | **Self-test** | **17 checks, 0 failed** — *8 at the time §4.6.3.7 was written; the count grew as defects were found.* |
+> | **Files changed** | *`claim_map.py` (new), and **`ps_evidence.py` WAS changed** — root probing + `_names_the_brand` (§4.6.3.10).* |
+>
+> **⚠ WHERE THIS BLOCK IS WRONG, IT IS WRONG BELOW AND RIGHT ABOVE.** *Specific stale lines are
+> corrected in place with a `⚠ CORRECTED` marker; the surrounding narrative is left intact so the
+> reasoning that produced the corrections is still readable.*
+
 **(Sean's instruction, 17 Oct: *"lock in the claim map, but the process must include how it compares
 with the range of competitors. The capability to search for relevant competitors online must be
 integral."*)** This subsection is the committed design. Reference implementation:
-`specs/calibration/claim_map.py` (one call, five steps, self-test 8/8). It uses `ps_evidence.py` for
-reading a claim and `competitor_scan.py` for the reader plumbing; neither is changed by it.
+`specs/calibration/claim_map.py` (one call, five steps, **self-test 17/17** — *8/8 when this line was
+first written*). It uses `ps_evidence.py` for reading a claim and `competitor_scan.py` for the reader
+plumbing. **⚠ CORRECTED: `ps_evidence.py` WAS subsequently changed** — root probing and the
+`_names_the_brand` guard, both in §4.6.3.10.
 
 #### The five steps, in one call — `claim_map.build(...)`
 
@@ -3352,7 +3375,11 @@ blog** — `researchandmarkets.com`, `6wresearch.com`, `marketresearch.com`, `in
 *about* the category, not members *of* it.** (This re-confirms the dead end already recorded at
 §3.7.20.)
 
-**So the primary discovery is Google Maps enumeration**, because a Maps category search returns
+**⚠ CORRECTED BY §4.6.3.8 — MAPS IS NOT PRIMARY.** *Maps was the first mechanism tried and it scored
+**0 of 5 majors**; it survives only as the fallback for thin categories. The primary is a
+**brand-oriented query**.* **The paragraph below is kept because the outlet-vs-brand defect it records
+is still live and still fixed by `clean_place_name()` — a real finding, attached to a superseded
+conclusion.** **For the record, what this paragraph originally concluded:** Maps enumeration, because a Maps category search returns
 **named local businesses in that category** — which is exactly a competitive set. *Measured the same
 day elsewhere: 29 named managed-IT firms, 11–28 named places for bakery queries.*
 
@@ -3400,13 +3427,15 @@ words are theirs rather than being handed a label.
 - **✅ Proven:** the reader works on real brands — BreadTalk (*"over 700 outlets in 14 international
   markets … culinary magic"*), Four Leaves (*"a trustworthy bakery manufacturer … one of the leading
   companies"* — **again not the analyst map's "everyday"**, §4.6.3.2). The comparator passes its
-  control 8/8. The refusal fires on a thin range.
-- **✅ Proven:** a category web search is the wrong discovery mechanism, and Maps is the right one.
-- **⚠ NOT solved:** **a bare category query does not yet yield a *brand* set** — Maps gives local
-  outlets, and the market's majors (BreadTalk, Tiong Bahru Bakery, Paris Baguette) are not what
-  *"bakery Singapore"* returns. **The brand set currently comes from owner-named rivals (which works)
-  or a curated category list.** *Integral discovery is therefore real but partial: it finds businesses
-  in the category, not yet the category's leaders.* Stated as a limit in the output, not hidden.
+  control **17/17**. The refusal fires on a thin range.
+- **⚠ CORRECTED:** the right claim here is narrower. **A CATEGORY web search is the wrong mechanism
+  (measured: twelve captures, not one a bakery). But MAPS IS ALSO WRONG — it scored 0 of 5 majors
+  (§4.6.3.8). The mechanism that works is the BRAND-ORIENTED query.** *This bullet originally read
+  "Maps is the right one", which the next section refutes.*
+- **✅ NOW SOLVED (§4.6.3.8):** *this bullet read "NOT solved", and it was true when written.* **A
+  brand-oriented query now puts all five majors in the candidate pool**, and §4.6.3.9's verification
+  turns the pool into a vetted set. *Retained because it records the measurement that forced the
+  change: 'bakery Singapore' returns local outlets and a hotel, not the category's leaders.*
 - **⚠ Standing limits (§4.6.4.12):** the map reads **published** claims; it does **not** measure
   whether customers agree. **And DISTINCTIVE ≠ GOOD** — *an unoccupied claim may be a real position or
   one nobody cares about. This measures occupancy, not value.* Both are printed with every verdict.
@@ -3466,21 +3495,26 @@ them.***
 1. **Query shape is the decisive variable, not the platform.** *Same web, same fetcher: the category
    query scores 0 of 5, the brand-oriented query puts all five in the pool.* **Discovery asks who the
    BRANDS are, never what is nearby.** — *implemented as `discover_brand_source()`, now PRIMARY.*
-2. **But discovery from a text source is NOT production-ready, because FILTERING is unsolved.**
+2. **⚠ CORRECTED — FILTERING WAS SUBSEQUENTLY SOLVED (§4.6.3.9).** *When this line was written the
+   filter was unsolved; the hardening section below wired it.* **Kept because the REASON is durable:
+   no frequency measure can separate a brand named once from boilerplate repeated on every page.**
+   **The paragraph that follows, as originally written:** *discovery from a text source is not
+   production-ready, because filtering is unsolved.*
    *Frequency (any variant) cannot separate a brand named once from boilerplate repeated on every
    page.* **The only filter that discriminates is the claim reader — verify a candidate by reading a
    readable published claim from its own site.** *The majors all pass this (BreadTalk and Four Leaves
    both returned real claims in this very run); the junk does not.*
-3. **⚠ That verification is not free, and it is not yet wired.** *111 brand-shaped candidates ×
-   ~15 s ≈ 30 minutes as a bounded batch.* **Until it is wired, the pool is reported as CANDIDATES,
-   never as a vetted competitive set** — *and the output says so (`"NOT yet claim-verified"`).*
+3. **⚠ CORRECTED — THE VERIFICATION IS NOW WIRED (§4.6.3.9).** *This line read "not yet wired". It
+   is wired: concurrent, budgeted, cached and version-guarded, and the pool is reported as a VETTED
+   SET.* **The cost analysis stands and is why the work was split** — *~30 minutes serially, which is
+   what forced the inline/background split in §4.6.3.11.*
 4. **Therefore C is NOT beaten on cost — it is beaten on maintenance.** *B reaches the majors
    automatically but needs a verification pass to become a set. C is instant but needs a human,
    forever, per vertical.*
 
-**Recommendation: the brand-oriented query, with claim-verification as a bounded batch filter, and
-the curated list retained as a documented seed for thin categories where the brand source finds
-nothing.**
+**Recommendation — ✅ ADOPTED AND IMPLEMENTED (§4.6.3.9–§4.6.3.11):** *the brand-oriented query as
+primary, claim-verification as the filter (concurrent, budgeted, cached), the curated list retained as
+a documented seed where the brand source finds nothing.*
 
 ### 4.6.3.9 ★★ PRODUCTION HARDENING — DISCOVERY YIELDS A VETTED SET, NOT A CANDIDATE POOL
 
@@ -3526,13 +3560,16 @@ contested vs a category range of 27%)* — **not against a chosen number.**
 
 #### ⚠ THE HONEST STATE — it is hardened, it is NOT finished
 
-- **3 of 5 majors reach the vetted set** (BreadTalk, Paris Baguette, Tiong Bahru Bakery). **Four
-  Leaves and Polar Puffs are discovered but come back `could_not_read`** — *reported as inconclusive,
-  never as absent.* **The majors are 5/5 present in the candidate pool**, so this is a reading gap, not
-  a discovery gap.
-- **False accepts and duplicates remain:** *"All-Day Breakfast" was vetted on navigation text, and
-  "Tiong Bahru" / "Tiong Bahru Bakery" and "Happy Oven" / "Happy Oven Bakery" each survived as two
-  competitors because they resolved to different URLs.*
+- **⚠ CORRECTED — 4 of 5 majors now read (§4.6.3.10).** *When this was written it was 3 of 5:
+  Four Leaves came back `could_not_read` and the cause was domain resolution, fixed below.* **The
+  diagnosis here was right and is what led to the fix** — *the majors were 5/5 present in the
+  candidate pool, so it was a READING gap, not a discovery gap.* **Polar Puffs remains
+  `read_no_claim` — a genuine finding.**
+- **⚠ CORRECTED — THE DUPLICATES ARE FIXED (§4.6.3.11).** *"Tiong Bahru"/"Tiong Bahru Bakery" and
+  "Happy Oven"/"Happy Oven Bakery" survived as pairs because they resolved to DIFFERENT URLs; the
+  de-duplicator now works on ENTITY, by name-prefix, and `Happy Oven Bakery` appears once.* **The
+  chrome-text false accept was addressed by a name-repetition guard, but see the cache note below — it
+  had no effect until the cache was versioned.**
 - **Cost is per-market, not per-report:** *124 s warm. A cold market costs ~3.5 min.* **Acceptable as
   a background warm-up; not yet acceptable inline in a user-facing request for every new market.**
 
@@ -3584,9 +3621,9 @@ finding, not an artefact — and the two outcomes are now distinguishable.**
 **⇒ 4 of 5 majors now read.** *The fifth is a genuine "states no claim on the surfaces read", not an
 error — the same conclusion 4.6.3.2 reached by hand.*
 
-**⚠ Cost is now the open issue, not correctness:** *5 root probes per name at 5 s each.* **The verdict
-cache makes this a once-per-market-per-30-days cost, but a cold market is slower than 4.6.3.9
-measured.** *Moving verification to a background warm-up is the next fix, not a code rewrite.*
+**⚠ CORRECTED — the background warm-up was built next (§4.6.3.11).** *This line said it "is the next
+fix". It exists: `warm_market()` runs out of band and `build(cache_only=True)` never waits.* **The
+cost observation stands** — *5 root probes per name at 5 s each, once per market per 30 days.*
 
 ### 4.6.3.11 ★★ THE INLINE / BACKGROUND SPLIT — and de-duplication by ENTITY
 
