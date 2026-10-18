@@ -3961,7 +3961,13 @@ actually measured, and it is genuinely useful. They do NOT answer "which brand o
 test needs an instrument whose reviews are *about the vendor's differentiation and name the alternative* — and food
 retail, reviewed by the visit, is the opposite of that.**
 
-**✅ AND THE INVERSION THIS PRODUCES: THE B2B DESIGN OF §4.6.4.3 IS THE BETTER INSTRUMENT, NOT THE FALLBACK.**
+**⚠⚠ CORRECTED BY §4.6.4.7 — THIS PREDICTION WAS WRONG.** *It read "✅ AND THE INVERSION THIS PRODUCES:
+THE B2B DESIGN OF §4.6.4.3 IS THE BETTER INSTRUMENT".* **It is not.** *§4.6.4.7 ran the B2B test and
+measured ZERO of 59 reviews naming an alternative — the attribution sentence is absent from B2B Google
+reviews too, because the corpus is POST-PURCHASE.* **The paragraph below is kept because the reason
+given for the prediction is still the right reason — B2B reviews ARE about the relationship rather
+than the visit — and that finding survived. What did not survive is the inference from it.**
+**As originally written:**
 *G2 / Capterra / Clutch reviews are **inherently comparative and vendor-level**: a reviewer states what they evaluated,
 what they switched from, and why. That is the attribution sentence §4.6.4.4 needs* — ***"I go here instead of X because…"
 is the NORM on a B2B review site and the exception on Google Maps.*** **So the mind test should be attempted on a B2B
@@ -4083,10 +4089,17 @@ Gartner because they do.**
 cost", "UX expertise", "High ratings") rather than a free-text list of named alternatives — **so Clutch yields
 selection CRITERIA, which is what matters for the claim test, but not a named consideration set.***
 
-**✅ PRACTICAL CONSEQUENCE — AND IT PUTS OUR OWN CATEGORY IN SCOPE.** *TrustRadius and Clutch serve **software and
+**⚠⚠ CORRECTED BY §4.6.4.10 — "IN SCOPE" WAS TOO STRONG.** *8 Clutch profiles read in full
+(68,081 chars): **0 of 8 render a selection/alternatives section, and 0 selection-reason hits** — the
+form asks the question, the PUBLISHED corpus never shows the answer.* **So Clutch is usable, but through
+the SYNTHESIS route (§4.6.4.10), not the raw-review route assumed here.** **As originally written:** *TrustRadius and Clutch serve **software and
 agencies**.* **So the mind test applies to SaaS and agency/services categories, and everything else falls to the
 claim-vs-claims branch (§4.6.3) with the limit stated.** ***Clutch covers agency firms — and ObserveCo is itself a
 consulting firm — so the mind test is applicable to our own category, which is the one we can validate it against.***
+
+**⚠ REPRODUCE:** *the five forms are quoted with source URLs in `/tmp/ws_a_forms.md` (24.9 KB, with a raw appendix);
+Clutch reachability re-verified independently by `verify_clutch.py` (13,010 chars, 110 bodies); the implementation of
+this section's verdict rules is `specs/calibration/mind_test.py` (§4.6.4.9).*
 
 ### 4.6.4.9 THE PRECONDITION GATE, AS CODE — `specs/calibration/mind_test.py`
 
@@ -4336,10 +4349,6 @@ SURFACE B is the `Review Highlights` … `Reviews` region split into statements 
 813-char shell was the `/sg/it-services/...` path, a different wall); `consulting_decide.py` (0/8 sections,
 0 hits in 68,081 chars); `verify_zero.py` (control-word proof the zero is real); `claim_vs_mind.py` (the six
 side-by-side pairs); artifacts `/tmp/consulting_*.json`, `/tmp/claim_vs_mind.json`.*
-
-**⚠ REPRODUCE:** *the five forms are quoted with source URLs in `/tmp/ws_a_forms.md` (24.9 KB, with a raw appendix);
-Clutch reachability re-verified independently by `verify_clutch.py` (13,010 chars, 110 bodies); the implementation of
-this section's verdict rules is `specs/calibration/mind_test.py` (§4.6.4.9).*
 
 ### 4.6.4.12 ⚠⚠⚠ OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST
 
