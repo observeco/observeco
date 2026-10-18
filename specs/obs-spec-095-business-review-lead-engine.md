@@ -32,6 +32,7 @@
   - [4.6.3.10  THE RESOLUTION FIX — AND THE FABRICATED FINDING IT ALMOST CREATED](#46310-the-resolution-fix-and-the-fabricated-finding-it-almost-created)
   - [4.6.3.11  THE INLINE / BACKGROUND SPLIT — and de-duplication by ENTITY](#46311-the-inline-background-split-and-de-duplication-by-entity)
 - [4.6.4 THE CLAIM/MIND PROTOCOL — VERIFYING WHAT CUSTOMERS THINK, NOT JUST WHAT THE BRAND SAYS](#464-the-claimmind-protocol-verifying-what-customers-think-not-just-what-the-brand-says)
+      - [4.6.4.0  THIS THREAD IS CLOSED — SETTLED 17 Oct 2026. DO NOT RE-OPEN WITHOUT NEW EVIDENCE.](#4640-this-thread-is-closed-settled-17-oct-2026-do-not-re-open-without-new-evidence)
   - [4.6.4.1  THE THREE-WAY RULE — SEAN'S, AND IT DECIDES THE WHOLE PIPELINE](#4641-the-three-way-rule-seans-and-it-decides-the-whole-pipeline)
   - [4.6.4.2 B2C — THE PROVEN PATH, AND ITS EXACT BLOCKER *MEASURED TODAY*](#4642-b2c-the-proven-path-and-its-exact-blocker-measured-today)
   - [4.6.4.3 B2B — THE PART THAT HAD TO BE DESIGNED, AND THE LADDER](#4643-b2b-the-part-that-had-to-be-designed-and-the-ladder)
@@ -3680,6 +3681,35 @@ the remaining number-drift risk, and it is in the budget, not in discovery.**
 entry is the remaining step, and the cache makes every market a one-time cost per 30 days.*
 
 ## 4.6.4 THE CLAIM/MIND PROTOCOL — VERIFYING WHAT CUSTOMERS THINK, NOT JUST WHAT THE BRAND SAYS
+
+### 4.6.4.0 ⚠⚠⚠ THIS THREAD IS CLOSED — SETTLED 17 Oct 2026. DO NOT RE-OPEN WITHOUT NEW EVIDENCE.
+
+**Six instruments were built and run against real corpora. NONE produced a usable claim/mind
+divergence flag.** *The product does **not** depend on it: PS evidence comes from the claim map
+(§4.6.3), which works.*
+
+| # | Instrument | Verdict | Section |
+|---|---|---|---|
+| 1 | Google reviews — bakery (110 reviews, 3 brands) | **INCONCLUSIVE** — reviews are about the visit | 4.6.4.5 |
+| 2 | Google reviews — SaladShop (12,523 reviews, 28 chains) | **same**, and a review attaches to an **outlet, not a brand** | 4.6.4.6 |
+| 3 | Google reviews — B2B (59 reviews, 29 MSPs) | **0 of 59 named a rival** — post-purchase | 4.6.4.7 |
+| 4 | Raw marketplace reviews (Clutch, 110 bodies) | **the alternatives question is never published** | 4.6.4.8–.10 |
+| 5 | Editorial synthesis (6 agencies) | **FALSE DIVERGENCE** — it was the marketplace's pricing frame | 4.6.4.11 |
+| 6 | Term-presence vs customer surface | **FALSE POSITIVE** — the control proved it measured text LENGTH | 4.6.4.12 |
+
+**THE THREE DURABLE CONCLUSIONS:**
+1. **The discriminator is the review FORM, not the market.** *Google asks "how was your visit"; only
+   TrustRadius and Clutch ask about alternatives — and no marketplace publishes the answer verbatim.*
+2. **The mind instrument may read CLIENT-DERIVED aggregates ONLY.** *A marketplace's editorial summary
+   or "rating for cost" is a **pricing frame**; reading it manufactured **six false divergences**.
+   A false flag is worse than no flag.*
+3. **A flag that fires on everything is worse than no flag.** *This is now load-bearing design: it is
+   why §4.6.3 measures against a **measured range** rather than a chosen threshold, and why the
+   comparator refuses below `MIN_RANGE`.*
+
+**⚠ DO NOT RE-DERIVE THIS.** *Six sections of negative results are recorded **in full** so the same
+road is not walked twice. **If you are reading this to build a mind flag: the evidence says it cannot
+be built from public review corpora.***
 
 **⚠ SEAN'S DIRECTION (8 Oct):** ***"To achieve the claim/mind distinction, it is important to independently verify what their
 customers think. To do so you need as part of the process to get customers reviews assessed. B2C can be derived from Google

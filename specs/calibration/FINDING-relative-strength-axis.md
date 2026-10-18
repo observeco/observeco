@@ -1,5 +1,12 @@
 # FINDING — the instrument has no relative-strength axis
 
+> **⚠⚠ SUPERSEDED BY §4.6.3 OF OBS-SPEC-095 (17 Oct 2026) — KEPT AS HISTORY.**
+> *This finding established that the instrument had **no relative-strength axis**. **That gap is now
+> closed: Positioning Strength (PS) is the relative-strength axis, it is built (`ps_evidence.py` +
+> `claim_map.py`), and it is measured against the RANGE OF COMPETITORS' PUBLISHED CLAIMS.***
+> **Do not read this as a live gap.** *The name **RS** is retired — **PS** replaces it throughout.*;
+> see OBS-SPEC-095 §4.6.3 and §4.6.3.7–§4.6.3.11.*
+
 **Trigger.** Sean: *"If my feedback to you is that what is missing is the exact's business
 relative strong positioning to their current business landscape, and the overall score is
 to judge whether the said business can be successful in penetrating the segment. how would

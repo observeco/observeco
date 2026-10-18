@@ -1,5 +1,14 @@
 # SPEC REVISION PACK — OBS-SPEC-095
 
+> **⚠⚠ PARTLY SUPERSEDED — THE `relative strength` AXIS IS WITHDRAWN (17 Oct 2026).**
+> *This pack still carries **`relative strength` as a 25%-weighted dimension** (see the table below).
+> **Sean directed that RS be removed entirely and replaced by PS.*** **Positioning Strength (PS) is
+> now the axis: the claim-ownership map, judged against the range of competitors' published claims —
+> OBS-SPEC-095 §4.6.3, implemented in `ps_evidence.py` and `claim_map.py`.***
+> *The `mental_advantage` material here remains live (see OBS-SPEC-095 §4.6.4), but the mind thread is
+> **closed as unproven** — read the closure banner at §4.6.4 before relying on it. **Anything below
+> that weights `relative strength` should be read as the historical proposal it is.***
+
 Recommended revisions to bring the spec in line with the calibrated instrument. Organised by
 severity, because one of these is a contradiction that would ship a broken report.
 
