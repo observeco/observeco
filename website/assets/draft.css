@@ -2872,6 +2872,112 @@ table.compare .generic { color: var(--yellow); }
    already gives those users 48px targets instead. */
 
 /* ============================================================
+   MOTION LAYER — 19 Oct 2026
+   The MOTION 2 dial is overruled ("I want motion").
+
+   Measured gap vs scrolltide.co before this: 0 elements moving
+   with no input on a mid-page viewport, 2 backdrop-filter panels
+   (vs 123), 0 transform changes driven by scrolling, and 63 of the
+   site's 67 infinite animations buried inside the 3.2s #sg-intro
+   splash. The page had all its energy in a screen most visitors
+   skip, then went completely still.
+
+   What this adds, in leverage order:
+     1. .bg-aurora   — continuous ambient drift (the "alive" feel)
+     2. scrub        — reveals tied to SCROLL POSITION, not a one-shot
+     3. parallax     — depth; the reel and figures drift at their own rate
+     4. .scroll-progress — a reading rail that proves the page is tracking you
+
+   Deliberately NOT done: nothing loops inside the evidence sections
+   (case cards, stats, cost table) — the "too kiddish" rule stands
+   there. The ambient drift is a single background field, not per-card
+   ornament. Everything is gated on prefers-reduced-motion.
+   ============================================================ */
+
+/* ── 1. AMBIENT AURORA ──
+   Two oversized blurred fields drifting at different rates, behind all
+   content. Only `transform` animates, so the compositor does the work —
+   the blur is rasterised once, not per frame.
+
+   First pass was measured at max delta 3/255 against flat paper — a
+   rumour, not motion. Alphas roughly doubled and the cycle cut from 96s
+   to 34s/44s so the drift is actually perceptible within a few seconds
+   while staying far below "decorative". */
+.bg-aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -2;                 /* behind .bg-wash and .bg-nodes */
+  pointer-events: none;
+  overflow: hidden;
+}
+.bg-aurora::before {
+  content: "";
+  position: absolute;
+  inset: -35%;
+  background:
+    radial-gradient(38% 40% at 28% 28%, rgba(14, 110, 92, 0.24), transparent 62%),
+    radial-gradient(34% 36% at 74% 64%, rgba(184, 74, 47, 0.14), transparent 64%),
+    radial-gradient(46% 40% at 46% 90%, rgba(14, 110, 92, 0.16), transparent 66%);
+  filter: blur(46px);
+  will-change: transform;
+}
+/* A counter-drifting warm field — the two layers slide against each other,
+   which is what reads as depth rather than a single lazy blob. */
+.bg-aurora::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(32% 34% at 66% 26%, rgba(201, 154, 63, 0.13), transparent 66%),
+    radial-gradient(28% 30% at 22% 74%, rgba(14, 110, 92, 0.11), transparent 66%);
+  filter: blur(52px);
+  will-change: transform;
+}
+
+@keyframes aurora-drift {
+  0%   { transform: translate3d(-6%, -4%, 0) scale(1.00) rotate(-1.5deg); }
+  50%  { transform: translate3d(5%, 4%, 0)   scale(1.12) rotate(2deg); }
+  100% { transform: translate3d(-3%, 6%, 0)  scale(1.05) rotate(-2.5deg); }
+}
+@keyframes aurora-drift-2 {
+  0%   { transform: translate3d(5%, 3%, 0)   scale(1.08) rotate(2deg); }
+  50%  { transform: translate3d(-4%, -3%, 0) scale(1.00) rotate(-1.5deg); }
+  100% { transform: translate3d(3%, -5%, 0)  scale(1.10) rotate(1.5deg); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bg-aurora::before { animation: aurora-drift 34s ease-in-out infinite alternate; }
+  .bg-aurora::after  { animation: aurora-drift-2 44s ease-in-out infinite alternate; }
+}
+
+/* ── 2. SCRUB + 3. PARALLAX targets ──
+   JS writes transform/opacity inline while an element is entering, then
+   CLEARS them once it has settled so the CSS hover lift and the reel's
+   own transforms are not permanently overridden. */
+.scrub { will-change: transform, opacity; }
+.parallax { will-change: transform; }
+
+/* ── 4. SCROLL PROGRESS RAIL ── */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 120;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--green) 0%, var(--green) 60%, var(--amber) 100%);
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-aurora { display: none; }
+  .scroll-progress { display: none; }
+}
+
+/* ============================================================
    MARK REVEALS — 28 Sep 2026
    Why: replacing the two clip-art pictograms with designed glyphs
    removed their motion outright (the old ones re-drove / re-drew on
@@ -2952,4 +3058,157 @@ table.compare .generic { color: var(--yellow); }
 @keyframes gwm-to-in {
   0%   { stroke-dashoffset: 104; opacity: 0; }
   100% { stroke-dashoffset: 0;   opacity: 1; }
+}
+
+/* ─── REEL SLIDER — coverflow of the case cards ───────────────────────────
+   Reference: scrolltide.co "Reel Slider" — the active card faces you while
+   its neighbours slide out, turn toward it and soften. Hand-authored vanilla
+   CSS 3D; the gallery is a REFERENCE, not a dependency (this site is
+   zero-build — no React/Tailwind/bundler).
+
+   Doctrine: this is an EVIDENCE section, so the reel is USER-DRIVEN only —
+   drag, arrows, keys, click. There is NO autoplay and NO infinite animation.
+   Loop only when the loop IS the data; identical re-runs are decoration.
+
+   Progressive enhancement: with no JS, narrow screens, or reduced motion,
+   .case-grid stays the plain 2-up / auto-fit grid it always was. The reel is
+   a pointer-and-width enhancement layered on top. */
+
+.reel {
+  position: relative;
+  display: block;                /* overrides .case-grid's display:grid */
+  height: 620px;                 /* JS overwrites with the tallest card */
+  perspective: 1600px;
+  perspective-origin: 50% 42%;
+  overflow: hidden;
+  touch-action: pan-y;           /* vertical page scroll still works */
+  outline: none;
+  /* Soften the frame edges so off-stage reels fade out instead of being
+     hard-clipped by overflow:hidden — the fan should read as continuing. */
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 0, #000 9%, #000 91%, transparent 100%);
+  mask-image: linear-gradient(to right,
+    transparent 0, #000 9%, #000 91%, transparent 100%);
+  --reel-card-w: 400px;
+  --reel-spacing: 300px;
+  /* Active reel surface — insight teal at ~6% over white. Slightly cooler
+     than the #ffffff neighbour cards and the #f7f6f3 paper, so the live card
+     reads as selected without competing with the content. */
+  --reel-active-bg: #f1f6f5;
+}
+
+.reel:focus-visible {
+  box-shadow: 0 0 0 2px var(--green-dim);
+  border-radius: var(--radius-lg);
+}
+
+.reel .case-card {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--reel-card-w);
+  margin-left: calc(var(--reel-card-w) / -2);
+  height: 100%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, opacity, filter;
+  transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1),
+              opacity 0.55s ease,
+              filter 0.55s ease,
+              border-color 0.2s ease,
+              box-shadow 0.55s ease;
+  cursor: pointer;
+}
+
+/* The focused reel sits forward, takes the accent edge and tints its surface
+   so "active" is legible from colour alone, not just the border. */
+.reel .case-card.is-active {
+  background: var(--reel-active-bg);
+  border-color: var(--green);
+  box-shadow: 0 18px 44px rgba(27, 31, 36, 0.13);
+  cursor: default;
+}
+
+/* While dragging, kill the easing so the fan tracks the finger 1:1. */
+.reel.is-dragging .case-card {
+  transition: none;
+  cursor: grabbing;
+}
+
+/* ── Controls: paper-flat, mono labels, teal on interaction ── */
+.reel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.reel-controls[hidden] { display: none; }
+
+.reel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--fg-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease,
+              background 0.2s ease, transform 0.2s ease;
+}
+.reel-btn:hover:not(:active) {
+  color: var(--green);
+  border-color: var(--green);
+  transform: translateY(-1px);
+}
+.reel-btn:active { transform: translateY(1px); }
+.reel-btn:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+.reel-btn[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+
+.reel-status {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+  min-width: 13ch;
+  text-align: center;
+}
+
+/* ── Fallbacks: narrow screens and reduced motion get the plain grid ── */
+@media (max-width: 860px), (prefers-reduced-motion: reduce) {
+  .reel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-3);
+    height: auto;
+    perspective: none;
+    overflow: visible;
+  }
+  .reel .case-card {
+    position: static;
+    width: auto;
+    height: auto !important;
+    margin-left: 0;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    z-index: auto !important;
+    cursor: auto;
+    will-change: auto;
+  }
+  .reel .case-card.is-active { box-shadow: none; background: var(--surface); }
+  .reel-controls { display: none; }
 }

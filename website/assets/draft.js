@@ -329,3 +329,427 @@
 
   build();
 })();
+
+/* ============================================================
+   REEL SLIDER — coverflow of the case cards
+   Reference: scrolltide.co "Reel Slider" (active card faces you, neighbours
+   slide out, turn toward it and soften). Hand-authored vanilla JS — the
+   gallery is a reference, not a dependency.
+
+   Doctrine: the case grid is an EVIDENCE section, so this is USER-DRIVEN
+   only — drag, arrows, keys, click-to-focus. No autoplay, no infinite
+   animation. It also degrades: without JS, on narrow screens, or under
+   prefers-reduced-motion, .case-grid stays the plain grid.
+   ============================================================ */
+(function () {
+  var reel = document.querySelector('[data-reel]');
+  if (!reel) return;
+
+  var cards = Array.prototype.slice.call(reel.querySelectorAll('.case-card'));
+  if (cards.length < 3) return;
+
+  var controls = document.querySelector('[data-reel-controls]');
+  var status   = document.querySelector('[data-reel-status]');
+  var prevBtn  = document.querySelector('[data-reel-prev]');
+  var nextBtn  = document.querySelector('[data-reel-next]');
+
+  var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var mqNarrow = window.matchMedia('(max-width: 860px)');
+
+  var REACH = 3;          // how far the fan extends before cards park offstage
+  var active = 0;
+  var enabled = false;
+  var cardH = 0;
+
+  function shouldRun() {
+    return !mqReduce.matches && !mqNarrow.matches;
+  }
+
+  /* Height: measure every card at natural size, then pin them all to the
+     tallest so the coverflow reads as one rack rather than a ragged row. */
+  function measure() {
+    var i;
+    for (i = 0; i < cards.length; i++) cards[i].style.height = 'auto';
+    var tallest = 0;
+    for (i = 0; i < cards.length; i++) {
+      tallest = Math.max(tallest, cards[i].offsetHeight);
+    }
+    cardH = tallest;
+    reel.style.height = tallest + 'px';
+    for (i = 0; i < cards.length; i++) cards[i].style.height = tallest + 'px';
+  }
+
+  function spacing() {
+    var w = reel.clientWidth || 1120;
+    return Math.max(200, Math.min(w * 0.27, 320));
+  }
+
+  function render() {
+    if (!enabled) return;
+    var step = spacing();
+
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var d = i - active;
+      var ad = Math.abs(d);
+
+      if (ad > REACH) {
+        // Park offstage on the correct side so the next move is a slide-in.
+        var off = (d > 0 ? 1 : -1) * (step * (REACH + 1.4));
+        card.style.transform =
+          'translate3d(' + off + 'px,0,-520px) rotateY(' + (d > 0 ? -46 : 46) + 'deg)';
+        card.style.opacity = '0';
+        card.style.filter = 'blur(6px)';
+        card.style.zIndex = '1';
+        card.style.pointerEvents = 'none';
+        card.classList.remove('is-active');
+        card.removeAttribute('aria-current');
+        card.setAttribute('aria-hidden', 'true');
+        continue;
+      }
+
+      // The coverflow: neighbours slide out, turn TOWARD the active card
+      // (so their inner edges face you), sink in z and soften.
+      var x     = d * step;
+      var rotY  = d === 0 ? 0 : (d > 0 ? -30 : 30);
+      var z     = -ad * 130;
+      var y     = ad * 10;
+      var scale = 1 - ad * 0.055;
+      var op    = 1 - ad * 0.3;
+      var blur  = ad * 1.7;
+
+      card.style.transform =
+        'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) ' +
+        'rotateY(' + rotY + 'deg) scale(' + scale + ')';
+      card.style.opacity = String(Math.max(op, 0));
+      card.style.filter = blur ? 'blur(' + blur.toFixed(1) + 'px) saturate(0.86)' : 'none';
+      card.style.zIndex = String(100 - ad);
+      card.style.pointerEvents = 'auto';
+      card.removeAttribute('aria-hidden');
+
+      if (d === 0) {
+        card.classList.add('is-active');
+        card.setAttribute('aria-current', 'true');
+      } else {
+        card.classList.remove('is-active');
+        card.removeAttribute('aria-current');
+      }
+    }
+
+    if (status) {
+      var label = cards[active].querySelector('.case-year');
+      status.textContent = (active + 1) + ' / ' + cards.length +
+        (label ? ' · ' + label.textContent.trim() : '');
+    }
+    if (prevBtn) prevBtn.setAttribute('aria-disabled', active === 0 ? 'true' : 'false');
+    if (nextBtn) nextBtn.setAttribute('aria-disabled', active === cards.length - 1 ? 'true' : 'false');
+  }
+
+  function goTo(i) {
+    var next = Math.max(0, Math.min(cards.length - 1, i));
+    if (next === active) return;
+    active = next;
+    render();
+  }
+
+  function next() { goTo(active + 1); }
+  function prev() { goTo(active - 1); }
+
+  function enable() {
+    if (enabled) return;
+    enabled = true;
+    // The reel class is added here, not in the markup: with no JS the
+    // .case-grid stays a plain grid, so the enhancement can never leave a
+    // half-positioned reel on screen.
+    reel.classList.add('reel');
+    measure();
+    if (controls) controls.hidden = false;
+    render();
+  }
+
+  function clearInline() {
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      c.style.transform = '';
+      c.style.opacity = '';
+      c.style.filter = '';
+      c.style.zIndex = '';
+      c.style.height = '';
+      c.style.pointerEvents = '';
+      c.classList.remove('is-active');
+      c.removeAttribute('aria-current');
+      c.removeAttribute('aria-hidden');
+    }
+    reel.style.height = '';
+    reel.classList.remove('is-dragging');
+  }
+
+  function disable() {
+    if (!enabled) return;
+    enabled = false;
+    clearInline();
+    reel.classList.remove('reel');
+    if (controls) controls.hidden = true;
+  }
+
+  function sync() {
+    if (shouldRun()) enable();
+    else disable();
+  }
+
+  // ── Controls ──────────────────────────────────────────────
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+  if (nextBtn) nextBtn.addEventListener('click', next);
+
+  // ── Keyboard (roving focus on the rack) ───────────────────
+  reel.setAttribute('tabindex', '0');
+  reel.setAttribute('role', 'group');
+  reel.setAttribute('aria-label', 'Case study reel — use arrow keys to browse');
+  reel.addEventListener('keydown', function (e) {
+    if (!enabled) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+    else if (e.key === 'End') { e.preventDefault(); goTo(cards.length - 1); }
+  });
+
+  // ── Click a neighbour to focus it ─────────────────────────
+  cards.forEach(function (card, i) {
+    card.addEventListener('click', function (e) {
+      if (!enabled || i === active) return;
+      // Don't hijack clicks on real links inside a card.
+      if (e.target.closest('a')) return;
+      e.preventDefault();
+      goTo(i);
+    });
+  });
+
+  // ── Drag to spin (pointer events, 1:1 while dragging) ─────
+  var dragging = false;
+  var startX = 0;
+  var startY = 0;
+  var dragged = false;
+  var pointerId = null;
+
+  reel.addEventListener('pointerdown', function (e) {
+    if (!enabled || e.button !== 0) return;
+    if (e.target.closest('a')) return;
+    dragging = true;
+    dragged = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    pointerId = e.pointerId;
+  });
+
+  reel.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+
+    // Let a vertical gesture be a page scroll, not a spin.
+    if (!dragged && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
+      dragging = false;
+      return;
+    }
+    if (Math.abs(dx) > 6) {
+      if (!dragged) {
+        dragged = true;
+        reel.classList.add('is-dragging');
+        try { reel.setPointerCapture(pointerId); } catch (err) { /* no-op */ }
+      }
+    }
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    reel.classList.remove('is-dragging');
+    if (!dragged) return;   // a tap, not a drag — the click handler decides
+
+    var dx = (e.clientX || 0) - startX;
+    var threshold = Math.max(40, spacing() * 0.22);
+    if (dx <= -threshold) next();
+    else if (dx >= threshold) prev();
+
+    // Suppress the synthetic click that follows a drag.
+    e.preventDefault();
+  }
+
+  reel.addEventListener('pointerup', endDrag);
+  reel.addEventListener('pointercancel', function () {
+    dragging = false;
+    reel.classList.remove('is-dragging');
+  });
+
+  // ── Re-measure on resize / breakpoint / motion changes ────
+  var rTimer = null;
+  function reflow() {
+    clearTimeout(rTimer);
+    rTimer = setTimeout(function () {
+      var was = enabled;
+      sync();
+      if (was && enabled) { measure(); render(); }
+    }, 150);
+  }
+  window.addEventListener('resize', reflow);
+
+  if (mqReduce.addEventListener) {
+    mqReduce.addEventListener('change', reflow);
+    mqNarrow.addEventListener('change', reflow);
+  }
+
+  // Late-loading brand logos change card heights.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      if (enabled) { measure(); render(); }
+    });
+  }
+  window.addEventListener('load', function () {
+    if (enabled) { measure(); render(); }
+  });
+
+  sync();
+})();
+
+/* ============================================================
+   MOTION LAYER — ambient drift, scroll-scrubbed reveals, parallax
+   ============================================================
+   The MOTION 2 dial on this site was overruled ("I want motion").
+   Measured before this layer: 0 elements moving with no input on a
+   mid-page viewport, 0 transforms driven by scrolling, and 63 of the
+   site's 67 infinite animations buried in the 3.2s #sg-intro splash
+   — all the energy in a screen most visitors skip, then a dead page.
+
+   This adds three things and nothing else:
+     · a single ambient aurora field (continuous, never a per-card loop)
+     · scroll-SCRUBBED reveals — position-driven, not a one-shot fire
+     · parallax on whole blocks, so the page keeps answering the scroll
+
+   The "too kiddish" rule still holds inside the evidence sections:
+   no new loops on the case cards, the stats or the cost table.
+
+   Degradation: reduced-motion users get neither (CSS hides the aurora
+   and the rail, and this IIFE returns before wiring anything). With no
+   JS the inline transform/opacity are never written, so every element
+   shows its natural final state.
+   ============================================================ */
+(function () {
+  'use strict';
+
+  var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // Created here, not in the markup — same pattern as the .bg-wash and
+  // .bg-nodes canvases above, so no page HTML changes.
+  var aurora = document.createElement('div');
+  aurora.className = 'bg-aurora';
+  aurora.setAttribute('aria-hidden', 'true');
+  document.body.insertBefore(aurora, document.body.firstChild);  // paints behind wash + nodes
+
+  var rail = document.createElement('div');
+  rail.className = 'scroll-progress';
+  rail.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(rail);
+
+  if (mqReduce.matches) return;   // CSS hides both; nothing to drive
+
+  // Scrub targets. Headings and cards ONLY — body copy (.lead, .kicker) is
+  // deliberately excluded: dimming paragraphs while they are being read is
+  // a readability cost, not a flourish.
+  var SCRUB_SEL = '.hero h1, .section h2, .offer-card, .fork-card, .card-item, .stat-card';
+
+  // Blocks that drift at their own rate. .hero-flow is excluded on purpose:
+  // its transform is owned by a CSS .in-view animation, and an inline
+  // transform would lose to it.
+  var PARALLAX = [
+    { sel: '[data-reel]', strength: -16 }
+  ];
+
+  var scrubEls = [];
+  var parEls = [];
+  var vh = window.innerHeight;
+  var rafId = null;
+
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  function collect() {
+    scrubEls = [];
+    var found = document.querySelectorAll(SCRUB_SEL);
+    for (var i = 0; i < found.length; i++) {
+      var el = found[i];
+      // The coverflow owns every transform on its own cards.
+      if (el.closest('[data-reel]')) continue;
+      el.classList.add('scrub');
+      scrubEls.push(el);
+    }
+
+    parEls = [];
+    PARALLAX.forEach(function (cfg) {
+      var els = document.querySelectorAll(cfg.sel);
+      for (var k = 0; k < els.length; k++) {
+        els[k].classList.add('parallax');
+        parEls.push({ el: els[k], strength: cfg.strength });
+      }
+    });
+  }
+
+  function frame() {
+    rafId = null;
+    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+    // Reading rail — how far through the page you are.
+    var max = document.documentElement.scrollHeight - vh;
+    rail.style.transform = 'scaleX(' + (max > 0 ? clamp01(y / max) : 0).toFixed(4) + ')';
+
+    // Scrub: 0 while the element is low in the viewport, 1 once it settles.
+    for (var i = 0; i < scrubEls.length; i++) {
+      var el = scrubEls[i];
+      var r = el.getBoundingClientRect();
+      if (r.bottom < -120 || r.top > vh + 120) continue;   // offscreen: leave alone
+      var start = vh * 0.94;
+      var end = vh * 0.52;
+      var t = clamp01((start - r.top) / (start - end));
+      if (t >= 1) {
+        // Settle to natural state and hand transform back to the CSS hover
+        // lift — leaving an inline transform would kill every :hover rise.
+        if (el.style.transform) { el.style.transform = ''; el.style.opacity = ''; }
+      } else {
+        el.style.transform = 'translate3d(0,' + ((1 - t) * 26).toFixed(1) + 'px,0)';
+        el.style.opacity = (0.28 + t * 0.72).toFixed(3);
+      }
+    }
+
+    // Parallax: drift in proportion to distance from the viewport centre.
+    for (var j = 0; j < parEls.length; j++) {
+      var pe = parEls[j];
+      var pr = pe.el.getBoundingClientRect();
+      if (pr.bottom < -240 || pr.top > vh + 240) continue;
+      var centre = pr.top + pr.height / 2;
+      var off = (centre - vh / 2) / vh;
+      pe.el.style.transform = 'translate3d(0,' + (off * pe.strength).toFixed(1) + 'px,0)';
+    }
+  }
+
+  function onScroll() {
+    if (rafId === null) rafId = requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', function () {
+    vh = window.innerHeight;
+    onScroll();
+  }, { passive: true });
+
+  if (mqReduce.addEventListener) mqReduce.addEventListener('change', function () { onScroll(); });
+
+  collect();
+  frame();   // establish initial state so nothing pops on the first scroll
+
+  window.__motion = {
+    scrubCount: function () { return scrubEls.length; },
+    parallaxCount: function () { return parEls.length; },
+    auroraAnim: function () {
+      var a = document.querySelector('.bg-aurora');
+      return a ? getComputedStyle(a, '::before').animationName : 'missing';
+    }
+  };
+})();

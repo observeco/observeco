@@ -195,6 +195,17 @@
 </style>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0e6e5c">
+<style>
+  .books-mention { display: grid; grid-template-columns: auto 1fr; gap: 36px; align-items: center; }
+  .books-mention-covers { display: flex; gap: 16px; }
+  .books-mention-covers img { width: 150px; height: auto; border-radius: 10px; border: 1px solid rgba(14, 110, 92, .25); box-shadow: 0 10px 26px rgba(14, 110, 92, .16); transition: transform .2s ease; }
+  .books-mention-covers a:hover img { transform: translateY(-3px); }
+  .books-mention-copy .kicker { margin-bottom: var(--space-2, 10px); }
+  @media (max-width: 720px) {
+    .books-mention { grid-template-columns: 1fr; gap: 20px; }
+    .books-mention-covers img { width: 118px; }
+  }
+</style>
 </head>
 <body>
 <!-- SINGAPORE MAP INTRO OVERLAY — dark projection (added by Spectrum) -->
@@ -280,6 +291,7 @@
         <div class="nav-dropdown-menu" role="menu">
           <a href="case-studies-petdirectory.html" role="menuitem">Sample Client Work</a>
           <a href="whitepapers.html" role="menuitem">White Papers</a>
+          <a href="books.html" role="menuitem">The Books</a>
         </div>
       </div>
       <a class="nav-cta" href="https://wa.me/6591550120?text=Hi%20Sean%2C%20I%27d%20like%20to%20book%20a%20call%20about%20my%20business%20positioning.">Book a call</a>
@@ -369,7 +381,7 @@
       <h2 id="education-heading">The positioning statement that decides your revenue.</h2>
       <p class="lead">Your positioning statement is the sentence that tells people why they should choose you. Get it wrong and everything you spend on marketing, packaging, and your website is spent on the wrong message. Get it right and revenue moves — often within a year. The product didn't change in any of these cases. Only the reason to choose you changed.</p>
 
-      <div class="case-grid">
+      <div class="case-grid" data-reel>
         <article class="case-card">
           <span class="case-year">Airbnb</span>
           <h3 class="case-brand"><img class="brand-logo" src="https://cdn.simpleicons.org/airbnb" alt="Airbnb" loading="lazy"></h3>
@@ -681,6 +693,12 @@
         </article>
       </div>
 
+      <div class="reel-controls" data-reel-controls hidden>
+        <button class="reel-btn" type="button" data-reel-prev aria-label="Previous case study">&#8592;</button>
+        <p class="reel-status" data-reel-status aria-live="polite"></p>
+        <button class="reel-btn" type="button" data-reel-next aria-label="Next case study">&#8594;</button>
+      </div>
+
       <p class="lead" style="margin-top: var(--space-3);">The pattern: Every successful brand owns one word in the customer's mind. Revenue jumps within 1–2 years when you find the right word. And the position compounds for decades. That's what a good positioning statement is worth.</p>
     </div>
   </section>
@@ -956,6 +974,24 @@
           <p>You'd rather buy an established business or franchise than build a new idea from zero. You want the lower-risk path into entrepreneurship — but you need help selecting the optimal one from the sea of franchises.</p>
           <a class="link-arrow" href="https://wa.me/6591550120?text=Hi%20Sean%2C%20I%27d%20like%20to%20book%20a%20call%20about%20my%20business%20positioning.">Book a call</a>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE BOOKS -->
+  <section class="section section-alt" aria-labelledby="books-heading">
+    <div class="container">
+      <div class="books-mention">
+        <div class="books-mention-covers">
+          <a href="books.html"><img src="assets/img/book1-cover.jpg" alt="Small Island, Crowded Market — book cover" width="150" height="232" loading="lazy"></a>
+          <a href="books.html"><img src="assets/img/book2-cover.jpg" alt="How a Small Business Gets Chosen — book cover" width="150" height="232" loading="lazy"></a>
+        </div>
+        <div class="books-mention-copy">
+          <p class="kicker">Published · Two books</p>
+          <h2 id="books-heading">The method has been written down — twice.</h2>
+          <p class="lead">Sean Foo is the author of <a href="books.html">Small Island, Crowded Market</a> — the ground a Singapore small business competes on — and <a href="books.html">How a Small Business Gets Chosen</a> — the move that wins on it. Both titles carry National Library Board (NLB) Singapore ISBNs, and both grow out of the same research this consultancy runs on.</p>
+          <a class="link-arrow" href="books.html">Meet the books</a>
+        </div>
       </div>
     </div>
   </section>
