@@ -2,136 +2,138 @@
 
 ## TABLE OF CONTENTS
 
-- [1. The product](#1-the-product)
-  - [1.1 The ten questions this design must answer](#11-the-ten-questions-this-design-must-answer)
-  - [1.2 Committed decisions](#12-committed-decisions)
-- [2. Architecture overview](#2-architecture-overview)
-- [3. L1 — Capture](#3-l1-capture)
-  - [3.1 PDPA is an architecture concern, not a page footer](#31-pdpa-is-an-architecture-concern-not-a-page-footer)
-  - [3.2 The two-purpose consent model](#32-the-two-purpose-consent-model)
-  - [3.3 Processor register](#33-processor-register)
-  - [3.4 privacy.html is a launch prerequisite](#34-privacyhtml-is-a-launch-prerequisite)
-  - [3.5 The phone number — a different regime](#35-the-phone-number-a-different-regime)
-  - [3.6 The input contract](#36-the-input-contract)
-  - [3.7 The form is an open relay, and this is the most serious gap in the design](#37-the-form-is-an-open-relay-and-this-is-the-most-serious-gap-in-the-design)
-- [4.6 The competitor scan is a scored pass, not best-effort (D25 direction)](#46-the-competitor-scan-is-a-scored-pass-not-best-effort-d25-direction)
-  - [4.6.0a  THE SCAN COULD NOT READ THE PAGES — and reported the wrong reason (30 Sep)](#460a-the-scan-could-not-read-the-pages-and-reported-the-wrong-reason-30-sep)
-  - [4.6.0b  OCCUPANT MINING IS A NEGATIVE RESULT — DO NOT RETRY THE HEURISTICS (30 Sep)](#460b-occupant-mining-is-a-negative-result-do-not-retry-the-heuristics-30-sep)
-  - [4.6.1 The scan, built (v38) — and what it is NOT](#461-the-scan-built-v38-and-what-it-is-not)
-  - [4.6.2  THE COMPETITOR-SET METHOD — the proven five-pass sweep, and what the free report uses](#462-the-competitor-set-method-the-proven-five-pass-sweep-and-what-the-free-report-uses)
-- [4.6.3 THE PS EVIDENCE PROTOCOL — how PS is graded, and how it is graded BY THE TOOL](#463-the-ps-evidence-protocol-how-ps-is-graded-and-how-it-is-graded-by-the-tool)
-  - [4.6.3.1 WHAT PS ACTUALLY NEEDS — THE CLAIM-OWNERSHIP MAP](#4631-what-ps-actually-needs-the-claim-ownership-map)
-  - [4.6.3.2  THE PILOT, AND THE ONE ERROR THAT MATTERS — ONE CATEGORY, SIX BRANDS, THREE CLAIMS](#4632-the-pilot-and-the-one-error-that-matters-one-category-six-brands-three-claims)
-  - [4.6.3.3  THE METHODOLOGICAL RULE THE PILOT PROVED — READ THE ABOUT PAGE, NOT THE HOMEPAGE](#4633-the-methodological-rule-the-pilot-proved-read-the-about-page-not-the-homepage)
-  - [4.6.3.4 THE PIPELINE — WHAT I WILL ACTUALLY RUN](#4634-the-pipeline-what-i-will-actually-run)
-  - [4.6.3.5 D1–D4, DECIDED BY THE TOOL NOT THE USER (Sean's instruction, 8 Oct)](#4635-d1d4-decided-by-the-tool-not-the-user-seans-instruction-8-oct)
-  - [4.6.3.6 THE TOOL IS BUILT AND RUN — ps_evidence.py, AND THE THREE DEFECTS ITS FIRST RUN FOUND IN IT](#4636-the-tool-is-built-and-run-ps_evidencepy-and-the-three-defects-its-first-run-found-in-it)
-  - [4.6.3.7  THE CLAIM MAP, LOCKED IN — and HOW IT COMPARES WITH THE RANGE OF COMPETITORS](#4637-the-claim-map-locked-in-and-how-it-compares-with-the-range-of-competitors)
-  - [4.6.3.8  THE THREE-WAY DISCOVERY TEST — WHICH MECHANISM ACTUALLY SURFACES THE MAJORS](#4638-the-three-way-discovery-test-which-mechanism-actually-surfaces-the-majors)
-  - [4.6.3.9  PRODUCTION HARDENING — DISCOVERY YIELDS A VETTED SET, NOT A CANDIDATE POOL](#4639-production-hardening-discovery-yields-a-vetted-set-not-a-candidate-pool)
-  - [4.6.3.10  THE RESOLUTION FIX — AND THE FABRICATED FINDING IT ALMOST CREATED](#46310-the-resolution-fix-and-the-fabricated-finding-it-almost-created)
-  - [4.6.3.11  THE INLINE / BACKGROUND SPLIT — and de-duplication by ENTITY](#46311-the-inline-background-split-and-de-duplication-by-entity)
-- [4.6.4 THE CLAIM/MIND PROTOCOL — VERIFYING WHAT CUSTOMERS THINK, NOT JUST WHAT THE BRAND SAYS](#464-the-claimmind-protocol-verifying-what-customers-think-not-just-what-the-brand-says)
-      - [4.6.4.0  THIS THREAD IS CLOSED — SETTLED 17 Oct 2026. DO NOT RE-OPEN WITHOUT NEW EVIDENCE.](#4640-this-thread-is-closed-settled-17-oct-2026-do-not-re-open-without-new-evidence)
-  - [4.6.4.1  THE THREE-WAY RULE — SEAN'S, AND IT DECIDES THE WHOLE PIPELINE](#4641-the-three-way-rule-seans-and-it-decides-the-whole-pipeline)
-  - [4.6.4.2 B2C — THE PROVEN PATH, AND ITS EXACT BLOCKER *MEASURED TODAY*](#4642-b2c-the-proven-path-and-its-exact-blocker-measured-today)
-  - [4.6.4.3 B2B — THE PART THAT HAD TO BE DESIGNED, AND THE LADDER](#4643-b2b-the-part-that-had-to-be-designed-and-the-ladder)
-  - [4.6.4.4  HOW "AGREE" AND "DISAGREE" ARE ACTUALLY DECIDED — NOT BY IMPRESSION](#4644-how-agree-and-disagree-are-actually-decided-not-by-impression)
-  - [4.6.4.5  THE MIND CAPTURE NOW RUNS END-TO-END — AND ITS FIRST HONEST RESULT IS *INCONCLUSIVE*, NOT A FLAG](#4645-the-mind-capture-now-runs-end-to-end-and-its-first-honest-result-is-inconclusive-not-a-flag)
-  - [4.6.4.6  SECOND CORPUS, SAME VERDICT — AND NOW THE CAUSE IS ESTABLISHED. GOOGLE MAPS REVIEWS ARE THE WRONG INSTRUMENT FOR POSITIONING](#4646-second-corpus-same-verdict-and-now-the-cause-is-established-google-maps-reviews-are-the-wrong-instrument-for-positioning)
-  - [4.6.4.7  THE B2B TEST — AND THE RULE IT EXPOSES: IT IS NOT B2C-vs-B2B, IT IS WHETHER THE REVIEW FORM ASKS THE COMPARISON QUESTION](#4647-the-b2b-test-and-the-rule-it-exposes-it-is-not-b2c-vs-b2b-it-is-whether-the-review-form-asks-the-comparison-question)
-  - [4.6.4.8  THE FORM HYPOTHESIS, MEASURED — AND THE INSTRUMENT IT ACTUALLY IDENTIFIES](#4648-the-form-hypothesis-measured-and-the-instrument-it-actually-identifies)
-  - [4.6.4.9 THE PRECONDITION GATE, AS CODE — specs/calibration/mind_test.py](#4649-the-precondition-gate-as-code-specscalibrationmind_testpy)
-  - [4.6.4.10  CONSULTING-AGENCY VALIDATION — THE RAW-REVIEW ROUTE FAILS, THE SYNTHESIS ROUTE WORKS, AND IT FOUND A SYSTEMATIC GAP](#46410-consulting-agency-validation-the-raw-review-route-fails-the-synthesis-route-works-and-it-found-a-systematic-gap)
-  - [4.6.4.11  §4.6.4.10's HEADLINE IS REFUTED — THE PRICE DOMINANCE IS CLUTCH'S EDITORIAL FRAME, NOT THE CUSTOMERS'](#46411-46410s-headline-is-refuted-the-price-dominance-is-clutchs-editorial-frame-not-the-customers)
-  - [4.6.4.12  OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST](#46412-option-1-the-flag-does-not-fire-usefully-and-the-control-proves-the-test-was-a-length-contest)
-  - [3.8 Input quality floor — superseded, see §3.10](#38-input-quality-floor-superseded-see-310)
-  - [3.9 Untrusted input must be contained](#39-untrusted-input-must-be-contained)
-  - [3.11 The pre-flight gate runs BEFORE the token spend (D30)](#311-the-pre-flight-gate-runs-before-the-token-spend-d30)
-  - [3.10 The input-quality floor (D12, accepted) — the live floor; §3.8 was its earlier title](#310-the-input-quality-floor-d12-accepted-the-live-floor-38-was-its-earlier-title)
-- [4. L2 — Enrichment](#4-l2-enrichment)
-  - [4.1 The validity gate is mandatory](#41-the-validity-gate-is-mandatory)
-  - [4.2 GRADE supplies the "what we couldn't check" section](#42-grade-supplies-the-what-we-couldnt-check-section)
-  - [4.3 Enrichment must not overstate](#43-enrichment-must-not-overstate)
-  - [4.4 What enrichment feeds](#44-what-enrichment-feeds)
-  - [4.4.1 Heritage is EVIDENCE, but it is DUE DILIGENCE, not a form question (D55 — Sean's ruling, 30 Sep)](#441-heritage-is-evidence-but-it-is-due-diligence-not-a-form-question-d55-seans-ruling-30-sep)
-- [5.10  THE LITE TIER — WHAT THE FREE REPORT OPENS UP, AND THE COST CUT THAT CANNOT BE TAKEN (Sean's design, measured)](#510-the-lite-tier-what-the-free-report-opens-up-and-the-cost-cut-that-cannot-be-taken-seans-design-measured)
-- [5.11 CANDIDATE LITE-TIER METRICS — RESEARCHED, WITH A RECOMMENDATION (7 Oct)](#511-candidate-lite-tier-metrics-researched-with-a-recommendation-7-oct)
-- [5.12 EMBA FRAMEWORKS — WHAT CAN ACTUALLY BE USED, AND WHAT TO REFUSE (7 Oct)](#512-emba-frameworks-what-can-actually-be-used-and-what-to-refuse-7-oct)
-  - [4.5 Non-load-bearing by construction —  EXCEPT position_strength, WHICH IS THE COMPARISON](#45-non-load-bearing-by-construction-except-position_strength-which-is-the-comparison)
-- [5. L3 — Scoring](#5-l3-scoring)
-  - [5.1 The six dimensions](#51-the-six-dimensions)
-  - [5.2 Variable dimension set (required by D7)](#52-variable-dimension-set-required-by-d7)
-  - [5.3 One rubric, two implementations](#53-one-rubric-two-implementations)
-  - [5.3.1 The rubric promotion step — DONE (promote_rubric.py)](#531-the-rubric-promotion-step-done-promote_rubricpy)
-  - [5.4 Two refusals, and no score gates](#54-two-refusals-and-no-score-gates)
-  - [5.5 The verdict and the one gate must be computed, not written](#55-the-verdict-and-the-one-gate-must-be-computed-not-written)
-  - [5.6 Unit discipline (measured)](#56-unit-discipline-measured)
-  - [5.7 Egress boundary](#57-egress-boundary)
-  - [5.8 The rubric is the asset, and it sits behind a free form](#58-the-rubric-is-the-asset-and-it-sits-behind-a-free-form)
-  - [5.9 Dependency on a single model vendor](#59-dependency-on-a-single-model-vendor)
-- [6. L4 — Delivery](#6-l4-delivery)
-  - [6.1 The cost question, answered honestly](#61-the-cost-question-answered-honestly)
-  - [6.2 Two streams](#62-two-streams)
-  - [6.3 The provider abstraction](#63-the-provider-abstraction)
-  - [6.4 Brevo is a processor, never a contact store](#64-brevo-is-a-processor-never-a-contact-store)
-  - [6.5 Own your suppression list](#65-own-your-suppression-list)
-  - [6.6 Unsubscribe must be real](#66-unsubscribe-must-be-real)
-  - [6.7 The report must survive its own delivery](#67-the-report-must-survive-its-own-delivery)
-  - [6.7.1  THE REPORT IS WRITTEN FOR THE SUBMITTER, NOT FOR US (D56 — Sean's ruling, 30 Sep)](#671-the-report-is-written-for-the-submitter-not-for-us-d56-seans-ruling-30-sep)
-  - [6.7.2  OPEN DEFECTS FOUND BY SUBMITTING A REAL BUSINESS (30 Sep — NOT FIXED, NEEDS A RULING)](#672-open-defects-found-by-submitting-a-real-business-30-sep-not-fixed-needs-a-ruling)
-  - [6.7.3  THE REPORT MUST USE THE SUBMITTER'S OWN WORDS (D58 — Sean's ruling, 30 Sep)](#673-the-report-must-use-the-submitters-own-words-d58-seans-ruling-30-sep)
-  - [6.7.4  THE INSUFFICIENCY REFUSAL IS NOW WIRED (D59 — 30 Sep)](#674-the-insufficiency-refusal-is-now-wired-d59-30-sep)
-  - [6.7.7 BLAST RADIUS — RUN, AND IT FOUND A LAUNCH-GATE DEFECT IN THE CANARY (BUILT)](#677-blast-radius-run-and-it-found-a-launch-gate-defect-in-the-canary-built)
-  - [6.7.6  THE COMPETITIVE SECTION WAS EMPTY BECAUSE THE RIVALS' SITES WERE NEVER READ (BUILT)](#676-the-competitive-section-was-empty-because-the-rivals-sites-were-never-read-built)
-  - [6.7.5  THE MODEL IS NOT DETERMINISTIC, AND THE PROJECT HAS BEEN TREATING IT AS IF IT WERE](#675-the-model-is-not-deterministic-and-the-project-has-been-treating-it-as-if-it-were)
-  - [6.7.5a WHAT THE INSTABILITY ACTUALLY IS — measured, and not what was assumed](#675a-what-the-instability-actually-is-measured-and-not-what-was-assumed)
-  - [6.7.5b  THE AMPLIFIER IS QUANTISATION — PROVEN, and it is THE finding](#675b-the-amplifier-is-quantisation-proven-and-it-is-the-finding)
-- [7. L5 — CRM, data model, retention](#7-l5-crm-data-model-retention)
-  - [7.1 Full pipeline (defined now so nothing is re-scoped later)](#71-full-pipeline-defined-now-so-nothing-is-re-scoped-later)
-  - [7.2 Company size routes the offer (Q10)](#72-company-size-routes-the-offer-q10)
-  - [7.3 The claimed-facts rule](#73-the-claimed-facts-rule)
-  - [7.4 Entities and the deletion guarantee](#74-entities-and-the-deletion-guarantee)
-  - [7.5 Retention must name a period](#75-retention-must-name-a-period)
-  - [7.6 The system of record has no durability story](#76-the-system-of-record-has-no-durability-story)
-  - [7.7 The data is research, and that needs its own consent purpose](#77-the-data-is-research-and-that-needs-its-own-consent-purpose)
-  - [7.7.1 The cold start is not a cold start — the calibration corpus is the seed](#771-the-cold-start-is-not-a-cold-start-the-calibration-corpus-is-the-seed)
-  - [7.7.2 Publication and confidentiality — the option space (D26)](#772-publication-and-confidentiality-the-option-space-d26)
-  - [7.11 Nothing here stays true — the reliability problem (D26 direction)](#711-nothing-here-stays-true-the-reliability-problem-d26-direction)
-  - [7.13 Naming and scoring competitors is not a compliance question (D25/D31)](#713-naming-and-scoring-competitors-is-not-a-compliance-question-d25d31)
-  - [7.14 The toolkit is one touchpoint in a trust sequence (D32, D33 answered)](#714-the-toolkit-is-one-touchpoint-in-a-trust-sequence-d32-d33-answered)
-  - [7.12 What the test can and cannot conclude (D29, quantified)](#712-what-the-test-can-and-cannot-conclude-d29-quantified)
-  - [7.8 Where the form data may and may not be used](#78-where-the-form-data-may-and-may-not-be-used)
-  - [7.9 The competitive fact this design has to answer for](#79-the-competitive-fact-this-design-has-to-answer-for)
-  - [7.10 The toolkit IS the test — sequencing accepted as D29](#710-the-toolkit-is-the-test-sequencing-accepted-as-d29)
-- [8. Accountability, operations, and asset protection](#8-accountability-operations-and-asset-protection)
-  - [8.1 Who owns a wrong answer (Q6)](#81-who-owns-a-wrong-answer-q6)
-  - [8.2 Instrumentation (Q7)](#82-instrumentation-q7)
-  - [8.3 The pipeline monitors nothing — and this is an observability company](#83-the-pipeline-monitors-nothing-and-this-is-an-observability-company)
-  - [8.4 Failure modes the queue introduces](#84-failure-modes-the-queue-introduces)
-  - [8.5 Cost ceilings (Q10)](#85-cost-ceilings-q10)
-  - [8.6 The rubric is the asset (Q9)](#86-the-rubric-is-the-asset-q9)
-- [9. Jurisdiction](#9-jurisdiction)
-- [10. Calibration and regression](#10-calibration-and-regression)
-  - [10.1 The calibration corpus](#101-the-calibration-corpus)
-  - [10.1.1 Two corpora, two jobs — do not conflate them](#1011-two-corpora-two-jobs-do-not-conflate-them)
-  - [10.2 Provenance — every report carries](#102-provenance-every-report-carries)
-  - [10.3 The canary](#103-the-canary)
-  - [10.4 Degradation ladder](#104-degradation-ladder)
-  - [10.5 What the calibration gate can and cannot prove (Q1)](#105-what-the-calibration-gate-can-and-cannot-prove-q1)
-  - [10.6b Fresh blind regrades — MA and CR pass on clean labels, and the old labels were the fault](#106b-fresh-blind-regrades-ma-and-cr-pass-on-clean-labels-and-the-old-labels-were-the-fault)
-  - [10.6c Competitive room reframed: CROWDING → DOMINANCE (Sean: *"hawker stalls would be 5"*)](#106c-competitive-room-reframed-crowding-dominance-sean-hawker-stalls-would-be-5)
-  - [10.6d  position_strength COLLAPSED INTO mental_advantage — 25% of the composite was measuring an existing dimension](#106d-position_strength-collapsed-into-mental_advantage-25-of-the-composite-was-measuring-an-existing-dimension)
-  - [10.6e Fresh blind regrade: PS and DR — ONE INVALID, TWO REAL DEFECTS (D52, D53)](#106e-fresh-blind-regrade-ps-and-dr-one-invalid-two-real-defects-d52-d53)
-  - [10.10 What is genuinely OPEN — and why none of it closes by editing](#1010-what-is-genuinely-open-and-why-none-of-it-closes-by-editing)
-  - [10.9  The launch gate is CLOSED — and what closing it does NOT prove](#109-the-launch-gate-is-closed-and-what-closing-it-does-not-prove)
-  - [10.6 Launch gate](#106-launch-gate)
-  - [10.7 What calibration established (v1.2.0 → v1.8.0)](#107-what-calibration-established-v120-v180)
-  - [10.8 The canary — built, baselined, running](#108-the-canary-built-baselined-running)
-- [11. Two-stage ship (per §12's D4 — not §13's D4, which is the refuse-ruling)](#11-two-stage-ship-per-12s-d4-not-13s-d4-which-is-the-refuse-ruling)
-- [12. Verified findings — constraints on the design](#12-verified-findings-constraints-on-the-design)
-- [13. Decisions required](#13-decisions-required)
-- [14. What this spec does not claim](#14-what-this-spec-does-not-claim)
+- [OBS-SPEC-095 — Business Review Lead Engine](#obs-spec-095-business-review-lead-engine)
+  - [1. The product](#1-the-product)
+    - [1.1 The ten questions this design must answer](#11-the-ten-questions-this-design-must-answer)
+    - [1.2 Committed decisions](#12-committed-decisions)
+  - [2. Architecture overview](#2-architecture-overview)
+  - [3. L1 — Capture](#3-l1-capture)
+    - [3.1 PDPA is an architecture concern, not a page footer](#31-pdpa-is-an-architecture-concern-not-a-page-footer)
+    - [3.2 The two-purpose consent model](#32-the-two-purpose-consent-model)
+    - [3.3 Processor register](#33-processor-register)
+    - [3.4 `privacy.html` is a launch prerequisite](#34-privacyhtml-is-a-launch-prerequisite)
+    - [3.5 The phone number — a different regime](#35-the-phone-number-a-different-regime)
+    - [3.6 The input contract](#36-the-input-contract)
+    - [3.7 The form is an open relay, and this is the most serious gap in the design ⚠](#37-the-form-is-an-open-relay-and-this-is-the-most-serious-gap-in-the-design)
+  - [4.6 The competitor scan is a scored pass, not best-effort (D25 direction) ⚠](#46-the-competitor-scan-is-a-scored-pass-not-best-effort-d25-direction)
+    - [4.6.0a ⚠⚠ THE SCAN COULD NOT READ THE PAGES — and reported the wrong reason (30 Sep)](#460a-the-scan-could-not-read-the-pages-and-reported-the-wrong-reason-30-sep)
+    - [4.6.0b ⚠⚠ OCCUPANT MINING IS A NEGATIVE RESULT — DO NOT RETRY THE HEURISTICS (30 Sep)](#460b-occupant-mining-is-a-negative-result-do-not-retry-the-heuristics-30-sep)
+    - [4.6.1 The scan, built (v38) — and what it is NOT](#461-the-scan-built-v38-and-what-it-is-not)
+    - [4.6.2 ✅ THE COMPETITOR-SET METHOD — the proven five-pass sweep, and what the free report uses ⚠](#462-the-competitor-set-method-the-proven-five-pass-sweep-and-what-the-free-report-uses)
+  - [4.6.3 THE PS EVIDENCE PROTOCOL — how PS is graded, and how it is graded BY THE TOOL](#463-the-ps-evidence-protocol-how-ps-is-graded-and-how-it-is-graded-by-the-tool)
+    - [4.6.3.0 THE TOOL'S NAME — **CLAIM MAP**](#4630-the-tools-name-claim-map)
+    - [4.6.3.1 WHAT PS ACTUALLY NEEDS — THE CLAIM-OWNERSHIP MAP](#4631-what-ps-actually-needs-the-claim-ownership-map)
+    - [4.6.3.2 ⚠⚠ THE PILOT, AND THE ONE ERROR THAT MATTERS — ONE CATEGORY, SIX BRANDS, THREE CLAIMS](#4632-the-pilot-and-the-one-error-that-matters-one-category-six-brands-three-claims)
+    - [4.6.3.3 ⚠⚠ THE METHODOLOGICAL RULE THE PILOT PROVED — READ THE ABOUT PAGE, NOT THE HOMEPAGE](#4633-the-methodological-rule-the-pilot-proved-read-the-about-page-not-the-homepage)
+    - [4.6.3.4 THE PIPELINE — WHAT I WILL ACTUALLY RUN](#4634-the-pipeline-what-i-will-actually-run)
+    - [4.6.3.5 D1–D4, DECIDED BY THE TOOL NOT THE USER (Sean's instruction, 8 Oct)](#4635-d1d4-decided-by-the-tool-not-the-user-seans-instruction-8-oct)
+    - [4.6.3.6 THE TOOL IS BUILT AND RUN — `ps_evidence.py`, AND THE THREE DEFECTS ITS FIRST RUN FOUND IN IT](#4636-the-tool-is-built-and-run-ps_evidencepy-and-the-three-defects-its-first-run-found-in-it)
+    - [4.6.3.7 ★★ THE CLAIM MAP, LOCKED IN — and HOW IT COMPARES WITH THE RANGE OF COMPETITORS](#4637-the-claim-map-locked-in-and-how-it-compares-with-the-range-of-competitors)
+    - [4.6.3.8 ★★ THE THREE-WAY DISCOVERY TEST — WHICH MECHANISM ACTUALLY SURFACES THE MAJORS](#4638-the-three-way-discovery-test-which-mechanism-actually-surfaces-the-majors)
+    - [4.6.3.9 ★★ PRODUCTION HARDENING — DISCOVERY YIELDS A VETTED SET, NOT A CANDIDATE POOL](#4639-production-hardening-discovery-yields-a-vetted-set-not-a-candidate-pool)
+    - [4.6.3.10 ★★ THE RESOLUTION FIX — AND THE FABRICATED FINDING IT ALMOST CREATED](#46310-the-resolution-fix-and-the-fabricated-finding-it-almost-created)
+    - [4.6.3.11 ★★ THE INLINE / BACKGROUND SPLIT — and de-duplication by ENTITY](#46311-the-inline-background-split-and-de-duplication-by-entity)
+  - [4.6.4 THE CLAIM/MIND PROTOCOL — VERIFYING WHAT CUSTOMERS THINK, NOT JUST WHAT THE BRAND SAYS](#464-the-claimmind-protocol-verifying-what-customers-think-not-just-what-the-brand-says)
+    - [4.6.4.0 ⚠⚠⚠ THIS THREAD IS CLOSED — SETTLED 17 Oct 2026. DO NOT RE-OPEN WITHOUT NEW EVIDENCE.](#4640-this-thread-is-closed-settled-17-oct-2026-do-not-re-open-without-new-evidence)
+    - [4.6.4.1 ⚠ THE THREE-WAY RULE — SEAN'S, AND IT DECIDES THE WHOLE PIPELINE](#4641-the-three-way-rule-seans-and-it-decides-the-whole-pipeline)
+    - [4.6.4.2 B2C — THE PROVEN PATH, AND ITS EXACT BLOCKER *MEASURED TODAY*](#4642-b2c-the-proven-path-and-its-exact-blocker-measured-today)
+    - [4.6.4.3 B2B — THE PART THAT HAD TO BE DESIGNED, AND THE LADDER](#4643-b2b-the-part-that-had-to-be-designed-and-the-ladder)
+    - [4.6.4.4 ⚠ HOW "AGREE" AND "DISAGREE" ARE ACTUALLY DECIDED — NOT BY IMPRESSION](#4644-how-agree-and-disagree-are-actually-decided-not-by-impression)
+    - [4.6.4.5 ⚠⚠ THE MIND CAPTURE RUNS END-TO-END — RESULT *INCONCLUSIVE* — **⚠ ITS CORPUS-TYPE PRECONDITION IS REPLACED BY §4.6.4.7**](#4645-the-mind-capture-runs-end-to-end-result-inconclusive-its-corpus-type-precondition-is-replaced-by-4647)
+    - [4.6.4.6 ⚠⚠⚠ SECOND CORPUS, SAME VERDICT — AND NOW THE CAUSE IS ESTABLISHED. GOOGLE MAPS REVIEWS ARE THE WRONG INSTRUMENT FOR POSITIONING](#4646-second-corpus-same-verdict-and-now-the-cause-is-established-google-maps-reviews-are-the-wrong-instrument-for-positioning)
+    - [4.6.4.7 ⚠⚠⚠ THE B2B TEST — AND THE RULE IT EXPOSES: IT IS NOT B2C-vs-B2B, IT IS WHETHER THE REVIEW FORM ASKS THE COMPARISON QUESTION](#4647-the-b2b-test-and-the-rule-it-exposes-it-is-not-b2c-vs-b2b-it-is-whether-the-review-form-asks-the-comparison-question)
+    - [4.6.4.8 ✅ THE FORM HYPOTHESIS, MEASURED — **⚠ PARTLY REFUTED BY §4.6.4.10** (the form asks; the PUBLISHED corpus never shows it)](#4648-the-form-hypothesis-measured-partly-refuted-by-46410-the-form-asks-the-published-corpus-never-shows-it)
+    - [4.6.4.9 THE PRECONDITION GATE, AS CODE — `specs/calibration/mind_test.py`](#4649-the-precondition-gate-as-code-specscalibrationmind_testpy)
+    - [4.6.4.10 ✅ CONSULTING-AGENCY VALIDATION — RAW-REVIEW ROUTE FAILS, SYNTHESIS ROUTE WORKS — **⚠ ITS HEADLINE IS REFUTED BY §4.6.4.11**](#46410-consulting-agency-validation-raw-review-route-fails-synthesis-route-works-its-headline-is-refuted-by-46411)
+    - [4.6.4.11 ⚠⚠ §4.6.4.10's HEADLINE IS REFUTED — THE PRICE DOMINANCE IS CLUTCH'S EDITORIAL FRAME, NOT THE CUSTOMERS'](#46411-46410s-headline-is-refuted-the-price-dominance-is-clutchs-editorial-frame-not-the-customers)
+    - [4.6.4.12 ⚠⚠⚠ OPTION 1 — THE FLAG DOES NOT FIRE USEFULLY, AND THE CONTROL PROVES THE TEST WAS A LENGTH CONTEST](#46412-option-1-the-flag-does-not-fire-usefully-and-the-control-proves-the-test-was-a-length-contest)
+    - [3.8 Input quality floor — superseded, see §3.10](#38-input-quality-floor-superseded-see-310)
+    - [3.9 Untrusted input must be contained](#39-untrusted-input-must-be-contained)
+    - [3.11 The pre-flight gate runs BEFORE the token spend (D30) ⚠](#311-the-pre-flight-gate-runs-before-the-token-spend-d30)
+    - [3.10 The input-quality floor (D12, accepted) — **the live floor; §3.8 was its earlier title**](#310-the-input-quality-floor-d12-accepted-the-live-floor-38-was-its-earlier-title)
+  - [4. L2 — Enrichment](#4-l2-enrichment)
+    - [4.1 The validity gate is mandatory](#41-the-validity-gate-is-mandatory)
+    - [4.2 GRADE supplies the "what we couldn't check" section](#42-grade-supplies-the-what-we-couldnt-check-section)
+    - [4.3 Enrichment must not overstate](#43-enrichment-must-not-overstate)
+    - [4.4 What enrichment feeds](#44-what-enrichment-feeds)
+    - [4.4.1 Heritage is EVIDENCE, but it is DUE DILIGENCE, not a form question (D55 — Sean's ruling, 30 Sep) ⚠](#441-heritage-is-evidence-but-it-is-due-diligence-not-a-form-question-d55-seans-ruling-30-sep)
+  - [5.10 ⚠⚠ THE LITE TIER — WHAT THE FREE REPORT OPENS UP, AND THE COST CUT THAT CANNOT BE TAKEN (Sean's design, measured)](#510-the-lite-tier-what-the-free-report-opens-up-and-the-cost-cut-that-cannot-be-taken-seans-design-measured)
+  - [5.11 CANDIDATE LITE-TIER METRICS — RESEARCHED, WITH A RECOMMENDATION (7 Oct)](#511-candidate-lite-tier-metrics-researched-with-a-recommendation-7-oct)
+  - [5.12 EMBA FRAMEWORKS — WHAT CAN ACTUALLY BE USED, AND WHAT TO REFUSE (7 Oct)](#512-emba-frameworks-what-can-actually-be-used-and-what-to-refuse-7-oct)
+    - [4.5 Non-load-bearing by construction — ⚠ EXCEPT `position_strength`, WHICH IS THE COMPARISON](#45-non-load-bearing-by-construction-except-position_strength-which-is-the-comparison)
+  - [5. L3 — Scoring](#5-l3-scoring)
+    - [5.1 The six dimensions](#51-the-six-dimensions)
+    - [5.2 Variable dimension set (required by D7)](#52-variable-dimension-set-required-by-d7)
+    - [5.3 One rubric, two implementations](#53-one-rubric-two-implementations)
+    - [5.3.1 The rubric promotion step — DONE (`promote_rubric.py`)](#531-the-rubric-promotion-step-done-promote_rubricpy)
+    - [5.4 Two refusals, and no score gates ⚠](#54-two-refusals-and-no-score-gates)
+    - [5.5 The verdict and the one gate must be computed, not written](#55-the-verdict-and-the-one-gate-must-be-computed-not-written)
+    - [5.6 Unit discipline (measured)](#56-unit-discipline-measured)
+    - [5.7 Egress boundary](#57-egress-boundary)
+    - [5.8 The rubric is the asset, and it sits behind a free form](#58-the-rubric-is-the-asset-and-it-sits-behind-a-free-form)
+    - [5.9 Dependency on a single model vendor](#59-dependency-on-a-single-model-vendor)
+  - [6. L4 — Delivery](#6-l4-delivery)
+    - [6.1 The cost question, answered honestly](#61-the-cost-question-answered-honestly)
+    - [6.2 Two streams](#62-two-streams)
+    - [6.3 The provider abstraction](#63-the-provider-abstraction)
+    - [6.4 Brevo is a processor, never a contact store](#64-brevo-is-a-processor-never-a-contact-store)
+    - [6.5 Own your suppression list](#65-own-your-suppression-list)
+    - [6.6 Unsubscribe must be real](#66-unsubscribe-must-be-real)
+    - [6.7 The report must survive its own delivery](#67-the-report-must-survive-its-own-delivery)
+    - [6.7.1 ⚠ THE REPORT IS WRITTEN FOR THE SUBMITTER, NOT FOR US (D56 — Sean's ruling, 30 Sep)](#671-the-report-is-written-for-the-submitter-not-for-us-d56-seans-ruling-30-sep)
+    - [6.7.2 ⚠ OPEN DEFECTS FOUND BY SUBMITTING A REAL BUSINESS (30 Sep — NOT FIXED, NEEDS A RULING)](#672-open-defects-found-by-submitting-a-real-business-30-sep-not-fixed-needs-a-ruling)
+    - [6.7.3 ⚠ THE REPORT MUST USE THE SUBMITTER'S OWN WORDS (D58 — Sean's ruling, 30 Sep)](#673-the-report-must-use-the-submitters-own-words-d58-seans-ruling-30-sep)
+    - [6.7.4 ⚠ THE INSUFFICIENCY REFUSAL IS NOW WIRED (D59 — 30 Sep)](#674-the-insufficiency-refusal-is-now-wired-d59-30-sep)
+    - [6.7.7 BLAST RADIUS — RUN, AND IT FOUND A LAUNCH-GATE DEFECT IN THE CANARY (BUILT)](#677-blast-radius-run-and-it-found-a-launch-gate-defect-in-the-canary-built)
+    - [6.7.6 ⚠⚠ THE COMPETITIVE SECTION WAS EMPTY BECAUSE THE RIVALS' SITES WERE NEVER READ (BUILT)](#676-the-competitive-section-was-empty-because-the-rivals-sites-were-never-read-built)
+    - [6.7.5 ⚠⚠ THE MODEL IS NOT DETERMINISTIC, AND THE PROJECT HAS BEEN TREATING IT AS IF IT WERE](#675-the-model-is-not-deterministic-and-the-project-has-been-treating-it-as-if-it-were)
+    - [6.7.5a WHAT THE INSTABILITY ACTUALLY IS — measured, and not what was assumed](#675a-what-the-instability-actually-is-measured-and-not-what-was-assumed)
+    - [6.7.5b ⚠⚠ THE AMPLIFIER IS QUANTISATION — PROVEN, and it is THE finding](#675b-the-amplifier-is-quantisation-proven-and-it-is-the-finding)
+  - [7. L5 — CRM, data model, retention](#7-l5-crm-data-model-retention)
+    - [7.1 Full pipeline (defined now so nothing is re-scoped later)](#71-full-pipeline-defined-now-so-nothing-is-re-scoped-later)
+    - [7.2 Company size routes the offer (Q10)](#72-company-size-routes-the-offer-q10)
+    - [7.3 The claimed-facts rule](#73-the-claimed-facts-rule)
+    - [7.4 Entities and the deletion guarantee](#74-entities-and-the-deletion-guarantee)
+    - [7.5 Retention must name a period](#75-retention-must-name-a-period)
+    - [7.6 The system of record has no durability story](#76-the-system-of-record-has-no-durability-story)
+    - [7.7 The data is research, and that needs its own consent purpose](#77-the-data-is-research-and-that-needs-its-own-consent-purpose)
+    - [7.7.1 ⚠ 'THE BENCHMARK IS PHASE 2' ADVICE SUPERSEDED BY §7.10 — the cold start is not a cold start — the calibration corpus is the seed ⚠](#771-the-benchmark-is-phase-2-advice-superseded-by-710-the-cold-start-is-not-a-cold-start-the-calibration-corpus-is-the-seed)
+    - [7.7.2 Publication and confidentiality — the option space (D26) ⚠](#772-publication-and-confidentiality-the-option-space-d26)
+    - [7.11 Nothing here stays true — the reliability problem (D26 direction) ⚠](#711-nothing-here-stays-true-the-reliability-problem-d26-direction)
+    - [7.13 Naming and scoring competitors is not a compliance question (D25/D31) ⚠](#713-naming-and-scoring-competitors-is-not-a-compliance-question-d25d31)
+    - [7.14 The toolkit is one touchpoint in a trust sequence (D32, D33 answered) ⚠](#714-the-toolkit-is-one-touchpoint-in-a-trust-sequence-d32-d33-answered)
+    - [7.12 What the test can and cannot conclude (D29, quantified) ⚠](#712-what-the-test-can-and-cannot-conclude-d29-quantified)
+    - [7.8 Where the form data may and may not be used](#78-where-the-form-data-may-and-may-not-be-used)
+    - [7.9 The competitive fact this design has to answer for ⚠](#79-the-competitive-fact-this-design-has-to-answer-for)
+    - [7.10 The toolkit IS the test — sequencing accepted as D29 ⚠](#710-the-toolkit-is-the-test-sequencing-accepted-as-d29)
+  - [8. Accountability, operations, and asset protection](#8-accountability-operations-and-asset-protection)
+    - [8.1 Who owns a wrong answer (Q6)](#81-who-owns-a-wrong-answer-q6)
+    - [8.2 Instrumentation (Q7)](#82-instrumentation-q7)
+    - [8.3 The pipeline monitors nothing — and this is an observability company](#83-the-pipeline-monitors-nothing-and-this-is-an-observability-company)
+    - [8.4 Failure modes the queue introduces](#84-failure-modes-the-queue-introduces)
+    - [8.5 Cost ceilings (Q10)](#85-cost-ceilings-q10)
+    - [8.6 The rubric is the asset (Q9)](#86-the-rubric-is-the-asset-q9)
+  - [9. Jurisdiction](#9-jurisdiction)
+  - [10. Calibration and regression](#10-calibration-and-regression)
+    - [10.1 The calibration corpus](#101-the-calibration-corpus)
+    - [10.1.1 Two corpora, two jobs — do not conflate them](#1011-two-corpora-two-jobs-do-not-conflate-them)
+    - [10.2 Provenance — every report carries](#102-provenance-every-report-carries)
+    - [10.3 The canary](#103-the-canary)
+    - [10.4 Degradation ladder](#104-degradation-ladder)
+    - [10.5 What the calibration gate can and cannot prove (Q1)](#105-what-the-calibration-gate-can-and-cannot-prove-q1)
+    - [10.6b Fresh blind regrades — MA and CR pass on clean labels, and the old labels were the fault](#106b-fresh-blind-regrades-ma-and-cr-pass-on-clean-labels-and-the-old-labels-were-the-fault)
+    - [10.6c Competitive room reframed: CROWDING → DOMINANCE (Sean: *"hawker stalls would be 5"*)](#106c-competitive-room-reframed-crowding-dominance-sean-hawker-stalls-would-be-5)
+    - [10.6d ⚠ `position_strength` COLLAPSED INTO `mental_advantage` — 25% of the composite was measuring an existing dimension](#106d-position_strength-collapsed-into-mental_advantage-25-of-the-composite-was-measuring-an-existing-dimension)
+    - [10.6e Fresh blind regrade: PS and DR — ONE INVALID, TWO REAL DEFECTS (D52, D53)](#106e-fresh-blind-regrade-ps-and-dr-one-invalid-two-real-defects-d52-d53)
+    - [10.10 What is genuinely OPEN — and why none of it closes by editing](#1010-what-is-genuinely-open-and-why-none-of-it-closes-by-editing)
+    - [10.9 ⚠ The launch gate is CLOSED — and what closing it does NOT prove](#109-the-launch-gate-is-closed-and-what-closing-it-does-not-prove)
+    - [10.6 Launch gate](#106-launch-gate)
+    - [10.7 What calibration established (v1.2.0 → v1.8.0)](#107-what-calibration-established-v120-v180)
+    - [10.8 The canary — built, baselined, running](#108-the-canary-built-baselined-running)
+  - [11. Two-stage ship (per §12's D4 — **not** §13's D4, which is the refuse-ruling)](#11-two-stage-ship-per-12s-d4-not-13s-d4-which-is-the-refuse-ruling)
+  - [12. Verified findings — constraints on the design](#12-verified-findings-constraints-on-the-design)
+  - [13. Decisions required](#13-decisions-required)
+  - [14. What this spec does not claim](#14-what-this-spec-does-not-claim)
 
 **Status:** DRAFT v50.6 — **⚠ THE 120-CASE REGRADE IS NOT A RELIABLE REFERENCE, and Sean has now confirmed this himself: every case re-examined (7 so far, across DEF, DR and PS) has confirmed the INSTRUMENT and contradicted his 27-Sep regrade. His PS regrade column is additionally the SUPERSEDED RECALL CONSTRUCT (r=+0.82, 67% identical to MA). Measured against properly-graded references the instrument is sound; against the quick regrade it reads 50.8% exact, and the regrade is the wrong number.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
@@ -3142,6 +3144,24 @@ and `curl -o /dev/null -w '%{http_code}' https://each-a-cup.com` must return 200
 
 ## 4.6.3 THE PS EVIDENCE PROTOCOL — how PS is graded, and how it is graded BY THE TOOL
 
+### 4.6.3.0 THE TOOL'S NAME — **CLAIM MAP**
+
+**The component is the CLAIM MAP.** *Module `claim_map.py`; claim reader `ps_evidence.py`. This ratifies the name
+already used throughout §4.6.3 and in the code, and adds no new language.*
+
+| | |
+|---|---|
+| **Name** | **Claim Map** |
+| **Does** | *discovers a business's real competitors online, reads each rival's **published claim**, measures the market's own contested rate, and places the subject against that range* |
+| **Answers** | ***"Is what you say actually distinctive, or is it what everyone in your market already says?"*** |
+| **Inputs** | *business name, category, market* |
+| **Outputs** | *DISTINCTIVE / TYPICAL / CROWDED against a **measured** range — **or a REFUSAL** below 3 readable rivals* |
+| **Refuses when** | *fewer than `MIN_RANGE=3` rivals are readable; a candidate fails verification; a discovery call fails — **loudly**, never as "no competitors"* |
+| **Never does** | *invent a claim, judge against a number anyone chose, or treat "could not search" as "the market is empty"* |
+
+**⚠ Status:** *the name is provisional — **Sean holds copy**.* *A different name is a find/replace across §4.6.3
+and the module docstring; nothing else depends on it.*
+
 **⚠ WHY THIS SECTION EXISTS.** *Sean's direction (8 Oct): "establish a comfortable PS grading methodology yourself,
 because you will have to do the work yourself in a steady state condition. Then all I am doing is corroborate your
 results."* **So this is not a calibration aid. It is the production method, and it must be runnable by the tool,
@@ -3864,7 +3884,7 @@ pressed into service.*
 `profiles/accelerator/cache/scratch/diag_b2c_mind.py`; re-seed by re-logging into Google in Firefox and copying
 `cookies.sqlite` + `key4.db` + `cert9.db` into the Camoufox profile.*
 
-### 4.6.4.5 ⚠⚠ THE MIND CAPTURE NOW RUNS END-TO-END — AND ITS FIRST HONEST RESULT IS *INCONCLUSIVE*, NOT A FLAG
+### 4.6.4.5 ⚠⚠ THE MIND CAPTURE RUNS END-TO-END — RESULT *INCONCLUSIVE* — **⚠ ITS CORPUS-TYPE PRECONDITION IS REPLACED BY §4.6.4.7**
 
 **✅ SEAN RE-LOGGED INTO GOOGLE IN FIREFOX AND THE WHOLE CHAIN NOW WORKS.** *Three bakery brands captured
 (50/30/30 verbatim reviews). Four defects were found and fixed to get there — **three in the pipeline, one in my own
@@ -4042,7 +4062,7 @@ CAN THIS CATEGORY BE MIND-TESTED AT ALL?
 ```
 ***That single test replaces the corpus-type check, and it is measurable before any capture: read the review form.***
 
-### 4.6.4.8 ✅ THE FORM HYPOTHESIS, MEASURED — AND THE INSTRUMENT IT ACTUALLY IDENTIFIES
+### 4.6.4.8 ✅ THE FORM HYPOTHESIS, MEASURED — **⚠ PARTLY REFUTED BY §4.6.4.10** (the form asks; the PUBLISHED corpus never shows it)
 
 *Option 1, run to completion: read the review FORMS and test whether a comparative corpus is reachable.*
 **Verdict: the hypothesis is SUPPORTED in mechanism, and the measurement identifies a sharper instrument than
@@ -4227,7 +4247,7 @@ dimension.*
 
 ---
 
-### 4.6.4.10 ✅ CONSULTING-AGENCY VALIDATION — THE RAW-REVIEW ROUTE FAILS, THE SYNTHESIS ROUTE WORKS, AND IT FOUND A SYSTEMATIC GAP
+### 4.6.4.10 ✅ CONSULTING-AGENCY VALIDATION — RAW-REVIEW ROUTE FAILS, SYNTHESIS ROUTE WORKS — **⚠ ITS HEADLINE IS REFUTED BY §4.6.4.11**
 
 *Ran on our own category — Singapore consulting/agency firms on Clutch — because §4.6.4.8 put it in scope and it
 is the one category we can also check by hand.*
@@ -9193,7 +9213,7 @@ wrong number for a small, concentrated market.**
 So the deletion job must **strip and aggregate before it deletes**, and the aggregate must be built
 so it cannot be re-associated. "We deleted the contact but kept the row" is not anonymisation.
 
-### 7.7.1 The cold start is not a cold start — the calibration corpus is the seed ⚠
+### 7.7.1 ⚠ 'THE BENCHMARK IS PHASE 2' ADVICE SUPERSEDED BY §7.10 — the cold start is not a cold start — the calibration corpus is the seed ⚠
 
 **This is the finding that de-risks the whole dataset premise, and it was sitting in the repository.**
 The benchmark model's hardest problem is the first contributor: *why submit to a pool with nothing
