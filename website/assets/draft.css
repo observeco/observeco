@@ -2961,60 +2961,20 @@ table.compare .generic { color: var(--yellow); }
 .scrub { will-change: transform, opacity; }
 .parallax { will-change: transform; }
 
-/* ── 5. METHOD MARQUEE ──
-   The one infinite loop on the page. Measured reasoning: our scroll motion
-   displaced 30px over 500px of scrolling (invisible) while scrolltide's
-   marquee covered 67,695px² and never stopped. Perceived dynamism comes
-   from ONE large, always-moving element — not micro-motion everywhere.
-
-   Two identical spans translate -50% for a seamless loop, so the track is
-   exactly 2x one repetition and there is no visible seam.
-   Decorative repetition of the method already stated in the hero, so it is
-   aria-hidden in the markup. */
-.method-marquee {
-  overflow: hidden;
-  padding: 20px 0;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
-}
-.method-marquee__track {
-  display: flex;
-  width: max-content;
-  will-change: transform;
-}
-.method-marquee__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 34px;
-  padding-right: 34px;
-  white-space: nowrap;
-  font-family: var(--font-display);
-  font-size: clamp(26px, 3.4vw, 46px);
-  line-height: 1.15;
-  letter-spacing: 0.01em;
-  color: var(--fg);
-}
-.method-marquee__item em {
-  font-style: normal;
-  color: var(--amber);
-  opacity: 0.6;
-  font-size: 0.44em;
-  transform: translateY(-0.15em);
-}
-@keyframes marquee-x {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-50%, 0, 0); }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .method-marquee__track { animation: marquee-x 28s linear infinite; }
-}
-@media (prefers-reduced-motion: reduce) {
-  /* Still readable — just parked. Not hidden: it carries the method. */
-  .method-marquee__track { animation: none; }
-}
+/* ── 5. METHOD MARQUEE — REMOVED 19 Oct 2026 ──
+   A full-bleed scrolling word band shipped here briefly and was pulled after
+   review: it read as a 1990s ticker banner. The reasons are worth recording,
+   because the same mistake is easy to repeat:
+     · horizontal infinite scroll of text IS the <marquee> idiom — it dates the
+       page no matter how good the type is
+     · diamond separator glyphs between repeated words read as decoration,
+       not design
+     · worst of all it repeated content the hero already states TWICE — the
+       .process-flow-headline sequence and the 01-04 step diagram. Zero
+       information, all noise.
+   Motion on this site now comes only from things that carry meaning:
+   scroll-driven reveals, the coverflow reels, parallax, inertial scroll,
+   and the ambient aurora showing through the translucent surfaces. */
 
 /* ── 6. GLASS DEPTH (ported from scrolltide, 19 Oct 2026) ──
    Reverse-engineering scrolltide.co's shipped code (Next.js/Turbopack, zero
