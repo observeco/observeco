@@ -5055,6 +5055,26 @@ rival matches.* **Reach is not position, and position is not reach.**
 
 ## 5.10 ⚠⚠ THE LITE TIER — WHAT THE FREE REPORT OPENS UP, AND THE COST CUT THAT CANNOT BE TAKEN (Sean's design, measured)
 
+> ## ⚠⚠⚠ SUPERSEDED 18 Oct 2026 — SEAN HAS DECIDED AGAINST THE LITE TIER.
+> ***"I have decided not to make the claim map free online, nor create a Lite version."***
+>
+> **So everything in §5.10–§5.10.2 is MOOT as a shipping design.** *The lite tier existed to give a
+> **free** report a cheap subset of dimensions so it could run without the competitor sweep. With no
+> free report and no lite tier, there is no subset to choose and no cost/measurement trade-off to
+> resolve.*
+>
+> **What this settles, and where the sections still have value:**
+> | Question | Status |
+> |---|---|
+> | Which dimensions does lite assess? | **MOOT** — no lite tier exists |
+> | Does lite print a composite or band? | **MOOT** — it does not print at all |
+> | Is the Claim Map free or paid? | **PAID / internal only.** *The tool is named (§4.6.3.0) and run on demand.* |
+> | **Retained for its ANALYSIS, not its design:** | *§4.6.4.9's finding stands and is still load-bearing: **one of the three "cheap" dimensions (`market_headroom`) is inert in 114 of 120 cases, and the other two are the worst-measured (−0.46, −0.22).*** **That is a fact about the rubric, not about lite.** |
+>
+> **⚠ What this leaves open, and it needs an answer before any build:** *if there is no free report and
+> no lite tier, **what is the lead engine's front door?** The Claim Map is now a paid instrument; the
+> free tier that fed it no longer exists. **That is a product question, not a documentation one.**
+
 **SEAN'S DESIGN, VERBATIM.** ***"Conceptually what needs to happen for the lite version is we only open up the
 results for the free report to dimensions that are not token/compute/workload onerous. The paid version does all
 dimensions."***
