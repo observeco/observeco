@@ -2918,7 +2918,11 @@ table.compare .generic { color: var(--yellow); }
     radial-gradient(38% 40% at 28% 28%, rgba(14, 110, 92, 0.24), transparent 62%),
     radial-gradient(34% 36% at 74% 64%, rgba(184, 74, 47, 0.14), transparent 64%),
     radial-gradient(46% 40% at 46% 90%, rgba(14, 110, 92, 0.16), transparent 66%);
-  filter: blur(46px);
+  /* NO filter:blur here. Measured: blur(46px) on this oversized layer cost
+     50ms of every frame (66.7ms median -> 16.7ms with the blur removed,
+     i.e. 20fps -> 60fps). The radial gradients already ramp to `transparent`
+     at 62-66%, so they are soft without it — the blur was buying nothing
+     and charging the whole scroll budget for it. */
   will-change: transform;
 }
 /* A counter-drifting warm field — the two layers slide against each other,
@@ -2930,7 +2934,7 @@ table.compare .generic { color: var(--yellow); }
   background:
     radial-gradient(32% 34% at 66% 26%, rgba(201, 154, 63, 0.13), transparent 66%),
     radial-gradient(28% 30% at 22% 74%, rgba(14, 110, 92, 0.11), transparent 66%);
-  filter: blur(52px);
+  /* Blur removed for the same measured reason as ::before — see above. */
   will-change: transform;
 }
 
@@ -2956,6 +2960,61 @@ table.compare .generic { color: var(--yellow); }
    own transforms are not permanently overridden. */
 .scrub { will-change: transform, opacity; }
 .parallax { will-change: transform; }
+
+/* ── 5. METHOD MARQUEE ──
+   The one infinite loop on the page. Measured reasoning: our scroll motion
+   displaced 30px over 500px of scrolling (invisible) while scrolltide's
+   marquee covered 67,695px² and never stopped. Perceived dynamism comes
+   from ONE large, always-moving element — not micro-motion everywhere.
+
+   Two identical spans translate -50% for a seamless loop, so the track is
+   exactly 2x one repetition and there is no visible seam.
+   Decorative repetition of the method already stated in the hero, so it is
+   aria-hidden in the markup. */
+.method-marquee {
+  overflow: hidden;
+  padding: 20px 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+}
+.method-marquee__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.method-marquee__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 34px;
+  padding-right: 34px;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3.4vw, 46px);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+}
+.method-marquee__item em {
+  font-style: normal;
+  color: var(--amber);
+  opacity: 0.6;
+  font-size: 0.44em;
+  transform: translateY(-0.15em);
+}
+@keyframes marquee-x {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .method-marquee__track { animation: marquee-x 28s linear infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Still readable — just parked. Not hidden: it carries the method. */
+  .method-marquee__track { animation: none; }
+}
 
 /* ── 4. SCROLL PROGRESS RAIL ── */
 .scroll-progress {
@@ -3102,7 +3161,7 @@ table.compare .generic { color: var(--yellow); }
   border-radius: var(--radius-lg);
 }
 
-.reel .case-card {
+.reel .reel-card {
   position: absolute;
   top: 0;
   left: 50%;
@@ -3122,7 +3181,7 @@ table.compare .generic { color: var(--yellow); }
 
 /* The focused reel sits forward, takes the accent edge and tints its surface
    so "active" is legible from colour alone, not just the border. */
-.reel .case-card.is-active {
+.reel .reel-card.is-active {
   background: var(--reel-active-bg);
   border-color: var(--green);
   box-shadow: 0 18px 44px rgba(27, 31, 36, 0.13);
@@ -3130,7 +3189,7 @@ table.compare .generic { color: var(--yellow); }
 }
 
 /* While dragging, kill the easing so the fan tracks the finger 1:1. */
-.reel.is-dragging .case-card {
+.reel.is-dragging .reel-card {
   transition: none;
   cursor: grabbing;
 }
@@ -3197,7 +3256,7 @@ table.compare .generic { color: var(--yellow); }
     perspective: none;
     overflow: visible;
   }
-  .reel .case-card {
+  .reel .reel-card {
     position: static;
     width: auto;
     height: auto !important;
@@ -3209,6 +3268,6 @@ table.compare .generic { color: var(--yellow); }
     cursor: auto;
     will-change: auto;
   }
-  .reel .case-card.is-active { box-shadow: none; background: var(--surface); }
+  .reel .reel-card.is-active { box-shadow: none; background: var(--surface); }
   .reel-controls { display: none; }
 }

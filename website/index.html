@@ -374,6 +374,21 @@
     </div>
   </section>
 
+  <!-- METHOD MARQUEE — the four-step method as a band that never stops moving.
+       This is the ONE deliberate infinite loop on the page, and it exists
+       because measured comparison showed our motion was 30px over 500px of
+       scrolling while scrolltide's always-moving element covered 67,695px².
+       Continuous life has to live somewhere large and always-visible.
+       Kept OUT of every evidence section (case cards, stats, cost table) —
+       the "too kiddish" rule still holds there.
+       aria-hidden: it is decorative repetition of the method stated above. -->
+  <div class="method-marquee" aria-hidden="true">
+    <div class="method-marquee__track">
+      <span class="method-marquee__item">Observe<em>&#10022;</em>Uncover<em>&#10022;</em>Differentiate<em>&#10022;</em>Be&nbsp;Chosen<em>&#10022;</em></span>
+      <span class="method-marquee__item">Observe<em>&#10022;</em>Uncover<em>&#10022;</em>Differentiate<em>&#10022;</em>Be&nbsp;Chosen<em>&#10022;</em></span>
+    </div>
+  </div>
+
   <!-- EDUCATION CORE — bad statement → good statement → revenue result -->
   <section class="section section-alt" id="education" aria-labelledby="education-heading">
     <div class="container">
@@ -693,11 +708,6 @@
         </article>
       </div>
 
-      <div class="reel-controls" data-reel-controls hidden>
-        <button class="reel-btn" type="button" data-reel-prev aria-label="Previous case study">&#8592;</button>
-        <p class="reel-status" data-reel-status aria-live="polite"></p>
-        <button class="reel-btn" type="button" data-reel-next aria-label="Next case study">&#8594;</button>
-      </div>
 
       <p class="lead" style="margin-top: var(--space-3);">The pattern: Every successful brand owns one word in the customer's mind. Revenue jumps within 1–2 years when you find the right word. And the position compounds for decades. That's what a good positioning statement is worth.</p>
     </div>
@@ -708,7 +718,7 @@
     <div class="container">
       <p class="kicker">The Singapore stakes</p>
       <h2 id="stakes-heading">In Singapore, the odds are already against you.</h2>
-      <div class="stats-grid">
+      <div class="stats-grid" data-reel>
         <div class="stat-card">
           <span class="sc-label">Survival at 5 years</span>
           <span class="num">50<em>%</em></span>
@@ -893,7 +903,7 @@
       <h2 id="offer-heading">Strategy shouldn't be a luxury for small businesses.</h2>
       <p class="lead">Observeco — making strategic thinking accessible to the businesses that need it most.</p>
 
-      <div class="store-grid">
+      <div class="store-grid" data-reel>
         <article class="offer-card">
           <p class="offer-name">The Differentiation Strategy</p>
           <p class="offer-price"><strong>From S$500</strong> one-shot</p>
@@ -937,7 +947,7 @@
   <section class="section" aria-labelledby="fork-heading">
     <div class="container">
       <h2 id="fork-heading">Which one is you?</h2>
-      <div class="fork-grid">
+      <div class="fork-grid" data-reel>
         <article class="fork-card">
           <p class="tag">Validating</p>
           <h3>You have a hunch, and want to check it.</h3>

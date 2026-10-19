@@ -342,273 +342,316 @@
    prefers-reduced-motion, .case-grid stays the plain grid.
    ============================================================ */
 (function () {
-  var reel = document.querySelector('[data-reel]');
-  if (!reel) return;
-
-  var cards = Array.prototype.slice.call(reel.querySelectorAll('.case-card'));
-  if (cards.length < 3) return;
-
-  var controls = document.querySelector('[data-reel-controls]');
-  var status   = document.querySelector('[data-reel-status]');
-  var prevBtn  = document.querySelector('[data-reel-prev]');
-  var nextBtn  = document.querySelector('[data-reel-next]');
-
   var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   var mqNarrow = window.matchMedia('(max-width: 860px)');
 
-  var REACH = 3;          // how far the fan extends before cards park offstage
-  var active = 0;
-  var enabled = false;
-  var cardH = 0;
+  var REACH = 3;              // how far the fan extends before cards park offstage
+  var reels = [];             // one entry per [data-reel] grid on the page
 
   function shouldRun() {
     return !mqReduce.matches && !mqNarrow.matches;
   }
 
-  /* Height: measure every card at natural size, then pin them all to the
-     tallest so the coverflow reads as one rack rather than a ragged row. */
-  function measure() {
-    var i;
-    for (i = 0; i < cards.length; i++) cards[i].style.height = 'auto';
-    var tallest = 0;
-    for (i = 0; i < cards.length; i++) {
-      tallest = Math.max(tallest, cards[i].offsetHeight);
+  // Status readout label. The case cards carry .case-year; other collections
+  // use their own heading, so fall back through the likely candidates.
+  function statusLabel(card) {
+    var el = card.querySelector('[data-reel-label]') ||
+             card.querySelector('.case-year, .kicker, .case-brand, h4, h3, h2');
+    return el ? (el.textContent || '').replace(/\s+/g, ' ').trim() : '';
+  }
+
+  function initReel(grid) {
+    var cards = [];
+    for (var k = 0; k < grid.children.length; k++) {
+      if (grid.children[k].nodeType === 1) cards.push(grid.children[k]);
     }
-    cardH = tallest;
-    reel.style.height = tallest + 'px';
-    for (i = 0; i < cards.length; i++) cards[i].style.height = tallest + 'px';
-  }
+    if (cards.length < 3) return;    // a fan needs at least three cards
 
-  function spacing() {
-    var w = reel.clientWidth || 1120;
-    return Math.max(200, Math.min(w * 0.27, 320));
-  }
+    var S = {
+      grid: grid, cards: cards, active: 0, enabled: false, cardH: 0,
+      dragging: false, startX: 0, startY: 0, dragged: false, pointerId: null,
+      rTimer: null, controls: null, status: null, prevBtn: null, nextBtn: null
+    };
 
-  function render() {
-    if (!enabled) return;
-    var step = spacing();
+    /* Controls are BUILT here rather than authored in the markup. There are
+       nine reels across five pages: hand-writing nine control blocks means
+       nine sets of duplicate data-attributes that would all match the same
+       querySelector, and with no JS a hand-written control would sit on
+       screen doing nothing. Generated here, they exist exactly when they
+       work. */
+    var wrap = document.createElement('div');
+    wrap.className = 'reel-controls';
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<button class="reel-btn" type="button" data-reel-prev aria-label="Previous card">\u2190</button>' +
+      '<p class="reel-status" data-reel-status aria-live="polite"></p>' +
+      '<button class="reel-btn" type="button" data-reel-next aria-label="Next card">\u2192</button>';
+    grid.parentNode.insertBefore(wrap, grid.nextSibling);
 
-    for (var i = 0; i < cards.length; i++) {
-      var card = cards[i];
-      var d = i - active;
-      var ad = Math.abs(d);
+    S.controls = wrap;
+    S.status   = wrap.querySelector('[data-reel-status]');
+    S.prevBtn  = wrap.querySelector('[data-reel-prev]');
+    S.nextBtn  = wrap.querySelector('[data-reel-next]');
 
-      if (ad > REACH) {
-        // Park offstage on the correct side so the next move is a slide-in.
-        var off = (d > 0 ? 1 : -1) * (step * (REACH + 1.4));
+    /* Height: measure every card at natural size, then pin them all to the
+       tallest so the coverflow reads as one rack rather than a ragged row. */
+    function measure() {
+      var i;
+      for (i = 0; i < cards.length; i++) cards[i].style.height = 'auto';
+      var tallest = 0;
+      for (i = 0; i < cards.length; i++) {
+        tallest = Math.max(tallest, cards[i].offsetHeight);
+      }
+      S.cardH = tallest;
+      grid.style.height = tallest + 'px';
+      for (i = 0; i < cards.length; i++) cards[i].style.height = tallest + 'px';
+    }
+
+    function spacing() {
+      var w = grid.clientWidth || 1120;
+      return Math.max(200, Math.min(w * 0.27, 320));
+    }
+
+    function render() {
+      if (!S.enabled) return;
+      var step = spacing();
+
+      for (var i = 0; i < cards.length; i++) {
+        var card = cards[i];
+        var d = i - S.active;
+        var ad = Math.abs(d);
+
+        if (ad > REACH) {
+          // Park offstage on the correct side so the next move is a slide-in.
+          var off = (d > 0 ? 1 : -1) * (step * (REACH + 1.4));
+          card.style.transform =
+            'translate3d(' + off + 'px,0,-520px) rotateY(' + (d > 0 ? -46 : 46) + 'deg)';
+          card.style.opacity = '0';
+          card.style.filter = 'blur(6px)';
+          card.style.zIndex = '1';
+          card.style.pointerEvents = 'none';
+          card.classList.remove('is-active');
+          card.removeAttribute('aria-current');
+          card.setAttribute('aria-hidden', 'true');
+          continue;
+        }
+
+        // The coverflow: neighbours slide out, turn TOWARD the active card
+        // (so their inner edges face you), sink in z and soften.
+        var x     = d * step;
+        var rotY  = d === 0 ? 0 : (d > 0 ? -30 : 30);
+        var z     = -ad * 130;
+        var y     = ad * 10;
+        var scale = 1 - ad * 0.055;
+        var op    = 1 - ad * 0.3;
+        var blur  = ad * 1.7;
+
         card.style.transform =
-          'translate3d(' + off + 'px,0,-520px) rotateY(' + (d > 0 ? -46 : 46) + 'deg)';
-        card.style.opacity = '0';
-        card.style.filter = 'blur(6px)';
-        card.style.zIndex = '1';
-        card.style.pointerEvents = 'none';
-        card.classList.remove('is-active');
-        card.removeAttribute('aria-current');
-        card.setAttribute('aria-hidden', 'true');
-        continue;
+          'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) ' +
+          'rotateY(' + rotY + 'deg) scale(' + scale + ')';
+        card.style.opacity = String(Math.max(op, 0));
+        card.style.filter = blur ? 'blur(' + blur.toFixed(1) + 'px) saturate(0.86)' : 'none';
+        card.style.zIndex = String(100 - ad);
+        card.style.pointerEvents = 'auto';
+        card.removeAttribute('aria-hidden');
+
+        if (d === 0) {
+          card.classList.add('is-active');
+          card.setAttribute('aria-current', 'true');
+        } else {
+          card.classList.remove('is-active');
+          card.removeAttribute('aria-current');
+        }
       }
 
-      // The coverflow: neighbours slide out, turn TOWARD the active card
-      // (so their inner edges face you), sink in z and soften.
-      var x     = d * step;
-      var rotY  = d === 0 ? 0 : (d > 0 ? -30 : 30);
-      var z     = -ad * 130;
-      var y     = ad * 10;
-      var scale = 1 - ad * 0.055;
-      var op    = 1 - ad * 0.3;
-      var blur  = ad * 1.7;
-
-      card.style.transform =
-        'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) ' +
-        'rotateY(' + rotY + 'deg) scale(' + scale + ')';
-      card.style.opacity = String(Math.max(op, 0));
-      card.style.filter = blur ? 'blur(' + blur.toFixed(1) + 'px) saturate(0.86)' : 'none';
-      card.style.zIndex = String(100 - ad);
-      card.style.pointerEvents = 'auto';
-      card.removeAttribute('aria-hidden');
-
-      if (d === 0) {
-        card.classList.add('is-active');
-        card.setAttribute('aria-current', 'true');
-      } else {
-        card.classList.remove('is-active');
-        card.removeAttribute('aria-current');
+      if (S.status) {
+        var label = statusLabel(cards[S.active]);
+        S.status.textContent = (S.active + 1) + ' / ' + cards.length +
+          (label ? ' \u00b7 ' + label : '');
       }
+      if (S.prevBtn) S.prevBtn.setAttribute('aria-disabled', S.active === 0 ? 'true' : 'false');
+      if (S.nextBtn) S.nextBtn.setAttribute('aria-disabled', S.active === cards.length - 1 ? 'true' : 'false');
     }
 
-    if (status) {
-      var label = cards[active].querySelector('.case-year');
-      status.textContent = (active + 1) + ' / ' + cards.length +
-        (label ? ' · ' + label.textContent.trim() : '');
+    function goTo(i) {
+      var next = Math.max(0, Math.min(cards.length - 1, i));
+      if (next === S.active) return;
+      S.active = next;
+      render();
     }
-    if (prevBtn) prevBtn.setAttribute('aria-disabled', active === 0 ? 'true' : 'false');
-    if (nextBtn) nextBtn.setAttribute('aria-disabled', active === cards.length - 1 ? 'true' : 'false');
-  }
+    function next() { goTo(S.active + 1); }
+    function prev() { goTo(S.active - 1); }
 
-  function goTo(i) {
-    var next = Math.max(0, Math.min(cards.length - 1, i));
-    if (next === active) return;
-    active = next;
-    render();
-  }
-
-  function next() { goTo(active + 1); }
-  function prev() { goTo(active - 1); }
-
-  function enable() {
-    if (enabled) return;
-    enabled = true;
-    // The reel class is added here, not in the markup: with no JS the
-    // .case-grid stays a plain grid, so the enhancement can never leave a
-    // half-positioned reel on screen.
-    reel.classList.add('reel');
-    measure();
-    if (controls) controls.hidden = false;
-    render();
-  }
-
-  function clearInline() {
-    for (var i = 0; i < cards.length; i++) {
-      var c = cards[i];
-      c.style.transform = '';
-      c.style.opacity = '';
-      c.style.filter = '';
-      c.style.zIndex = '';
-      c.style.height = '';
-      c.style.pointerEvents = '';
-      c.classList.remove('is-active');
-      c.removeAttribute('aria-current');
-      c.removeAttribute('aria-hidden');
+    function enable() {
+      if (S.enabled) return;
+      S.enabled = true;
+      // The reel class is added here, not in the markup: with no JS the grid
+      // stays a plain grid, so the enhancement can never leave a
+      // half-positioned reel on screen.
+      grid.classList.add('reel');
+      for (var i = 0; i < cards.length; i++) cards[i].classList.add('reel-card');
+      measure();
+      if (S.controls) S.controls.hidden = false;
+      if (S.active > cards.length - 1) S.active = cards.length - 1;
+      render();
     }
-    reel.style.height = '';
-    reel.classList.remove('is-dragging');
-  }
 
-  function disable() {
-    if (!enabled) return;
-    enabled = false;
-    clearInline();
-    reel.classList.remove('reel');
-    if (controls) controls.hidden = true;
-  }
+    function clearInline() {
+      for (var i = 0; i < cards.length; i++) {
+        var c = cards[i];
+        c.style.transform = '';
+        c.style.opacity = '';
+        c.style.filter = '';
+        c.style.zIndex = '';
+        c.style.height = '';
+        c.style.pointerEvents = '';
+        c.classList.remove('is-active');
+        c.removeAttribute('aria-current');
+        c.removeAttribute('aria-hidden');
+      }
+      grid.style.height = '';
+      grid.classList.remove('is-dragging');
+    }
 
-  function sync() {
-    if (shouldRun()) enable();
-    else disable();
-  }
+    function disable() {
+      if (!S.enabled) return;
+      S.enabled = false;
+      clearInline();
+      grid.classList.remove('reel');
+      for (var i = 0; i < cards.length; i++) cards[i].classList.remove('reel-card');
+      if (S.controls) S.controls.hidden = true;
+    }
 
-  // ── Controls ──────────────────────────────────────────────
-  if (prevBtn) prevBtn.addEventListener('click', prev);
-  if (nextBtn) nextBtn.addEventListener('click', next);
+    function sync() {
+      if (shouldRun()) enable();
+      else disable();
+    }
 
-  // ── Keyboard (roving focus on the rack) ───────────────────
-  reel.setAttribute('tabindex', '0');
-  reel.setAttribute('role', 'group');
-  reel.setAttribute('aria-label', 'Case study reel — use arrow keys to browse');
-  reel.addEventListener('keydown', function (e) {
-    if (!enabled) return;
-    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
-    else if (e.key === 'Home') { e.preventDefault(); goTo(0); }
-    else if (e.key === 'End') { e.preventDefault(); goTo(cards.length - 1); }
-  });
+    function reflow(immediate) {
+      if (immediate) {
+        sync();
+        if (S.enabled) { measure(); render(); }
+        return;
+      }
+      clearTimeout(S.rTimer);
+      S.rTimer = setTimeout(function () {
+        var was = S.enabled;
+        sync();
+        if (was && S.enabled) { measure(); render(); }
+      }, 150);
+    }
 
-  // ── Click a neighbour to focus it ─────────────────────────
-  cards.forEach(function (card, i) {
-    card.addEventListener('click', function (e) {
-      if (!enabled || i === active) return;
-      // Don't hijack clicks on real links inside a card.
-      if (e.target.closest('a')) return;
-      e.preventDefault();
-      goTo(i);
+    // ── Controls ──────────────────────────────────────────────
+    if (S.prevBtn) S.prevBtn.addEventListener('click', prev);
+    if (S.nextBtn) S.nextBtn.addEventListener('click', next);
+
+    // ── Keyboard (roving focus on the rack) ───────────────────
+    grid.setAttribute('tabindex', '0');
+    grid.setAttribute('role', 'group');
+    if (!grid.getAttribute('aria-label')) {
+      grid.setAttribute('aria-label', 'Card reel — use arrow keys to browse');
+    }
+    grid.addEventListener('keydown', function (e) {
+      if (!S.enabled) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+      else if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+      else if (e.key === 'End') { e.preventDefault(); goTo(cards.length - 1); }
     });
-  });
 
-  // ── Drag to spin (pointer events, 1:1 while dragging) ─────
-  var dragging = false;
-  var startX = 0;
-  var startY = 0;
-  var dragged = false;
-  var pointerId = null;
+    // ── Click a neighbour to focus it ─────────────────────────
+    cards.forEach(function (card, i) {
+      card.addEventListener('click', function (e) {
+        if (!S.enabled || i === S.active) return;
+        if (e.target.closest('a')) return;     // never hijack a real link
+        e.preventDefault();
+        goTo(i);
+      });
+    });
 
-  reel.addEventListener('pointerdown', function (e) {
-    if (!enabled || e.button !== 0) return;
-    if (e.target.closest('a')) return;
-    dragging = true;
-    dragged = false;
-    startX = e.clientX;
-    startY = e.clientY;
-    pointerId = e.pointerId;
-  });
+    // ── Drag to spin (pointer events, 1:1 while dragging) ─────
+    grid.addEventListener('pointerdown', function (e) {
+      if (!S.enabled || e.button !== 0) return;
+      if (e.target.closest('a')) return;
+      S.dragging = true;
+      S.dragged = false;
+      S.startX = e.clientX;
+      S.startY = e.clientY;
+      S.pointerId = e.pointerId;
+    });
 
-  reel.addEventListener('pointermove', function (e) {
-    if (!dragging) return;
-    var dx = e.clientX - startX;
-    var dy = e.clientY - startY;
+    grid.addEventListener('pointermove', function (e) {
+      if (!S.dragging) return;
+      var dx = e.clientX - S.startX;
+      var dy = e.clientY - S.startY;
 
-    // Let a vertical gesture be a page scroll, not a spin.
-    if (!dragged && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
-      dragging = false;
-      return;
-    }
-    if (Math.abs(dx) > 6) {
-      if (!dragged) {
-        dragged = true;
-        reel.classList.add('is-dragging');
-        try { reel.setPointerCapture(pointerId); } catch (err) { /* no-op */ }
+      // Let a vertical gesture be a page scroll, not a spin.
+      if (!S.dragged && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
+        S.dragging = false;
+        return;
       }
+      if (Math.abs(dx) > 6 && !S.dragged) {
+        S.dragged = true;
+        grid.classList.add('is-dragging');
+        try { grid.setPointerCapture(S.pointerId); } catch (err) { /* no-op */ }
+      }
+    });
+
+    function endDrag(e) {
+      if (!S.dragging) return;
+      S.dragging = false;
+      grid.classList.remove('is-dragging');
+      if (!S.dragged) return;      // a tap, not a drag — the click handler decides
+
+      var dx = (e.clientX || 0) - S.startX;
+      var threshold = Math.max(40, spacing() * 0.22);
+      if (dx <= -threshold) next();
+      else if (dx >= threshold) prev();
+      e.preventDefault();          // suppress the click that follows a drag
     }
-  });
 
-  function endDrag(e) {
-    if (!dragging) return;
-    dragging = false;
-    reel.classList.remove('is-dragging');
-    if (!dragged) return;   // a tap, not a drag — the click handler decides
+    grid.addEventListener('pointerup', endDrag);
+    grid.addEventListener('pointercancel', function () {
+      S.dragging = false;
+      grid.classList.remove('is-dragging');
+    });
 
-    var dx = (e.clientX || 0) - startX;
-    var threshold = Math.max(40, spacing() * 0.22);
-    if (dx <= -threshold) next();
-    else if (dx >= threshold) prev();
-
-    // Suppress the synthetic click that follows a drag.
-    e.preventDefault();
+    S.reflow = reflow;
+    S.isEnabled = function () { return S.enabled; };
+    S.cardCount = function () { return cards.length; };
+    reels.push(S);
+    sync();
   }
 
-  reel.addEventListener('pointerup', endDrag);
-  reel.addEventListener('pointercancel', function () {
-    dragging = false;
-    reel.classList.remove('is-dragging');
-  });
+  // The case grid is declared first in the DOM; initReel keeps DOM order.
+  var grids = document.querySelectorAll('[data-reel]');
+  for (var g = 0; g < grids.length; g++) initReel(grids[g]);
 
-  // ── Re-measure on resize / breakpoint / motion changes ────
-  var rTimer = null;
-  function reflow() {
-    clearTimeout(rTimer);
-    rTimer = setTimeout(function () {
-      var was = enabled;
-      sync();
-      if (was && enabled) { measure(); render(); }
+  // One shared listener set for every reel on the page.
+  var allTimer = null;
+  function reflowAll() {
+    clearTimeout(allTimer);
+    allTimer = setTimeout(function () {
+      for (var i = 0; i < reels.length; i++) reels[i].reflow();
     }, 150);
   }
-  window.addEventListener('resize', reflow);
-
+  window.addEventListener('resize', reflowAll);
   if (mqReduce.addEventListener) {
-    mqReduce.addEventListener('change', reflow);
-    mqNarrow.addEventListener('change', reflow);
+    mqReduce.addEventListener('change', reflowAll);
+    mqNarrow.addEventListener('change', reflowAll);
   }
 
-  // Late-loading brand logos change card heights.
+  // Late-loading brand logos and fonts change card heights.
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(function () {
-      if (enabled) { measure(); render(); }
+      for (var i = 0; i < reels.length; i++) reels[i].reflow(true);
     });
   }
   window.addEventListener('load', function () {
-    if (enabled) { measure(); render(); }
+    for (var i = 0; i < reels.length; i++) reels[i].reflow(true);
   });
 
-  sync();
+  window.__reels = reels;   // exposed for the verification harness
 })();
 
 /* ============================================================
@@ -660,8 +703,10 @@
   // Blocks that drift at their own rate. .hero-flow is excluded on purpose:
   // its transform is owned by a CSS .in-view animation, and an inline
   // transform would lose to it.
+  // Strength raised -16 -> -80: at -16 the measured displacement was 30px
+  // across 500px of scrolling, which is below the perceptual floor.
   var PARALLAX = [
-    { sel: '[data-reel]', strength: -16 }
+    { sel: '[data-reel]', strength: -80 }
   ];
 
   var scrubEls = [];
@@ -713,8 +758,10 @@
         // lift — leaving an inline transform would kill every :hover rise.
         if (el.style.transform) { el.style.transform = ''; el.style.opacity = ''; }
       } else {
-        el.style.transform = 'translate3d(0,' + ((1 - t) * 26).toFixed(1) + 'px,0)';
-        el.style.opacity = (0.28 + t * 0.72).toFixed(3);
+        // 26px was imperceptible (measured: 30px max across 500px of scroll).
+        // 64px with a deeper fade reads as motion while staying understated.
+        el.style.transform = 'translate3d(0,' + ((1 - t) * 64).toFixed(1) + 'px,0)';
+        el.style.opacity = (0.16 + t * 0.84).toFixed(3);
       }
     }
 
@@ -740,6 +787,80 @@
   }, { passive: true });
 
   if (mqReduce.addEventListener) mqReduce.addEventListener('change', function () { onScroll(); });
+
+  /* ── 6. INERTIAL SCROLL (desktop / fine pointer only) ──
+     Native scroll feels dead next to Lenis-style inertia, and this is the one
+     change that alters the feel of EVERY gesture rather than one section.
+
+     Implemented by easing the REAL scroll position (window.scrollTo) rather
+     than transform-hijacking the page, so a fixed header, sticky elements,
+     anchor targets and every IntersectionObserver above keep working
+     untouched. Easing the document also keeps the scrollbar honest.
+
+     Touch devices are deliberately excluded — their native momentum is better
+     than anything we would synthesise. */
+  var mqFine = window.matchMedia('(pointer: fine)');
+  if (mqFine.matches) {
+    var root = document.documentElement;
+    var ease = 0.13;
+    var target = window.pageYOffset || 0;
+    var current = target;
+    var driving = false;
+    var maxScroll = function () { return root.scrollHeight - window.innerHeight; };
+
+    root.style.scrollBehavior = 'auto';   // we own easing from here on
+
+    var drive = function () {
+      var diff = target - current;
+      current += diff * ease;
+      if (Math.abs(diff) < 0.5) current = target;
+      window.scrollTo(0, current);
+      if (Math.abs(target - current) < 0.5) { driving = false; return; }
+      requestAnimationFrame(drive);
+    };
+    var startDrive = function () {
+      if (!driving) { driving = true; requestAnimationFrame(drive); }
+    };
+
+    // Never swallow the gesture when it belongs to a nested scroll area.
+    var inScrollable = function (el) {
+      while (el && el !== document.body && el.nodeType === 1) {
+        var st = getComputedStyle(el);
+        if (/(auto|scroll)/.test(st.overflowY) && el.scrollHeight > el.clientHeight + 2) return true;
+        el = el.parentElement;
+      }
+      return false;
+    };
+
+    window.addEventListener('wheel', function (e) {
+      if (e.ctrlKey || e.metaKey) return;          // never eat pinch-zoom
+      if (inScrollable(e.target)) return;          // let inner panes scroll
+      e.preventDefault();
+      target = Math.max(0, Math.min(maxScroll(), target + e.deltaY));
+      startDrive();
+    }, { passive: false });
+
+    // Keys, scrollbar drags and browser scroll restoration move the page
+    // directly — resync so the next wheel gesture starts from real position.
+    window.addEventListener('scroll', function () {
+      if (!driving) { target = current = window.pageYOffset || 0; }
+    }, { passive: true });
+
+    // With scroll-behavior off, anchor jumps would land abruptly. Drive them.
+    document.addEventListener('click', function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+      if (!a) return;
+      var href = a.getAttribute('href');
+      if (!href || href.length < 2) return;
+      var el;
+      try { el = document.querySelector(href); } catch (err) { return; }
+      if (!el) return;
+      e.preventDefault();
+      var top = el.getBoundingClientRect().top + (window.pageYOffset || 0) - 84;
+      target = Math.max(0, Math.min(maxScroll(), top));
+      startDrive();
+    });
+  }
 
   collect();
   frame();   // establish initial state so nothing pops on the first scroll
