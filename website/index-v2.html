@@ -34,6 +34,17 @@
   ]
 }
 </script>
+<style>
+  .books-mention { display: grid; grid-template-columns: auto 1fr; gap: 36px; align-items: center; }
+  .books-mention-covers { display: flex; gap: 16px; }
+  .books-mention-covers img { width: 150px; height: auto; border-radius: 10px; border: 1px solid rgba(14, 110, 92, .25); box-shadow: 0 10px 26px rgba(14, 110, 92, .16); transition: transform .2s ease; }
+  .books-mention-covers a:hover img { transform: translateY(-3px); }
+  .books-mention-copy .kicker { margin-bottom: var(--space-2, 10px); }
+  @media (max-width: 720px) {
+    .books-mention { grid-template-columns: 1fr; gap: 20px; }
+    .books-mention-covers img { width: 118px; }
+  }
+</style>
 </head>
 <body>
 
@@ -581,6 +592,24 @@
     </div>
   </section>
 
+  <!-- THE BOOKS -->
+  <section class="section section-alt" aria-labelledby="books-heading">
+    <div class="container">
+      <div class="books-mention">
+        <div class="books-mention-covers">
+          <a href="books.html"><img src="assets/img/book1-cover.jpg" alt="Small Island, Crowded Market — book cover" width="150" height="232" loading="lazy"></a>
+          <a href="books.html"><img src="assets/img/book2-cover.jpg" alt="How a Small Business Gets Chosen — book cover" width="150" height="232" loading="lazy"></a>
+        </div>
+        <div class="books-mention-copy">
+          <p class="kicker">Published · Two books</p>
+          <h2 id="books-heading">The method has been written down — twice.</h2>
+          <p class="lead">Sean Foo is the author of <a href="books.html">Small Island, Crowded Market</a> — the ground a Singapore small business competes on — and <a href="books.html">How a Small Business Gets Chosen</a> — the move that wins on it. Both titles carry National Library Board (NLB) Singapore ISBNs, and both grow out of the same research this consultancy runs on.</p>
+          <a class="link-arrow" href="books.html">Meet the books</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- CONTACT -->
   <section class="section section-alt" id="contact" aria-labelledby="contact-heading">
     <div class="container">
@@ -602,7 +631,8 @@
       <a href="differentiation-strategy.html">The Strategy</a><span class="sep">·</span>
       <a href="differentiation-watch.html">The Watch</a><span class="sep">·</span>
       <a href="method.html">The Method</a><span class="sep">·</span>
-      <a href="case-studies-petdirectory.html">Client Work</a>
+      <a href="case-studies-petdirectory.html">Client Work</a><span class="sep">·</span>
+      <a href="press.html">Press</a>
     </nav>
     <p class="legal">© ObserveCo 2026 · Differentiation strategy for Singapore small business.</p>
   </div>

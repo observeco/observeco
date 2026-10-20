@@ -655,7 +655,7 @@
 })();
 
 /* ============================================================
-   MOTION LAYER — ambient drift, scroll-scrubbed reveals, parallax
+   MOTION LAYER — scroll-scrubbed reveals, parallax, inertial scroll
    ============================================================
    The MOTION 2 dial on this site was overruled ("I want motion").
    Measured before this layer: 0 elements moving with no input on a
@@ -663,30 +663,34 @@
    site's 67 infinite animations buried in the 3.2s #sg-intro splash
    — all the energy in a screen most visitors skip, then a dead page.
 
-   This adds three things and nothing else:
-     · a single ambient aurora field (continuous, never a per-card loop)
+   What this layer does:
      · scroll-SCRUBBED reveals — position-driven, not a one-shot fire
      · parallax on whole blocks, so the page keeps answering the scroll
+     · inertial scroll, so every gesture has weight
+     · a reading rail
+
+   Removed after review, and NOT to be re-added without a rethink:
+     · the ambient aurora (a fixed drifting colour wash under everything —
+       it competed with the page's own animation)
+     · the method marquee (a scrolling word band — a 1990s ticker idiom that
+       repeated what the hero already said twice)
 
    The "too kiddish" rule still holds inside the evidence sections:
    no new loops on the case cards, the stats or the cost table.
 
-   Degradation: reduced-motion users get neither (CSS hides the aurora
-   and the rail, and this IIFE returns before wiring anything). With no
-   JS the inline transform/opacity are never written, so every element
-   shows its natural final state.
+   Degradation: reduced-motion users get none of it (CSS hides the rail and
+   this IIFE returns before wiring anything). With no JS the inline
+   transform/opacity are never written, so every element shows its natural
+   final state.
    ============================================================ */
 (function () {
   'use strict';
 
   var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  // Created here, not in the markup — same pattern as the .bg-wash and
-  // .bg-nodes canvases above, so no page HTML changes.
-  var aurora = document.createElement('div');
-  aurora.className = 'bg-aurora';
-  aurora.setAttribute('aria-hidden', 'true');
-  document.body.insertBefore(aurora, document.body.firstChild);  // paints behind wash + nodes
+  // The ambient aurora that used to be created here was REMOVED 19 Oct 2026:
+  // a fixed full-viewport colour drift underneath every reveal competed with
+  // the page's own animation. See the note in draft.css.
 
   var rail = document.createElement('div');
   rail.className = 'scroll-progress';
@@ -868,9 +872,6 @@
   window.__motion = {
     scrubCount: function () { return scrubEls.length; },
     parallaxCount: function () { return parEls.length; },
-    auroraAnim: function () {
-      var a = document.querySelector('.bg-aurora');
-      return a ? getComputedStyle(a, '::before').animationName : 'missing';
-    }
+    auroraPresent: function () { return !!document.querySelector('.bg-aurora'); }
   };
 })();

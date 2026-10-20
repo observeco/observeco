@@ -2883,10 +2883,9 @@ table.compare .generic { color: var(--yellow); }
    skip, then went completely still.
 
    What this adds, in leverage order:
-     1. .bg-aurora   — continuous ambient drift (the "alive" feel)
-     2. scrub        — reveals tied to SCROLL POSITION, not a one-shot
-     3. parallax     — depth; the reel and figures drift at their own rate
-     4. .scroll-progress — a reading rail that proves the page is tracking you
+     1. scrub        — reveals tied to SCROLL POSITION, not a one-shot
+     2. parallax     — depth; the reel and figures drift at their own rate
+     3. .scroll-progress — a reading rail that proves the page is tracking you
 
    Deliberately NOT done: nothing loops inside the evidence sections
    (case cards, stats, cost table) — the "too kiddish" rule stands
@@ -2894,65 +2893,18 @@ table.compare .generic { color: var(--yellow); }
    ornament. Everything is gated on prefers-reduced-motion.
    ============================================================ */
 
-/* ── 1. AMBIENT AURORA ──
-   Two oversized blurred fields drifting at different rates, behind all
-   content. Only `transform` animates, so the compositor does the work —
-   the blur is rasterised once, not per frame.
+/* ── 1. AMBIENT AURORA — REMOVED 19 Oct 2026 ──
+   A fixed two-field drifting colour wash shipped here and was pulled after
+   review: it interfered with the page's own animation. It was a permanent
+   full-viewport colour shift sitting underneath every reveal, the reels and
+   the parallax, so two independent motion systems competed on the same
+   screen — and because the surfaces had been made translucent to let it show
+   through, the interference was everywhere rather than peripheral.
 
-   First pass was measured at max delta 3/255 against flat paper — a
-   rumour, not motion. Alphas roughly doubled and the cycle cut from 96s
-   to 34s/44s so the drift is actually perceptible within a few seconds
-   while staying far below "decorative". */
-.bg-aurora {
-  position: fixed;
-  inset: 0;
-  z-index: -2;                 /* behind .bg-wash and .bg-nodes */
-  pointer-events: none;
-  overflow: hidden;
-}
-.bg-aurora::before {
-  content: "";
-  position: absolute;
-  inset: -35%;
-  background:
-    radial-gradient(38% 40% at 28% 28%, rgba(14, 110, 92, 0.24), transparent 62%),
-    radial-gradient(34% 36% at 74% 64%, rgba(184, 74, 47, 0.14), transparent 64%),
-    radial-gradient(46% 40% at 46% 90%, rgba(14, 110, 92, 0.16), transparent 66%);
-  /* NO filter:blur here. Measured: blur(46px) on this oversized layer cost
-     50ms of every frame (66.7ms median -> 16.7ms with the blur removed,
-     i.e. 20fps -> 60fps). The radial gradients already ramp to `transparent`
-     at 62-66%, so they are soft without it — the blur was buying nothing
-     and charging the whole scroll budget for it. */
-  will-change: transform;
-}
-/* A counter-drifting warm field — the two layers slide against each other,
-   which is what reads as depth rather than a single lazy blob. */
-.bg-aurora::after {
-  content: "";
-  position: absolute;
-  inset: -30%;
-  background:
-    radial-gradient(32% 34% at 66% 26%, rgba(201, 154, 63, 0.13), transparent 66%),
-    radial-gradient(28% 30% at 22% 74%, rgba(14, 110, 92, 0.11), transparent 66%);
-  /* Blur removed for the same measured reason as ::before — see above. */
-  will-change: transform;
-}
-
-@keyframes aurora-drift {
-  0%   { transform: translate3d(-6%, -4%, 0) scale(1.00) rotate(-1.5deg); }
-  50%  { transform: translate3d(5%, 4%, 0)   scale(1.12) rotate(2deg); }
-  100% { transform: translate3d(-3%, 6%, 0)  scale(1.05) rotate(-2.5deg); }
-}
-@keyframes aurora-drift-2 {
-  0%   { transform: translate3d(5%, 3%, 0)   scale(1.08) rotate(2deg); }
-  50%  { transform: translate3d(-4%, -3%, 0) scale(1.00) rotate(-1.5deg); }
-  100% { transform: translate3d(3%, -5%, 0)  scale(1.10) rotate(1.5deg); }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .bg-aurora::before { animation: aurora-drift 34s ease-in-out infinite alternate; }
-  .bg-aurora::after  { animation: aurora-drift-2 44s ease-in-out infinite alternate; }
-}
+   Removed with it: the translucent surfaces (.section / card backgrounds are
+   back to solid var(--surface), since their only purpose was letting the
+   drift show through). Motion here should come from the content the visitor
+   is actually reading, not from a wash underneath it. */
 
 /* ── 2. SCRUB + 3. PARALLAX targets ──
    JS writes transform/opacity inline while an element is entering, then
@@ -2987,10 +2939,10 @@ table.compare .generic { color: var(--yellow); }
    The genuinely measurable difference was DEPTH: 124 backdrop-filter panels
    against our 2, and 602 transitioned elements against our 46.
 
-   Making the surfaces translucent over the fixed aurora layer does two jobs
-   at once: it introduces that depth AND lets the ambient drift show THROUGH
-   the page instead of only around it — which was the real reason our motion
-   read as too subtle.
+   SUPERSEDED 19 Oct 2026: the translucency existed only to let the aurora
+   show through, and the aurora has been removed for interfering with the
+   page's own animation. Surfaces are back to solid var(--surface). The
+   measured lesson below still stands and is why we never added blur.
 
    Opacity floor is 0.72 so body text stays far above the 4.5:1 AA contrast
    floor against near-white paper.
@@ -3004,7 +2956,7 @@ table.compare .generic { color: var(--yellow); }
    we must NOT copy literally. Depth comes from the alpha, not the blur. */
 .section,
 .section-alt {
-  background: rgba(255, 255, 255, 0.74);
+  background: var(--surface);
 }
 
 .case-card,
@@ -3016,7 +2968,7 @@ table.compare .generic { color: var(--yellow); }
 .stat-card,
 .watch-card,
 .flank-map-card {
-  background: rgba(255, 255, 255, 0.80);
+  background: var(--surface);
 }
 
 /* Reduced-motion users get solid surfaces back — no alpha flicker, no
@@ -3053,7 +3005,6 @@ table.compare .generic { color: var(--yellow); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bg-aurora { display: none; }
   .scroll-progress { display: none; }
 }
 

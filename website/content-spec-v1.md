@@ -86,7 +86,9 @@
 - **CTA:** Get your free positioning snapshot · [WhatsApp button]
 
 ## Footer
-© ObserveCo 2026 · The Strategy · The Watch · The Method · Client Work · Privacy · Built by the team behind ObserveCo — open-source agent observability.
+© ObserveCo 2026 · The Strategy · The Watch · The Method · Client Work · White Paper · Press
+
+> **Open item (flagged 2026-10-20, not fixed):** this footer line previously ended "· Privacy · Built by the team behind ObserveCo — open-source agent observability", which is pre-pivot copy. The live footer says only "© ObserveCo 2026 · Differentiation strategy for Singapore small business." Decide whether the observability clause is retired for good before the next rebuild.
 
 ---
 
@@ -239,6 +241,74 @@ Book a call — we'll show you what your industry's dataset looks like · [Whats
 
 ## CTA
 Want this depth for your market? → [The Differentiation Strategy] · [Free snapshot] · [WhatsApp]
+
+---
+
+# PAGE 6 — /press (press & media kit) — added 2026-10-20
+
+**Purpose.** A journalist on deadline must be able to verify who ObserveCo is, check its numbers at origin, and reach Sean — in under 30 seconds, without a login and without a form. This page is not a marketing page and must never carry a sales CTA. Its conversion event is an email from a reporter.
+
+**Why it exists (measured, 2026-10-20).** Before this page there were zero third-party mentions of ObserveCo in the Google index, and `/about`, `/press`, `/contact`, `/bio` all returned 404. The only contact route on the site was a WhatsApp deep link. That — not placement volume — is what suppresses earned coverage.
+
+**Rules for this page (do not violate).**
+- Every statistic must be a third-party figure with a named publisher. No ObserveCo estimates, no unsourced percentages, no "most SMEs…" claims.
+- No pricing comparison ObserveCo cannot source (e.g. do not assert what big firms charge unless that figure is attributed).
+- No form. Site policy is zero `<form>` elements; contact is `mailto:` and `wa.me` only.
+- No new nav item. Footer link only.
+
+## Nav
+Same as every other page, no `aria-current` anywhere.
+
+## Hero
+- Kicker: Press & media
+- H1: Everything you need to write about ObserveCo.
+- Sub: one paragraph — what ObserveCo is, that the facts, founder, books and angles follow, and that email is fastest on deadline.
+
+## The facts — "The numbers we quote, and where they come from."
+Six `.press-fact` blocks, each: figure → plain-English claim → publisher in caps. Every one already appears elsewhere on the site with the same attribution:
+| Figure | Claim | Source |
+|---|---|---|
+| 50% | new Singapore businesses do not survive five years | ACRA |
+| 213 | new business registrations per day | ACRA, 2025 |
+| 55% | of SME decision-makers cite getting/keeping customers as a top concern | QBE 2025 (n=600) |
+| 36% | cite market competition as their number one concern | OCBC, 4Q2025 |
+| 39% → 50% | of SMEs citing increasing competition, 2024→2025 | QBE 2025 |
+| 25,000 | enterprises a year get free 1-to-1 advice from Enterprise Singapore SME Centres | Enterprise Singapore |
+
+Lead paragraph must state these are published third-party statistics, independently checkable at origin.
+
+## The founder — "The founder."
+`.press-person` grid: `assets/img/sean-foo.jpg` (portrait card, no crop, 220×330 attributes) + bio paragraph + the career list already used on `/method` (Stuart Wright Well Consultancy · AlgoMerchant · Aurora Energy Research · Author of both books). Bio must mention 15 years consulting, 18 in startups, and that the method he sells is the one he wrote down in the books.
+
+> **Do not add a LinkedIn link here.** `method.html` currently has `href="#"` for LinkedIn — a dead link. Fix or remove at source first.
+
+## What the business does
+Two `.card-item` blocks: The Differentiation Strategy (from S$500, 3–7 days from a 30-minute call, no-result-no-fee guarantee) and Differentiation Watch (S$300–400 per quarter). Plain description, no sales language.
+
+## The books
+Two `.press-book` cards: cover thumbnail, title, subtitle, ISBN chip. Buy links go to Bookshop.org. **The book PDFs are NOT hosted on the site** — `references/*.pdf` returns 404; do not link them.
+
+## Story angles
+Four `.card-item` blocks in a 2×2 grid. Each is a story a journalist can take without ObserveCo's cooperation:
+1. **The S$500 strategy** — strategy consulting priced for companies that can afford six figures; what breaks when you strip out the deck and the timeline.
+2. **Half of them are gone in five years** — ACRA's survival numbers against 213 daily registrations; the differentiation argument.
+3. **Two books, one question** — founder profile on why he wrote them and what the research found.
+4. **Where does a small business show up in an AI answer?** — first-person angle on AI-assisted buying. **Must stay a question, never a statistic** — ObserveCo has measured its own category, not the SME population. Do not invent a percentage here.
+
+## Contact
+Two blocks: email (`sean.foo@observeco.com`, preferred, with a subject line prefill) and WhatsApp (+65 9155 0120, urgent only). Email block must promise that a queried figure is "sourced or withdrawn" — that is the honesty contract and it is the reason the page is credible.
+
+## Images and assets
+Direct download links, credit line "Free to use with credit to ObserveCo":
+`assets/img/sean-foo.jpg` · `assets/img/book1-cover.jpg` · `assets/img/book2-cover.jpg` · `assets/logo.svg` · `og-1200x630.png`
+
+## Schema (shipped with this page)
+- `press.html` — `WebPage` with `@id`, `isPartOf` → `#organization`, `about` + `mainEntity` → `#sean-foo`
+- `books.html` — `@graph`: `Person` (`#sean-foo`) + two `Book` nodes carrying real ISBNs (`9789819478293`, `9789819478286`), `datePublished 2026-09`, Bookshop offer URLs. No `publisher` and no `price`: publisher is not established and the $5.99 / £4.99 currency differs by store — do not assert either.
+- `index.html` — `ProfessionalService` gains `@id`, `url`, `logo`, `image`, and `founder` → `#sean-foo`
+
+## Machine-readable layer
+`llms.txt` at site root: entity summary, the two offers, the founder, key page list, the six sourced figures, contact, and an explicit disambiguation note separating observeco.com from Observe Inc and the github.com/observeco/observeco open-source project.
 
 ---
 

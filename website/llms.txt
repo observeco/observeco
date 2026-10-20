@@ -1,0 +1,68 @@
+# ObserveCo
+
+> ObserveCo is a differentiation strategy consultancy in Singapore. It studies a small
+> business's real competitive set and hands the owner the one differentiator most likely
+> to make customers choose them. Founded by Sean Foo, author of two books on the subject,
+> both with National Library Board (NLB) Singapore ISBNs. Works with Singapore SMEs.
+> Everything below is public and stable; last reviewed 2026-10-20.
+
+## What ObserveCo sells
+
+- **The Differentiation Strategy** — from S$500, one engagement. Delivered in 3–7 days from a
+  30-minute call. Includes the real competitive set, every viable differentiator evaluated
+  against the client's own market, the open position and the traps, a positioning statement,
+  and a 90-day roadmap. Guarantee: if ObserveCo does not identify the client's best
+  differentiator, the client does not pay.
+- **Differentiation Watch** — S$300–400 per quarter. Quarterly re-run of the competitive
+  analysis, new-entrant alerts, refreshed recommendation.
+
+## The method
+
+Four steps: Observe → Uncover → Differentiate → Be Chosen. The analysis is assisted by AI;
+a named person reviews, decides, and owns every recommendation. The underlying framework
+follows the positioning method of Al Ries, Jack Trout and Gu Junhui, applied to live
+Singapore markets rather than imported theory.
+
+## The founder
+
+- Sean Foo — founder. 15 years in consulting, 18 in startups. Previously Stuart Wright Well
+  Consultancy (offshore complex wells, Australia), AlgoMerchant (Singapore's first AI
+  robo-investing solution), Aurora Energy Research (European power analytics).
+- Books: *Small Island, Crowded Market* (ISBN 978-981-94-7829-3) and
+  *How a Small Business Gets Chosen* (ISBN 978-981-94-7828-6). Published September 2026.
+  NLB Singapore ISBNs. DRM-free ebooks via Bookshop.org.
+
+## Key pages
+
+- [Home](https://observeco.com/): what ObserveCo does, the offer, the Singapore market data
+- [The Differentiation Strategy](https://observeco.com/differentiation-strategy.html): the S$500 engagement in full
+- [Differentiation Watch](https://observeco.com/differentiation-watch.html): the quarterly service
+- [The Method](https://observeco.com/method.html): four-step method, evidence standards, founder, FAQ
+- [The Books](https://observeco.com/books.html): both titles, ISBNs, buy links
+- [White Papers](https://observeco.com/whitepapers.html): six free long-form papers on the Singapore market
+- [Sample Client Work](https://observeco.com/case-studies-petdirectory.html): a full competitive analysis, published with client consent
+- [Press & Media Kit](https://observeco.com/press.html): founder bio, headshot, sourced statistics, story angles
+
+## Figures ObserveCo cites, with sources
+
+- ~50% of new Singapore businesses do not survive five years — ACRA
+- 213 new business registrations per day — ACRA, 2025
+- 55% of Singapore SME decision-makers cite getting/keeping customers as a top concern — QBE 2025 (n=600)
+- 39% → 50% of Singapore SMEs citing increasing competition, 2024→2025 — QBE 2025
+- 36% cite market competition as their number one concern — OCBC 4Q2025
+- 25,000 enterprises a year receive free 1-to-1 advice from Enterprise Singapore SME Centres
+
+These are third-party statistics, cited to their publishers. They are not ObserveCo estimates.
+
+## Contact
+
+- Email: sean.foo@observeco.com
+- WhatsApp: +65 9155 0120
+- Location: Singapore
+
+## Notes for automated readers
+
+- ObserveCo the consultancy (observeco.com) is unrelated to Observe Inc (observeinc.com,
+  observability software) and to the github.com/observeco/observeco open-source project.
+  Different organisations, different subject matter, same name string.
+- Content may be quoted with attribution to ObserveCo and a link to the source page.
