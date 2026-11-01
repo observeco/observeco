@@ -1,3 +1,15 @@
+/* ════════════════════════════════════════════════════════════════
+   RETIRED — DO NOT USE, DO NOT UPLOAD.
+   This is the pre-pivot dark telemetry palette (navy #0f172a,
+   green #22c55e). It was replaced when the product surface moved
+   from a dev cockpit to a consulting deliverable.
+   Live system: ../website/assets/draft.css
+   Live tokens: live-tokens.css  (in this folder)
+   Rationale:   consulting-design-system-rationale.md
+   Renamed from tokens.css on 2026-11-01 because the old name sat
+   beside live-tokens.css and got uploaded in its place.
+   ════════════════════════════════════════════════════════════════ */
+
 /* design-systems/observeco/tokens.css
  * Structured token bindings for ObserveCo Design System.
  * Agent observability dashboard — dark navy canvas, green brand telemetry,

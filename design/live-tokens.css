@@ -1,0 +1,73 @@
+/* ============================================================
+   ObserveCo Consulting — LIVE token set
+   Extracted verbatim from the :root block of website/assets/draft.css
+   (the stylesheet all live pages actually link), commit 07b888e,
+   2026-11-01. Line-for-line copy — no values reinterpreted.
+
+   WHY THIS FILE EXISTS
+   design/consulting-tokens.css is the earlier token draft. It is close
+   but NOT identical to production. Divergences that matter:
+     · coral #b84a2f / amber #c99a3f and their -hover/-dim variants exist
+       live but are absent from consulting-tokens.css
+     · spacing: live is 8/16/24/40/64/88; the doc file is a 4/8/12/16/20/
+       24/32/40/48/64 grid. Same token NAMES, different values.
+     · live has only --radius 10px and --radius-lg 14px (no 6/18/pill)
+     · the doc file's --canvas/--insight/--ink naming is aliased at the
+       bottom of this block so both naming families resolve
+   Prefer this file for anything that must match the live site.
+   ============================================================ */
+
+:root {
+  /* Surfaces — light-first paper canvas */
+  --bg: #f7f6f3;              /* page canvas — bond paper */
+  --surface: #ffffff;         /* cards, panels */
+  --surface-2: #f1f0ec;       /* nested elevation */
+  --border: #e4e2dc;          /* hairline */
+  --border-subtle: #efeee9;   /* lighter hairline */
+
+  /* Single accent — insight teal */
+  --green: #0e6e5c;           /* AA on paper */
+  --green-hover: #0a5447;
+  --green-dim: rgba(14, 110, 92, 0.08);
+
+  /* Complementary warm — coral (before/negative states, data-viz contrast) */
+  --coral: #b84a2f;           /* warm complement to teal, AA on paper */
+  --coral-hover: #9c3d25;
+  --coral-dim: rgba(184, 74, 47, 0.10);
+  --amber: #c99a3f;           /* secondary warm accent (trends, markers) */
+
+  /* Neutrals — ink on paper */
+  --fg: #1b1f24;
+  --fg-2: #4a525c;
+  --fg-3: #6b737e;
+  --fg-muted: #8a929c;
+
+  /* Type */
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --radius: 10px;
+  --radius-lg: 14px;
+  --maxw: 1120px;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 40px;
+  --space-5: 64px;
+  --space-6: 88px;
+
+  /* Doc-token aliases — the design docs use these names */
+  --canvas: var(--bg);
+  --line: var(--border);
+  --line-soft: var(--border-subtle);
+  --surface-hover: var(--surface-2);
+  --insight: var(--green);
+  --insight-strong: var(--green-hover);
+  --ink: var(--fg);
+  --ink-2: var(--fg-2);
+  --ink-3: var(--fg-3);
+  --font-body: var(--font-sans);
+  --radius-md: var(--radius);
+}
