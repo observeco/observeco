@@ -662,6 +662,9 @@
    mid-page viewport, 0 transforms driven by scrolling, and 63 of the
    site's 67 infinite animations buried in the 3.2s #sg-intro splash
    — all the energy in a screen most visitors skip, then a dead page.
+   (Superseded: that splash was a 295KB inline Singapore map, since
+   replaced by the cherry-blossom film. The measurement is kept as the
+   reason this layer exists, not as a description of the page today.)
 
    What this layer does:
      · scroll-SCRUBBED reveals — position-driven, not a one-shot fire
