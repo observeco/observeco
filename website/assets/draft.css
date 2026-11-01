@@ -54,6 +54,27 @@
   --space-4: 40px;
   --space-5: 64px;
   --space-6: 88px;
+
+  /* ── Doc-token aliases (design/consulting-tokens.css names) ──
+   * The design docs call this palette --canvas / --insight / --ink; this
+   * sheet has always called it --bg / --green / --fg. Both now resolve, so a
+   * snippet copied out of design/README.md or consulting-tokens.css renders
+   * instead of silently falling back to unstyled defaults.
+   * Aliases only: no existing name changes value, so nothing re-renders.
+   * The doc's --space-1..6 scale is deliberately NOT aliased — it is a 4px
+   * grid, this one is 8px, so aliasing would silently halve every gap.
+   */
+  --canvas: var(--bg);
+  --line: var(--border);
+  --line-soft: var(--border-subtle);
+  --surface-hover: var(--surface-2);
+  --insight: var(--green);
+  --insight-strong: var(--green-hover);
+  --ink: var(--fg);
+  --ink-2: var(--fg-2);
+  --ink-3: var(--fg-3);
+  --font-body: var(--font-sans);
+  --radius-md: var(--radius);
 }
 
 html { scroll-behavior: smooth; }
